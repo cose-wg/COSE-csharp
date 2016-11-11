@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30110.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "COSE", "COSE.csproj", "{D02F476F-BC2C-4D01-BEDE-EB8E79DD050E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "crypto", "..\..\..\BouncyCastle\csharp\crypto\crypto.csproj", "{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Portable.CBOR", "..\..\..\cbor-contrib\Portable.CBOR.csproj", "{23A1B70C-F064-47B6-8B7E-E2042CDAD8C7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D02F476F-BC2C-4D01-BEDE-EB8E79DD050E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D02F476F-BC2C-4D01-BEDE-EB8E79DD050E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D02F476F-BC2C-4D01-BEDE-EB8E79DD050E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D02F476F-BC2C-4D01-BEDE-EB8E79DD050E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23A1B70C-F064-47B6-8B7E-E2042CDAD8C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23A1B70C-F064-47B6-8B7E-E2042CDAD8C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23A1B70C-F064-47B6-8B7E-E2042CDAD8C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23A1B70C-F064-47B6-8B7E-E2042CDAD8C7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
