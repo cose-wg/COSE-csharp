@@ -14,8 +14,9 @@ using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Math;
 
-namespace COSE
+namespace Org.BouncyCastle.Crypto.Engines
 {
+#if false
     public class ChaCha20Poly1305 : IAeadBlockCipher
     {
         /// <summary>
@@ -172,7 +173,7 @@ namespace COSE
             }
         }
 
-        class ChaChaX : ChaChaEngine
+        class ChaChaX : IStreamCipher
         {
             public override void Init(bool forEncryption, ICipherParameters parameters)
             {
@@ -203,33 +204,186 @@ namespace COSE
                 byte[] constants;
 
                 // Key
-                engineState[4] = Pack.LE_To_UInt32(keyBytes, 0);
-                engineState[5] = Pack.LE_To_UInt32(keyBytes, 4);
-                engineState[6] = Pack.LE_To_UInt32(keyBytes, 8);
-                engineState[7] = Pack.LE_To_UInt32(keyBytes, 12);
+                engineState[4] = LE_To_UInt32(keyBytes, 0);
+                engineState[5] = LE_To_UInt32(keyBytes, 4);
+                engineState[6] = LE_To_UInt32(keyBytes, 8);
+                engineState[7] = LE_To_UInt32(keyBytes, 12);
 
-                    constants = sigma;
-                    offset = 16;
+                constants = sigma;
+                offset = 16;
 
-                engineState[8] = Pack.LE_To_UInt32(keyBytes, offset);
-                engineState[9] = Pack.LE_To_UInt32(keyBytes, offset + 4);
-                engineState[10] = Pack.LE_To_UInt32(keyBytes, offset + 8);
-                engineState[11] = Pack.LE_To_UInt32(keyBytes, offset + 12);
+                engineState[8] = LE_To_UInt32(keyBytes, offset);
+                engineState[9] = LE_To_UInt32(keyBytes, offset + 4);
+                engineState[10] = LE_To_UInt32(keyBytes, offset + 8);
+                engineState[11] = LE_To_UInt32(keyBytes, offset + 12);
 
-                engineState[0] = Pack.LE_To_UInt32(constants, 0);
-                engineState[1] = Pack.LE_To_UInt32(constants, 4);
-                engineState[2] = Pack.LE_To_UInt32(constants, 8);
-                engineState[3] = Pack.LE_To_UInt32(constants, 12);
+                engineState[0] = LE_To_UInt32(constants, 0);
+                engineState[1] = LE_To_UInt32(constants, 4);
+                engineState[2] = LE_To_UInt32(constants, 8);
+                engineState[3] = LE_To_UInt32(constants, 12);
 
                 // Counter
                 engineState[12] = 0;
 
                 // IV
-                engineState[13] = Pack.LE_To_UInt32(ivBytes, 0);
-                engineState[14] = Pack.LE_To_UInt32(ivBytes, 4);
-                engineState[15] = Pack.LE_To_UInt32(ivBytes, 8);
+                engineState[13] = LE_To_UInt32(ivBytes, 0);
+                engineState[14] = LE_To_UInt32(ivBytes, 4);
+                engineState[15] = LE_To_UInt32(ivBytes, 8);
                 ResetCounter();
             }
+
+            public virtual byte ReturnByte(
+                 byte input)
+            {
+                if (LimitExceeded()) {
+                    throw new MaxBytesExceededException("2^70 byte limit per IV; Change IV");
+                }
+
+                if (index == 0) {
+                    GenerateKeyStream(keyStream);
+                    AdvanceCounter();
+                }
+
+                byte output = (byte) (keyStream[index] ^ input);
+                index = (index + 1) & 63;
+
+                return output;
+            }
+            protected void AdvanceCounter()
+            {
+                if (++engineState[12] == 0) {
+                    ++engineState[13];
+                }
+            }
+            private bool LimitExceeded()
+            {
+                if (++cW0 == 0) {
+                    if (++cW1 == 0) {
+                        return (++cW2 & 0x20) != 0;          // 2^(32 + 32 + 6)
+                    }
+                }
+
+                return false;
+            }
+            private const int StateSize = 16; // 16, 32 bit ints = 64 bytes
+            protected uint[] engineState = new uint[StateSize]; // state
+            private uint cW0, cW1, cW2;
+            public virtual void ProcessBytes(
+                byte[] inBytes,
+                int inOff,
+                int len,
+                byte[] outBytes,
+                int outOff)
+            {
+                if (!initialised)
+                    throw new InvalidOperationException(AlgorithmName + " not initialised");
+
+                Check.DataLength(inBytes, inOff, len, "input buffer too short");
+                Check.OutputLength(outBytes, outOff, len, "output buffer too short");
+
+                if (LimitExceeded((uint) len))
+                    throw new MaxBytesExceededException("2^70 byte limit per IV would be exceeded; Change IV");
+
+                for (int i = 0; i < len; i++) {
+                    if (index == 0) {
+                        GenerateKeyStream(keyStream);
+                        AdvanceCounter();
+                    }
+                    outBytes[i + outOff] = (byte) (keyStream[index] ^ inBytes[i + inOff]);
+                    index = (index + 1) & 63;
+                }
+            }
+            protected void GenerateKeyStream(byte[] output)
+            {
+                ChachaCore(rounds, engineState, x);
+                Pack.UInt32_To_LE(x, output, 0);
+            }
+            internal static void ChachaCore(int rounds, uint[] input, uint[] x)
+            {
+                if (input.Length != 16) {
+                    throw new ArgumentException();
+                }
+                if (x.Length != 16) {
+                    throw new ArgumentException();
+                }
+                if (rounds % 2 != 0) {
+                    throw new ArgumentException("Number of rounds must be even");
+                }
+
+                uint x00 = input[0];
+                uint x01 = input[1];
+                uint x02 = input[2];
+                uint x03 = input[3];
+                uint x04 = input[4];
+                uint x05 = input[5];
+                uint x06 = input[6];
+                uint x07 = input[7];
+                uint x08 = input[8];
+                uint x09 = input[9];
+                uint x10 = input[10];
+                uint x11 = input[11];
+                uint x12 = input[12];
+                uint x13 = input[13];
+                uint x14 = input[14];
+                uint x15 = input[15];
+
+                for (int i = rounds; i > 0; i -= 2) {
+                    x00 += x04; x12 = R(x12 ^ x00, 16);
+                    x08 += x12; x04 = R(x04 ^ x08, 12);
+                    x00 += x04; x12 = R(x12 ^ x00, 8);
+                    x08 += x12; x04 = R(x04 ^ x08, 7);
+                    x01 += x05; x13 = R(x13 ^ x01, 16);
+                    x09 += x13; x05 = R(x05 ^ x09, 12);
+                    x01 += x05; x13 = R(x13 ^ x01, 8);
+                    x09 += x13; x05 = R(x05 ^ x09, 7);
+                    x02 += x06; x14 = R(x14 ^ x02, 16);
+                    x10 += x14; x06 = R(x06 ^ x10, 12);
+                    x02 += x06; x14 = R(x14 ^ x02, 8);
+                    x10 += x14; x06 = R(x06 ^ x10, 7);
+                    x03 += x07; x15 = R(x15 ^ x03, 16);
+                    x11 += x15; x07 = R(x07 ^ x11, 12);
+                    x03 += x07; x15 = R(x15 ^ x03, 8);
+                    x11 += x15; x07 = R(x07 ^ x11, 7);
+                    x00 += x05; x15 = R(x15 ^ x00, 16);
+                    x10 += x15; x05 = R(x05 ^ x10, 12);
+                    x00 += x05; x15 = R(x15 ^ x00, 8);
+                    x10 += x15; x05 = R(x05 ^ x10, 7);
+                    x01 += x06; x12 = R(x12 ^ x01, 16);
+                    x11 += x12; x06 = R(x06 ^ x11, 12);
+                    x01 += x06; x12 = R(x12 ^ x01, 8);
+                    x11 += x12; x06 = R(x06 ^ x11, 7);
+                    x02 += x07; x13 = R(x13 ^ x02, 16);
+                    x08 += x13; x07 = R(x07 ^ x08, 12);
+                    x02 += x07; x13 = R(x13 ^ x02, 8);
+                    x08 += x13; x07 = R(x07 ^ x08, 7);
+                    x03 += x04; x14 = R(x14 ^ x03, 16);
+                    x09 += x14; x04 = R(x04 ^ x09, 12);
+                    x03 += x04; x14 = R(x14 ^ x03, 8);
+                    x09 += x14; x04 = R(x04 ^ x09, 7);
+                }
+
+                x[0] = x00 + input[0];
+                x[1] = x01 + input[1];
+                x[2] = x02 + input[2];
+                x[3] = x03 + input[3];
+                x[4] = x04 + input[4];
+                x[5] = x05 + input[5];
+                x[6] = x06 + input[6];
+                x[7] = x07 + input[7];
+                x[8] = x08 + input[8];
+                x[9] = x09 + input[9];
+                x[10] = x10 + input[10];
+                x[11] = x11 + input[11];
+                x[12] = x12 + input[12];
+                x[13] = x13 + input[13];
+                x[14] = x14 + input[14];
+                x[15] = x15 + input[15];
+            }
+        }
+
+        private byte[] keyStream = new byte[StateSize * 4]; // expanded state, 64 bytes
+            private bool initialised = false;
+
         }
 
         private const int BlockSize = 16;
@@ -300,7 +454,7 @@ namespace COSE
                 throw new ArgumentException("invalid parameters passed to ChaCha20Poly1305");
             }
 
-            if (nonce == null || nonce.Length <1) {
+            if (nonce == null || nonce.Length < 1) {
                 throw new ArgumentException("IV must be at least 1 byte");
             }
 
@@ -308,7 +462,7 @@ namespace COSE
             ChaChaX tmpCypher = new ChaChaX();
             byte[] zero = new byte[32];
             byte[] polyKey = new byte[32];
-            ParametersWithIV tmpKey =  new ParametersWithIV( keyParam, nonce);
+            ParametersWithIV tmpKey = new ParametersWithIV(keyParam, nonce);
             tmpCypher.Init(true, tmpKey);
             tmpCypher.ProcessBytes(zero, 0, zero.Length, polyKey, 0);
 
@@ -410,8 +564,8 @@ namespace COSE
 
             //  Pad out the AD
 
-                zeros = new byte[16 - (aadLength % 16)];
-                if (zeros.Length != 16) poly.BlockUpdate(zeros, 0, zeros.Length);
+            zeros = new byte[16 - (aadLength % 16)];
+            if (zeros.Length != 16) poly.BlockUpdate(zeros, 0, zeros.Length);
 
             chacha20.ProcessBytes(data.GetBuffer(), 0, extra, output, outOff);
 
@@ -437,11 +591,11 @@ namespace COSE
 
             if (forEncryption) {
                 resultLen = extra + macSize;
-                Array.Copy(macResult, 0, output, extra+outOff, macSize);
+                Array.Copy(macResult, 0, output, extra + outOff, macSize);
             }
             else {
                 bool f = true;
-                for (int i=0; i<macSize; i++) {
+                for (int i = 0; i < macSize; i++) {
                     f &= (macResult[i] == data.GetBuffer()[extra + i]);
                 }
                 if (!f) throw new Exception("Authentication Failed");
@@ -467,6 +621,14 @@ namespace COSE
             chacha20.Reset();
             poly.Reset();
             aadLength = 0;
+        }
+
+        public static uint LE_To_UInt32(byte[] bs, int off)
+        {
+            return (uint) bs[off]
+                | (uint) bs[off + 1] << 8
+                | (uint) bs[off + 2] << 16
+                | (uint) bs[off + 3] << 24;
         }
 
 
@@ -551,5 +713,8 @@ namespace COSE
 
 
         }
+
+
     }
+#endif
 }

@@ -106,7 +106,11 @@ namespace examples
 
             try {
                 if (ProcessJSON(control, RootDir + "\\new\\" + dir + "\\" + fileName.Replace(".json", ".bin"))) {
+#if true
+                    fileText = control.ToJSONString();
+#else
                     fileText = control.ToJSONStringPretty(1);
+#endif
                     StreamWriter file2 = File.CreateText(RootDir + "\\new\\" + dir + "\\" + fileName);
                     file2.Write(fileText);
                     file2.Write("\r\n");
