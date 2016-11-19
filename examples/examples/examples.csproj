@@ -32,8 +32,17 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CBOR">
-      <HintPath>..\..\..\..\cbor-contrib\bin\Debug\CBOR.dll</HintPath>
+    <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
+      <HintPath>..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="CBOR, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\PeterO.Cbor.2.4.2\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\CBOR.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Numbers, Version=0.2.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\PeterO.Numbers.0.2.2\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\Numbers.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -52,12 +61,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\Bouncy-Castle\bc-csharp\crypto\BouncyCastle.csproj">
-      <Project>{4c235092-820c-4deb-9074-d356fb797d8b}</Project>
-      <Name>BouncyCastle</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\COSE\COSE.csproj">
       <Project>{d02f476f-bc2c-4d01-bede-eb8e79dd050e}</Project>
       <Name>COSE</Name>

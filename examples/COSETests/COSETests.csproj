@@ -35,6 +35,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
+      <HintPath>..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="CBOR, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\PeterO.Cbor.2.4.2\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\CBOR.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Numbers, Version=0.2.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\PeterO.Numbers.0.2.2\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\Numbers.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <Choose>
@@ -57,14 +69,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\CBOR\CBOR.csproj">
-      <Project>{23a1b70c-f064-47b6-8b7e-e2042cdad8c7}</Project>
-      <Name>CBOR</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\COSE\COSE.csproj">
       <Project>{D02F476F-BC2C-4D01-BEDE-EB8E79DD050E}</Project>
       <Name>COSE</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
