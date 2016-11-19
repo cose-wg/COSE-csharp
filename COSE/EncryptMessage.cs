@@ -588,7 +588,6 @@ namespace COSE
         }
 #endif
 
-#if FOR_EXAMPLES
         public byte[] getAADBytes()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -600,8 +599,6 @@ namespace COSE
 
             return obj.EncodeToBytes();
         }
-
-#endif // FOR_EXAMPLES
     }
 
     public enum RecipientType
