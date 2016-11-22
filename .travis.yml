@@ -7,5 +7,6 @@ script:
   - xbuild /p:Configuration=Release examples/examples.sln
   - ls
   - ls examples/examples
+  - ls examples/examples/bin
   - examples/examples/bin/Release/Examples.exe Regressions
   
