@@ -25,6 +25,7 @@ namespace examples
         static void Main(string[] args)
         {
             if (args.Count() == 1) {
+                RootDir = "";
                 RunTestsInDirectory(args[0]);
                 return;
             }
