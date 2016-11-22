@@ -25,7 +25,7 @@ namespace examples
         static void Main(string[] args)
         {
             if (args.Count() == 1) {
-                RunTestsInDirectory(args[1]);
+                RunTestsInDirectory(args[0]);
                 return;
             }
             // RunCoseExamples();
