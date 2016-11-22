@@ -65,7 +65,7 @@ namespace examples
             try {
                 control = JSON.Parse(fileText);
             }
-            catch (Exception e) {
+            catch (Exception) {
                 return;
             }
 
@@ -172,7 +172,7 @@ namespace examples
                     try {
                         sig.GetContentAsString();
                     }
-                    catch (System.Exception e) {
+                    catch (System.Exception) {
                         sig.SetContent(input["payload"].AsString());
                     }
                     sig.Verify(key);

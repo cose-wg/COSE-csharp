@@ -124,7 +124,7 @@ namespace JOSE
                     CEK = recipient.Decrypt(key, cbitCEK, this);
                     if (CEK != null) break;
                 }
-                catch (Exception e) { }
+                catch (Exception) { }
             }
 
             if (CEK == null) {

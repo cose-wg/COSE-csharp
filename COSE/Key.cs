@@ -254,7 +254,7 @@ namespace COSE
                 return newKey;
         }
 
-        public static void NewKey()
+        public static Key NewKey()
         {
             if (false) {
                 X9ECParameters p = NistNamedCurves.GetByName("P-256");
@@ -269,13 +269,15 @@ namespace COSE
 
                 CBORObject epk = CBORObject.NewMap();
                 epk.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_EC);
-                epk.Add(CoseKeyParameterKeys.EC_Curve, "P-384");
+                epk.Add(CoseKeyParameterKeys.EC_Curve, 1 /*  "P-256" */);
                 ECPublicKeyParameters priv = (ECPublicKeyParameters) p1.Public;
                 epk.Add(CoseKeyParameterKeys.EC_X, priv.Q.Normalize().XCoord.ToBigInteger().ToByteArrayUnsigned());
                 epk.Add(CoseKeyParameterKeys.EC_Y, priv.Q.Normalize().YCoord.ToBigInteger().ToByteArrayUnsigned());
                 epk.Add(CoseKeyParameterKeys.EC_D, ((ECPrivateKeyParameters) p1.Private).D.ToByteArrayUnsigned());
 
                 string xxx = epk.ToJSONString();
+
+                return new COSE.Key(epk);
             }
             else {
                 X9ECParameters p = CustomNamedCurves.GetByName("CURVE25519");
@@ -297,7 +299,7 @@ namespace COSE
 
                 string xxx = epk.ToJSONString();
 
-
+                return new COSE.Key(epk);
             }
         }
     }
