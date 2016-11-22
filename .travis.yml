@@ -9,5 +9,5 @@ script:
   - ls examples/examples
   - ls examples/examples/bin
   - ls examples/examples/bin/Release
-  - examples/examples/bin/Release/examples.exe Regressions
+  - mono examples/examples/bin/Release/examples.exe Regressions
   
