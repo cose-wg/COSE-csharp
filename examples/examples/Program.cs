@@ -24,6 +24,11 @@ namespace examples
 
         static void Main(string[] args)
         {
+            if (args.Count() == 1) {
+                RootDir = "";
+                RunTestsInDirectory(args[0]);
+                return;
+            }
             // RunCoseExamples();
             JoseExamples.RunTests();
         }
@@ -80,11 +85,11 @@ namespace examples
         {
             DirectoryInfo diTop;
 
-            diTop = new DirectoryInfo(RootDir + "\\" + strDirectory);
+            diTop = new DirectoryInfo(Path.Combine(RootDir, strDirectory));
             foreach (var di in diTop.EnumerateDirectories()) {
                 if ((!di.Attributes.HasFlag(FileAttributes.Hidden)) &&
                     (di.FullName.Substring(di.FullName.Length - 4) != "\\new")) {
-                    RunTestsInDirectory(strDirectory + "\\" + di.Name);
+                    RunTestsInDirectory(Path.Combine(strDirectory, di.Name));
                 }
             }
 
@@ -97,14 +102,17 @@ namespace examples
 
         static void ProcessFile(String dir, String fileName)
         {
-            StreamReader file = File.OpenText(RootDir + "\\" + dir + "\\" + fileName);
+            StreamReader file = File.OpenText(Path.Combine(RootDir, dir, fileName));
             string fileText = file.ReadToEnd();
             CBORObject control = CBORObject.FromJSONString(fileText);
             file.Close();
 
 #if FOR_EXAMPLES
             Directory.CreateDirectory(RootDir + "\\new\\" + dir);
+#else
+            Console.Write(Path.Combine(RootDir, dir, fileName));
 #endif
+
 
             try {
 #if FOR_EXAMPLES
