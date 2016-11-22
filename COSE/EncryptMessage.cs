@@ -68,9 +68,11 @@ namespace COSE
                     AES_CCM_Decrypt(alg, CEK);
                     break;
 
+#if false
                 case AlgorithmValuesInt.ChaCha20_Poly1305:
                     ChaCha20_Poly1305_Decrypt(alg, CEK);
                     break;
+#endif
 
                 default:
                     throw new CoseException("Unknown algorithm found");
@@ -122,9 +124,11 @@ namespace COSE
                     ContentKey = AES_CCM(alg, ContentKey);
                     break;
 
+#if false
                 case AlgorithmValuesInt.ChaCha20_Poly1305:
                     ContentKey = ChaCha20_Poly1305(alg, ContentKey);
                     break;
+#endif
 
                 default:
                     throw new CoseException("Content encryption algorithm is not recognized");
@@ -138,7 +142,7 @@ namespace COSE
             return;
         }
 
-        #if FOR_EXAMPLES
+#if FOR_EXAMPLES
         public byte[] getCEK()
         {
             return this.m_cek;
@@ -492,6 +496,7 @@ namespace COSE
             rgbContent = C;
         }
 
+#if false
         private byte[] ChaCha20_Poly1305(CBORObject alg, byte[] K)
         {
             ChaCha20Poly1305 cipher = new ChaCha20Poly1305();
@@ -581,8 +586,8 @@ namespace COSE
             rgbContent = C;
 
         }
+#endif
 
-#if FOR_EXAMPLES
         public byte[] getAADBytes()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -594,8 +599,6 @@ namespace COSE
 
             return obj.EncodeToBytes();
         }
-
-#endif // FOR_EXAMPLES
     }
 
     public enum RecipientType

@@ -1,2 +1,4 @@
 language: csharp
-solution: example/example.sln
+mono:
+  - latest
+solution: examples/examples.sln

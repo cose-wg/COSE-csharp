@@ -102,16 +102,20 @@ namespace examples
             CBORObject control = CBORObject.FromJSONString(fileText);
             file.Close();
 
+#if FOR_EXAMPLES
             Directory.CreateDirectory(RootDir + "\\new\\" + dir);
+#endif
 
             try {
+#if FOR_EXAMPLES
                 if (ProcessJSON(control, RootDir + "\\new\\" + dir + "\\" + fileName.Replace(".json", ".bin"))) {
                     fileText = control.ToJSONStringPretty(1);
                     StreamWriter file2 = File.CreateText(RootDir + "\\new\\" + dir + "\\" + fileName);
                     file2.Write(fileText);
                     file2.Write("\r\n");
                     file2.Close();
-                }
+            }
+#endif
 
                 ValidateJSON(control);
             }
@@ -120,6 +124,7 @@ namespace examples
             }
         }
 
+#if FOR_EXAMPLES
         static bool ProcessJSON(CBORObject control, string fileName)
         {
             bool modified = false;
@@ -211,7 +216,9 @@ namespace examples
 
             return modified;
         }
+#endif
 
+#if FOR_EXAMPLES
         static CBORObject ProcessSign(CBORObject control, ref bool fDirty)
         {
             CBORObject input = control["input"];
@@ -274,7 +281,9 @@ namespace examples
 
             return msgOut;
         }
+#endif
 
+#if FOR_EXAMPLES
         static CBORObject ProcessSign0(CBORObject control, ref bool fDirty)
         {
             CBORObject input = control["input"];
@@ -313,13 +322,13 @@ namespace examples
             }
             return msgOut;
         }
+#endif
 
         static bool ValidateSign0(CBORObject cnControl)
         {
             CBORObject cnInput = cnControl["input"];
             CBORObject cnSign;
             COSE.Sign0Message hSig;
-            int type;
             bool fFail;
 
             byte[] rgb = FromHex(cnControl["output"]["cbor"].AsString());
@@ -357,6 +366,7 @@ namespace examples
         }
 
 
+#if FOR_EXAMPLES
         static CBORObject ProcessEncrypted(CBORObject control, ref bool fDirty)
         {
             CBORObject input = control["input"];
@@ -405,6 +415,7 @@ namespace examples
             }
             return msgOut;
         }
+#endif
 
         static bool ValidateEncrypted(CBORObject control)
         {
@@ -451,6 +462,7 @@ namespace examples
             return true;
         }
 
+#if FOR_EXAMPLES
         static CBORObject ProcessEnveloped(CBORObject control, ref bool fDirty)
         {
             CBORObject input = control["input"];
@@ -529,7 +541,9 @@ namespace examples
             }
             return msgOut;
         }
+#endif
 
+#if FOR_EXAMPLES
         static CBORObject ProcessMAC(CBORObject control, ref bool fDirty)
         {
             CBORObject input = control["input"];
@@ -595,7 +609,9 @@ namespace examples
             }
             return msgOut;
         }
+#endif
 
+#if FOR_EXAMPLES
         static CBORObject ProcessMAC0(CBORObject control, ref bool fDirty)
         {
             CBORObject input = control["input"];
@@ -641,6 +657,7 @@ namespace examples
             }
             return msgOut;
         }
+#endif
 
         static public Boolean ValidateMac0(CBORObject control)
         {
@@ -687,6 +704,7 @@ namespace examples
             return true;
         }
 
+#if FOR_EXAMPLES
         static CBORObject ProcessFailures(CBORObject msgOut, CBORObject failures, int iTag)
         {
             foreach (CBORObject failure in failures.Keys) {
@@ -737,6 +755,7 @@ namespace examples
             }
             return msgOut;
         }
+#endif
 
         static CBORObject GetAttribute(CBORObject obj, string attrName)
         {
