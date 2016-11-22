@@ -5,9 +5,5 @@ solution: examples/examples.sln
 script:
   - git clone --depth 1 https://github.com/cose-wg/Examples Regressions
   - xbuild /p:Configuration=Release examples/examples.sln
-  - ls
-  - ls examples/examples
-  - ls examples/examples/bin
-  - ls examples/examples/bin/Release
   - mono examples/examples/bin/Release/examples.exe Regressions
   
