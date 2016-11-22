@@ -2,3 +2,9 @@ language: csharp
 mono:
   - latest
 solution: examples/examples.sln
+script:
+  - git clone --depth 1 gits://github.com/cose-wg/Examples Regressions
+  - xbuild /p:Configuration=Release examples/examples.sln
+  - ls
+  - examples/bin/Release/Examples.exe Regressions
+  
