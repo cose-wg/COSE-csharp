@@ -8,5 +8,6 @@ script:
   - ls
   - ls examples/examples
   - ls examples/examples/bin
+  - ls examples/examples/bin/Release
   - examples/examples/bin/Release/Examples.exe Regressions
   
