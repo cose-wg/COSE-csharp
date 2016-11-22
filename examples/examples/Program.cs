@@ -24,13 +24,39 @@ namespace examples
 
         static void Main(string[] args)
         {
-            if (args.Count() == 1) {
-                RootDir = "";
-                RunTestsInDirectory(args[0]);
+            if (args.Count() == 0) {
+                // RunCoseExamples();
+                JoseExamples.RunTestsInDirectory(@"c:\Projects\JOSE\test");
                 return;
             }
-            // RunCoseExamples();
-            JoseExamples.RunTests();
+
+            for (int i = 0; i < args.Count(); i++) {
+                switch (args[i]) {
+                case "--cose":
+                    RootDir = "";
+                    i++;
+                    if (i > args.Count()) PrintCommandLine();
+                    RunTestsInDirectory(args[i]);
+                    break;
+
+                case "--jose":
+                    i++;
+                    if (i > args.Count()) PrintCommandLine();
+                    JoseExamples.RunTestsInDirectory(args[i]);
+                    break;
+
+                default:
+                    PrintCommandLine();
+                    break;
+                }
+            }
+        }
+
+        static void PrintCommandLine()
+        {
+            Console.WriteLine("Command line for test program is: ");
+            Console.WriteLine("example [--cose directory] [--jose directory]");
+            Environment.Exit(1);    
         }
 
         static void RunCoseExamples()

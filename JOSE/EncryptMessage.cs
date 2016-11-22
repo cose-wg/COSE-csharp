@@ -281,10 +281,12 @@ namespace JOSE
                     ContentKey = new byte[128 / 8];
                     break;
 
+                case "A192GCM":
                 case "AES192GCM":
                     ContentKey = new byte[192 / 8];
                     break;
 
+                case "A256GCM":
                 case "AES256GCM":
                     ContentKey = new byte[256 / 8];
                     break;
@@ -1197,7 +1199,7 @@ namespace JOSE
         {
             JSON epk = new JSON();
 
-            if (m_key.AsString("kty") == "EC2") {
+            if (m_key.AsString("kty") == "EC") {
                 X9ECParameters p = NistNamedCurves.GetByName(m_key.AsString("crv"));
                 ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
 

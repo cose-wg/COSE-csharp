@@ -441,7 +441,9 @@ namespace COSE
         }
     }
 
+        [Serializable]
     public class CoseException : Exception
+
     {
         public CoseException(string code) : base(code) { }
     }
