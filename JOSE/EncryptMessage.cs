@@ -322,6 +322,17 @@ namespace JOSE
                 strProtected = base64urlencode(UTF8Encoding.UTF8.GetBytes(objProtected.ToString()));
             }
 
+            byte[] saveContent = rgbContent;
+            if (objProtected.ContainsKey("zip")) {
+                MemoryStream stm2 = new MemoryStream();
+                DeflateStream zipStm = new DeflateStream(stm2, CompressionLevel.Optimal);
+
+                zipStm.Write(rgbContent, 0, rgbContent.Length);
+                zipStm.Close();
+
+                rgbContent = stm2.GetBuffer();
+            }
+
             switch (alg) {
             case "A128GCM":
             case "A192GCM":
@@ -343,7 +354,7 @@ namespace JOSE
                 throw new JOSE_Exception("Content encryption algorithm is not recognized");
             }
 
-
+            rgbContent = saveContent;
 
             return;
         }

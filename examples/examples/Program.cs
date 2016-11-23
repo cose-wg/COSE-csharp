@@ -26,7 +26,7 @@ namespace examples
         {
             if (args.Count() == 0) {
                 // RunCoseExamples();
-                JoseExamples.RunTestsInDirectory(@"c:\Projects\JOSE\test");
+                JoseExamples.RunTestsInDirectory(@"c:\Projects\JOSE\cookbook");
                 return;
             }
 
