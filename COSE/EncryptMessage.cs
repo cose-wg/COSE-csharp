@@ -619,14 +619,14 @@ namespace COSE
                 if (algorithm.Type == CBORType.TextString) {
                     switch (algorithm.AsString()) {
                     case "dir":  // Direct encryption mode
-                        if (key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Invalid parameters");
+                        if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid parameters");
                         m_recipientType = RecipientType.direct;
                         break;
 
                     case "A128GCMKW":
                     case "A192GCMKW":
                     case "A256GCMKW":
-                        if (key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Invalid Parameter");
+                        if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid Parameter");
                         m_recipientType = RecipientType.keyWrap;
                         break;
 
@@ -634,7 +634,7 @@ namespace COSE
                     case "PBES2-HS256+A128KW":
                     case "PBES2-HS256+A192KW":
                     case "PBES-HS256+A256KW":
-                        if (key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Invalid Parameter");
+                        if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid Parameter");
                         m_recipientType = RecipientType.password;
                         break;
 
@@ -648,26 +648,26 @@ namespace COSE
                     case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_512:
                     case AlgorithmValuesInt.Direct_HKDF_AES_128:
                     case AlgorithmValuesInt.Direct_HKDF_AES_256:
-                        if (key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Invalid parameters");
+                        if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid parameters");
                     m_recipientType = RecipientType.direct;
                     break;
 
 
                     case AlgorithmValuesInt.RSA_OAEP:
                     case AlgorithmValuesInt.RSA_OAEP_256:
-                        if (key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_RSA) throw new CoseException("Invalid Parameter");
+                        if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_RSA)) throw new CoseException("Invalid Parameter");
                         m_recipientType = RecipientType.keyTransport;
                         break;
 
                     case AlgorithmValuesInt.AES_KW_128:
                     case AlgorithmValuesInt.AES_KW_192:
                     case AlgorithmValuesInt.AES_KW_256:
-                        if ((key != null) && (key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet)) throw new CoseException("Invalid Parameter");
+                        if ((key != null) && (key[CoseKeyKeys.KeyType].Equals( GeneralValues.KeyType_Octet))) throw new CoseException("Invalid Parameter");
                         m_recipientType = RecipientType.keyWrap;
                         break;
 
                     case AlgorithmValuesInt.DIRECT:  // Direct encryption mode
-                        if (key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Invalid parameters");
+                        if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid parameters");
                         m_recipientType = RecipientType.direct;
                         break;
 
@@ -677,7 +677,7 @@ namespace COSE
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_128:
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_192:
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_256:
-                        if ((key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_EC) && (key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_OKP)) throw new CoseException("Invalid Parameter");
+                        if ((key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) && (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) throw new CoseException("Invalid Parameter");
                         m_recipientType = RecipientType.keyAgree;
                         break;
 
@@ -687,7 +687,7 @@ namespace COSE
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256:
                     case AlgorithmValuesInt.ECDH_SS_HKDF_512:
 #endif // DEBUG
-                        if ((key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_EC) && (key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_OKP)) throw new CoseException("Invalid Parameters");
+                        if ((key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) && (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) throw new CoseException("Invalid Parameters");
                         m_recipientType = RecipientType.keyAgreeDirect;
                         break;
 
@@ -869,16 +869,16 @@ namespace COSE
                     return key.AsBytes(CoseKeyParameterKeys.Octet_k);
 
                 case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_256:
-                    if (m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Needs to be an octet key");
+                    if (m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
                     return HKDF(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), cbitCEK, algCEK, new Sha256Digest());
 
                 case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_512:
-                    if (m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Needs to be an octet key");
+                    if (m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
                     return HKDF(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), cbitCEK, algCEK, new Sha512Digest());
 
                 case AlgorithmValuesInt.Direct_HKDF_AES_128:
                 case AlgorithmValuesInt.Direct_HKDF_AES_256:
-                    if (m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Needs to be an octet key");
+                    if (m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
                     return HKDF_AES(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), cbitCEK, algCEK);
 
                 case AlgorithmValuesInt.RSA_OAEP: return RSA_OAEP_KeyUnwrap(key, new Sha1Digest());
@@ -1594,13 +1594,13 @@ namespace COSE
                 //  Get the curve
 
                 X9ECParameters p = key.GetCurve();
-                ECPoint pubPoint = epk.GetPoint();
+                ECPoint pubPoint = key.GetPoint();
 
                 ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
 
                 ECPublicKeyParameters pub = new ECPublicKeyParameters(pubPoint, parameters);
 
-                ECPrivateKeyParameters priv = new ECPrivateKeyParameters(key.AsBigInteger(CoseKeyParameterKeys.EC_D), parameters);
+                ECPrivateKeyParameters priv = new ECPrivateKeyParameters(epk.AsBigInteger(CoseKeyParameterKeys.EC_D), parameters);
 
                 IBasicAgreement e1 = new ECDHBasicAgreement();
                 e1.Init(priv);

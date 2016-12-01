@@ -24,13 +24,39 @@ namespace examples
 
         static void Main(string[] args)
         {
-            if (args.Count() == 1) {
-                RootDir = "";
-                RunTestsInDirectory(args[0]);
+            if (args.Count() == 0) {
+                // RunCoseExamples();
+                JoseExamples.RunTestsInDirectory(@"c:\Projects\JOSE\cookbook");
                 return;
             }
-            // RunCoseExamples();
-            JoseExamples.RunTests();
+
+            for (int i = 0; i < args.Count(); i++) {
+                switch (args[i]) {
+                case "--cose":
+                    RootDir = "";
+                    i++;
+                    if (i > args.Count()) PrintCommandLine();
+                    RunTestsInDirectory(args[i]);
+                    break;
+
+                case "--jose":
+                    i++;
+                    if (i > args.Count()) PrintCommandLine();
+                    JoseExamples.RunTestsInDirectory(args[i]);
+                    break;
+
+                default:
+                    PrintCommandLine();
+                    break;
+                }
+            }
+        }
+
+        static void PrintCommandLine()
+        {
+            Console.WriteLine("Command line for test program is: ");
+            Console.WriteLine("example [--cose directory] [--jose directory]");
+            Environment.Exit(1);    
         }
 
         static void RunCoseExamples()
@@ -349,7 +375,7 @@ namespace examples
                 COSE.Message msg = COSE.Message.DecodeFromBytes(rgb, COSE.Tags.Signed0);
                 hSig = (COSE.Sign0Message) msg;
             }
-            catch (COSE.CoseException e) {
+            catch (COSE.CoseException) {
                 if (fFail) return true;
                 return false;
             }
@@ -365,7 +391,7 @@ namespace examples
                 if (f && (fFail || fFailInput)) return false;
                 if (!f && !(fFail || fFailInput)) return false;
             }
-            catch (Exception e) {
+            catch (Exception) {
                 if (fFail || fFailInput) return true;
                 return false;
             }
@@ -459,11 +485,11 @@ namespace examples
                     byte[] rgbContent = enc0.Decrypt(kk.GetByteString());
                     if ((cnFail != null) && !cnFail.AsBoolean()) return false; 
                 }
-                catch (Exception e) {
+                catch (Exception) {
                     if (!fFailBody && ((cnFail == null) || !cnFail.AsBoolean())) return false;
                 }
             }
-            catch (Exception e) {
+            catch (Exception) {
                 if (!fFailBody) return false;
             }
 
@@ -670,7 +696,6 @@ namespace examples
         static public Boolean ValidateMac0(CBORObject control)
         {
             CBORObject cnInput = control["input"];
-            int type;
             Boolean fFail = false;
             Boolean fFailBody = false;
             byte[] rgbData = FromHex(control["output"]["cbor"].AsString());
@@ -705,7 +730,7 @@ namespace examples
                 }
 
             }
-            catch (Exception e) {
+            catch (Exception) {
                 if (!fFailBody) return false;
             }
 
@@ -1427,7 +1452,7 @@ namespace examples
                     COSE.Message msgX = COSE.Message.DecodeFromBytes(rgb, COSE.Tags.Enveloped);
                     msg = (COSE.EnvelopedMessage) msgX;
                 }
-                catch(Exception e) {
+                catch(Exception) {
                     if (fFail) return true;
                     return false;
                 }
@@ -1452,7 +1477,7 @@ namespace examples
                     msg.Decrypt(recipX);
                     
                 }
-                catch (Exception e) {
+                catch (Exception) {
                     if (fFail || fFailRecipient) return true;
                     return false;
                 }
@@ -1480,7 +1505,7 @@ namespace examples
                     COSE.Message msgX = COSE.Message.DecodeFromBytes(rgb, COSE.Tags.MAC);
                     msg = (COSE.MACMessage) msgX;
                 }
-                catch (COSE.CoseException e) {
+                catch (COSE.CoseException) {
                     // Check for expected decode failure
                     if (fFail) return true;
                     return false;
@@ -1508,7 +1533,7 @@ namespace examples
                     if (f && (fFail || fFailRecip)) return false;
                     else if (!f && !(fFail || fFailRecip)) return false;
                 }
-                catch (Exception e) {
+                catch (Exception) {
                     if (!(fFail || fFailRecip)) return false;
                 }
             }
@@ -1558,7 +1583,7 @@ namespace examples
                         Boolean f = signMsg.Validate(hSigner);
                         if (!f && !(fFailBody || fFailSigner)) return false;
                     }
-                    catch (Exception e) {
+                    catch (Exception) {
                         if (!fFailBody && !fFailSigner) return false;
                     }
 
@@ -1578,7 +1603,7 @@ namespace examples
                     i++;
                 }
             }
-            catch (Exception e) {
+            catch (Exception) {
                 return false;
             }
             return true;

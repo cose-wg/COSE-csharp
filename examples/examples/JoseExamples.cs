@@ -13,13 +13,34 @@ namespace examples
 {
     public class JoseExamples
     {
-        public static void RunTests()
+        static public void RunTestsInDirectory(string strDirectory)
+        {
+            DirectoryInfo diTop;
+
+            diTop = new DirectoryInfo(strDirectory);
+            foreach (var di in diTop.EnumerateDirectories()) {
+                if ((!di.Attributes.HasFlag(FileAttributes.Hidden)) &&
+                    (di.FullName.Substring(di.FullName.Length - 4) != "\\new")) {
+                    RunTestsInDirectory(Path.Combine(strDirectory, di.Name));
+                }
+            }
+
+            foreach (var di in diTop.EnumerateFiles()) {
+                if (di.Extension == ".json") {
+                    Console.WriteLine("Process file: " + di.Name);
+                    ProcessFile(di.FullName);
+                }
+            }
+        }
+
+#if false
+        public static void RunTests(string directory)
         {
             DirectoryInfo diTop;
 
             if (false) {
                 Console.WriteLine("ProcessFile: ");
-                ProcessNestedFile(@"c:\projects\JOSE\test\6.nesting_signatures_and_encryption.json");
+                ProcessNestedFile(Path.Combine(directory, @"6.nesting_signatures_and_encryption.json"));
 
                 //      PBE_Tests();
 
@@ -51,6 +72,7 @@ namespace examples
             }
 
         }
+#endif
 
         static void ProcessFile(string fileName)
         {
@@ -65,9 +87,11 @@ namespace examples
             try {
                 control = JSON.Parse(fileText);
             }
-            catch (Exception e) {
+            catch (Exception) {
                 return;
             }
+
+            if (!control.ContainsKey("input")) return;
 
             if (control["input"].ContainsKey("passport")) {
                 ProcessPassport(control);
@@ -172,7 +196,7 @@ namespace examples
                     try {
                         sig.GetContentAsString();
                     }
-                    catch (System.Exception e) {
+                    catch (System.Exception) {
                         sig.SetContent(input["payload"].AsString());
                     }
                     sig.Verify(key);

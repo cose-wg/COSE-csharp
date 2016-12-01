@@ -173,10 +173,12 @@ namespace COSE
                 default:
                     throw new Exception("MAC algorithm not recognized" + alg.AsInt32());
                 }
+
             }
             else throw new CoseException("Algorithm incorrectly encoded");
 
             if (rgbKey == null) throw new CoseException("No Key Provided");
+            if (cbitKey / 8 != rgbKey.Length) throw new CoseException("Incorrect key length for operation");
 
             byte[] rgbCheck;
 

@@ -181,7 +181,7 @@ namespace JOSE
                     signer.Verify(key, this);
                     return;
                 }
-                catch (JOSE_Exception e) { }
+                catch (JOSE_Exception) { }
             }
 
             throw new JOSE_Exception("Validation of signature failed");
