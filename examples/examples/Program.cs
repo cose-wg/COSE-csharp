@@ -362,7 +362,7 @@ namespace examples
         {
             CBORObject cnInput = cnControl["input"];
             CBORObject cnSign;
-            COSE.Sign0Message hSig;
+            COSE.Sign1Message hSig;
             bool fFail;
 
             byte[] rgb = FromHex(cnControl["output"]["cbor"].AsString());
@@ -373,7 +373,7 @@ namespace examples
 
             try {
                 COSE.Message msg = COSE.Message.DecodeFromBytes(rgb, COSE.Tags.Signed0);
-                hSig = (COSE.Sign0Message) msg;
+                hSig = (COSE.Sign1Message) msg;
             }
             catch (COSE.CoseException) {
                 if (fFail) return true;
@@ -467,7 +467,7 @@ namespace examples
 
             try {
                 COSE.Message msg = COSE.Message.DecodeFromBytes(rgbData, COSE.Tags.Encrypted);
-                COSE.EncryptMessage enc0 = (COSE.EncryptMessage) msg;
+                COSE.Encrypt0Message enc0 = (COSE.Encrypt0Message) msg;
 
                 CBORObject cnEncrypt = cnInput["encrypted"];
                 SetRecievingAttributes(msg, cnEncrypt);
@@ -1445,12 +1445,12 @@ namespace examples
             for (int iRecipient = 0; iRecipient < encrypt["recipients"].Count; iRecipient++) {
 
                 bool fFail = HasFailMarker(control) || HasFailMarker(encrypt);
-                COSE.EnvelopedMessage msg;
+                COSE.EncryptMessage msg;
 
                 try {
 
                     COSE.Message msgX = COSE.Message.DecodeFromBytes(rgb, COSE.Tags.Enveloped);
-                    msg = (COSE.EnvelopedMessage) msgX;
+                    msg = (COSE.EncryptMessage) msgX;
                 }
                 catch(Exception) {
                     if (fFail) return true;

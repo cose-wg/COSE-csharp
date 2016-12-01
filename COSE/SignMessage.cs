@@ -24,7 +24,7 @@ namespace COSE
         List<Signer> signerList = new List<Signer>();
         byte[] rgbContent;
 
-        public SignMessage()
+        public SignMessage(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
             m_tag = Tags.Signed;
         }
@@ -622,8 +622,8 @@ namespace COSE
             byte[] rgbBody = null;
 
             if (m_msgToSign != null) {
-                if (m_msgToSign.GetType() == typeof(EnvelopedMessage)) {
-                    EnvelopedMessage msg = (EnvelopedMessage) m_msgToSign;
+                if (m_msgToSign.GetType() == typeof(EncryptMessage)) {
+                    EncryptMessage msg = (EncryptMessage) m_msgToSign;
                     msg.Encrypt();
                     CBORObject obj = msg.EncodeToCBORObject();
                     if (obj[1].Type != CBORType.ByteString) throw new Exception("Internal error");

@@ -1941,15 +1941,15 @@ namespace COSE
 #endif // FOR_EXAMPLES
     }
 
-    public class EncryptMessage : EncryptCommon
+    public class Encrypt0Message : EncryptCommon
     {
-        public EncryptMessage() : base(true, true)
+        public Encrypt0Message() : base(true, true)
         {
             context = "Encrypt1";
             m_tag = Tags.Encrypted;
         }
 
-        public EncryptMessage(bool fEmitTag, bool fEmitContent) :base(fEmitTag, fEmitContent)
+        public Encrypt0Message(bool fEmitTag, bool fEmitContent) :base(fEmitTag, fEmitContent)
         {
             context = "Encrypted";
             m_tag = Tags.Encrypted;
@@ -2026,7 +2026,7 @@ namespace COSE
         }
     }
 
-    public class EnvelopedMessage : EncryptCommon
+    public class EncryptMessage : EncryptCommon
     {
         protected List<Recipient> recipientList = new List<Recipient>();
 
@@ -2034,13 +2034,13 @@ namespace COSE
         byte[] m_cek;
 #endif // FOR_EXAMPLES
 
-        public EnvelopedMessage() : base(true, true)
+        public EncryptMessage() : base(true, true)
         {
             context = "Encrypt";
             m_tag = Tags.Enveloped;
         }
 
-        public EnvelopedMessage(Boolean emitTag, Boolean emitContent) : base(emitTag, emitContent)
+        public EncryptMessage(Boolean emitTag, Boolean emitContent) : base(emitTag, emitContent)
         {
             context = "Enveloped";
             m_tag = Tags.Enveloped;

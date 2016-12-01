@@ -121,7 +121,7 @@ namespace COSE.Tests
         [ExpectedException(typeof(CoseException), "No Algorithm Specified")]
         public void noAlgorithm()
         {
-            EncryptMessage msg = new EncryptMessage();
+            Encrypt0Message msg = new Encrypt0Message();
             msg.SetContent(strContent);
             msg.Encrypt(rgbKey128);
         }
@@ -130,7 +130,7 @@ namespace COSE.Tests
         [ExpectedException(typeof(CoseException), "Unknown Algorithm Specified")]
         public void unknownAlgorithm()
         {
-            EncryptMessage msg = new EncryptMessage();
+            Encrypt0Message msg = new Encrypt0Message();
             msg.AddAttribute(HeaderKeys.Algorithm, CBORObject.FromObject("Unknown"), true);
             msg.SetContent(strContent);
             msg.Encrypt(rgbKey128);
@@ -140,7 +140,7 @@ namespace COSE.Tests
         [ExpectedException(typeof(CoseException), "Unsupported Algorithm Specified")]
         public void unsupportedAlgorithm()
         {
-            EncryptMessage msg = new EncryptMessage();
+            Encrypt0Message msg = new Encrypt0Message();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.HMAC_SHA_256, true);
             msg.SetContent(strContent);
             msg.Encrypt(rgbKey128);
@@ -150,7 +150,7 @@ namespace COSE.Tests
         [ExpectedException(typeof(CoseException), "Incorrect Key Size")]
         public void incorrectKeySize()
         {
-            EncryptMessage msg = new EncryptMessage();
+            Encrypt0Message msg = new Encrypt0Message();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.SetContent(strContent);
             msg.Encrypt(rgbKey256);
@@ -160,7 +160,7 @@ namespace COSE.Tests
         [ExpectedException(typeof(CoseException), "No Key Specified")]
         public void nullKey()
         {
-            EncryptMessage msg = new EncryptMessage();
+            Encrypt0Message msg = new Encrypt0Message();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.SetContent(strContent);
             msg.Encrypt(null);
@@ -170,7 +170,7 @@ namespace COSE.Tests
         [ExpectedException(typeof(CoseException), "No Content Specified")]
         public void noContent()
         {
-            EncryptMessage msg = new EncryptMessage();
+            Encrypt0Message msg = new Encrypt0Message();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.Encrypt(rgbKey128);
         }
@@ -179,7 +179,7 @@ namespace COSE.Tests
         [ExpectedException(typeof(CoseException), "IV is incorrectly formed")]
         public void badIV()
         {
-            EncryptMessage msg = new EncryptMessage();
+            Encrypt0Message msg = new Encrypt0Message();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject("IV"), false);
             msg.SetContent(strContent);
@@ -190,7 +190,7 @@ namespace COSE.Tests
         [ExpectedException(typeof(CoseException), "IV size is incorrectly")]
         public void incorrectIV()
         {
-            EncryptMessage msg = new EncryptMessage();
+            Encrypt0Message msg = new Encrypt0Message();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV128), false);
             msg.SetContent(strContent);
@@ -199,7 +199,7 @@ namespace COSE.Tests
 
         [TestMethod()]
         public void encryptNoTag() {
-            EncryptMessage msg = new EncryptMessage(false, true);
+            Encrypt0Message msg = new Encrypt0Message(false, true);
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
@@ -214,7 +214,7 @@ namespace COSE.Tests
         [TestMethod()]
         public void encryptNoEmitContent()
         {
-            EncryptMessage msg = new EncryptMessage(true, false);
+            Encrypt0Message msg = new Encrypt0Message(true, false);
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
@@ -230,7 +230,7 @@ namespace COSE.Tests
         [ExpectedException(typeof(CoseException), "No Encrypted Content Supplied")]
         public void noContentForDecrypt()
         {
-            EncryptMessage msg = new EncryptMessage(true, false);
+            Encrypt0Message msg = new Encrypt0Message(true, false);
 
             //        thrown.expect(CoseException.class);
             //        thrown.expectMessage("No Encrypted Content Specified");
@@ -242,7 +242,7 @@ namespace COSE.Tests
 
             byte[] rgb = msg.EncodeToBytes();
 
-            msg = (EncryptMessage) Message.DecodeFromBytes(rgb);
+            msg = (Encrypt0Message) Message.DecodeFromBytes(rgb);
             msg.Decrypt(rgbKey128);
 
         }
@@ -251,7 +251,7 @@ namespace COSE.Tests
         [ExpectedException(typeof(CoseException), "No Key Supplied")]
         public void nullKeyForDecrypt()
         {
-            EncryptMessage msg = new EncryptMessage(true, true);
+            Encrypt0Message msg = new Encrypt0Message(true, true);
 
             //        thrown.expect(CoseException.class);
             //        thrown.expectMessage("No Encrypted Content Specified");
@@ -263,7 +263,7 @@ namespace COSE.Tests
 
             byte[] rgb = msg.EncodeToBytes();
 
-            msg = (EncryptMessage) Message.DecodeFromBytes(rgb);
+            msg = (Encrypt0Message) Message.DecodeFromBytes(rgb);
             msg.Decrypt(null);
 
         }
@@ -271,7 +271,7 @@ namespace COSE.Tests
         [TestMethod()]
         public void roundTripDetached()
         {
-            EncryptMessage msg = new EncryptMessage(true, false);
+            Encrypt0Message msg = new Encrypt0Message(true, false);
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
@@ -282,7 +282,7 @@ namespace COSE.Tests
 
             byte[] rgb = msg.EncodeToBytes();
 
-            msg = (EncryptMessage) Message.DecodeFromBytes(rgb);
+            msg = (Encrypt0Message) Message.DecodeFromBytes(rgb);
             msg.SetEncryptedContent(content);
             msg.Decrypt(rgbKey128);
 
@@ -291,14 +291,14 @@ namespace COSE.Tests
         [TestMethod()]
         public void roundTrip()
         {
-            EncryptMessage msg = new EncryptMessage();
+            Encrypt0Message msg = new Encrypt0Message();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
             msg.SetContent(strContent);
             msg.Encrypt(rgbKey128);
             byte[] rgbMsg = msg.EncodeToBytes();
 
-            msg = (EncryptMessage) Message.DecodeFromBytes(rgbMsg);
+            msg = (Encrypt0Message) Message.DecodeFromBytes(rgbMsg);
             msg.Decrypt(rgbKey128);
 
             Assert.AreEqual<string>(msg.GetContentAsString(), strContent);

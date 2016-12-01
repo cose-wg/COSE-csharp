@@ -152,7 +152,7 @@ namespace COSETests
         [ExpectedException(typeof(CoseException), "No Algorithm Specified")]
         public void noAlgorithm()
         {
-            EnvelopedMessage msg = new EnvelopedMessage();
+            EncryptMessage msg = new EncryptMessage();
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);
@@ -163,7 +163,7 @@ namespace COSETests
         [ExpectedException(typeof(CoseException), "Unknown Algorithm Specified")]
         public void unknownAlgorithm()
         {
-            EnvelopedMessage msg = new EnvelopedMessage();
+            EncryptMessage msg = new EncryptMessage();
             msg.AddAttribute(HeaderKeys.Algorithm, CBORObject.FromObject("Unknown"), true);
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
@@ -175,7 +175,7 @@ namespace COSETests
         [ExpectedException(typeof(CoseException), "Unsupported Algorithm Specified")]
         public void unsupportedAlgorithm()
         {
-            EnvelopedMessage msg = new EnvelopedMessage();
+            EncryptMessage msg = new EncryptMessage();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.HMAC_SHA_256, true);
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
@@ -187,7 +187,7 @@ namespace COSETests
         [ExpectedException(typeof(CoseException), "No Recipient Specified")]
         public void nullKey()
         {
-            EnvelopedMessage msg = new EnvelopedMessage();
+            EncryptMessage msg = new EncryptMessage();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.SetContent(strContent);
             msg.Encrypt();
@@ -197,7 +197,7 @@ namespace COSETests
         [ExpectedException(typeof(CoseException), "No Content Specified")]
         public void noContent()
         {
-            EnvelopedMessage msg = new EnvelopedMessage();
+            EncryptMessage msg = new EncryptMessage();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);
@@ -208,7 +208,7 @@ namespace COSETests
         [ExpectedException(typeof(CoseException), "IV is incorrectly formed")]
         public void badIV()
         {
-            EnvelopedMessage msg = new EnvelopedMessage();
+            EncryptMessage msg = new EncryptMessage();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject("IV"), false);
             msg.SetContent(strContent);
@@ -221,7 +221,7 @@ namespace COSETests
         [ExpectedException(typeof(CoseException), "IV size is incorrectly")]
         public void incorrectIV()
         {
-            EnvelopedMessage msg = new EnvelopedMessage();
+            EncryptMessage msg = new EncryptMessage();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV128), false);
             msg.SetContent(strContent);
@@ -233,7 +233,7 @@ namespace COSETests
         [TestMethod()]
         public void encryptNoTag()
         {
-            EnvelopedMessage msg = new EnvelopedMessage(false, true);
+            EncryptMessage msg = new EncryptMessage(false, true);
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
@@ -250,7 +250,7 @@ namespace COSETests
         [TestMethod()]
         public void encryptNoEmitContent()
         {
-            EnvelopedMessage msg = new EnvelopedMessage(true, false);
+            EncryptMessage msg = new EncryptMessage(true, false);
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
@@ -268,7 +268,7 @@ namespace COSETests
         [ExpectedException(typeof(CoseException), "No Enveloped Content Supplied")]
         public void noContentForDecrypt()
         {
-            EnvelopedMessage msg = new EnvelopedMessage(true, false);
+            EncryptMessage msg = new EncryptMessage(true, false);
 
             //        thrown.expect(CoseException.class);
             //        thrown.expectMessage("No Enveloped Content Specified");
@@ -282,7 +282,7 @@ namespace COSETests
 
             byte[] rgb = msg.EncodeToBytes();
 
-            msg = (EnvelopedMessage) Message.DecodeFromBytes(rgb);
+            msg = (EncryptMessage) Message.DecodeFromBytes(rgb);
             r = msg.RecipientList[0];
             r.SetKey(key128);
             msg.Decrypt(r);
@@ -293,7 +293,7 @@ namespace COSETests
         [ExpectedException(typeof(CoseException), "No Recipient Supplied")]
         public void nullKeyForDecrypt()
         {
-            EnvelopedMessage msg = new EnvelopedMessage(true, true);
+            EncryptMessage msg = new EncryptMessage(true, true);
 
             //        thrown.expect(CoseException.class);
             //        thrown.expectMessage("No Enveloped Content Specified");
@@ -307,7 +307,7 @@ namespace COSETests
 
             byte[] rgb = msg.EncodeToBytes();
 
-            msg = (EnvelopedMessage) Message.DecodeFromBytes(rgb);
+            msg = (EncryptMessage) Message.DecodeFromBytes(rgb);
             msg.Decrypt(null);
 
         }
@@ -315,7 +315,7 @@ namespace COSETests
         [TestMethod()]
         public void roundTripDetached()
         {
-            EnvelopedMessage msg = new EnvelopedMessage(true, false);
+            EncryptMessage msg = new EncryptMessage(true, false);
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
@@ -328,7 +328,7 @@ namespace COSETests
 
             byte[] rgb = msg.EncodeToBytes();
 
-            msg = (EnvelopedMessage) Message.DecodeFromBytes(rgb);
+            msg = (EncryptMessage) Message.DecodeFromBytes(rgb);
             msg.SetEncryptedContent(content);
             r = msg.RecipientList[0];
             r.SetKey(key128);
@@ -339,7 +339,7 @@ namespace COSETests
         [TestMethod()]
         public void roundTrip()
         {
-            EnvelopedMessage msg = new EnvelopedMessage();
+            EncryptMessage msg = new EncryptMessage();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
             msg.SetContent(strContent);
@@ -348,7 +348,7 @@ namespace COSETests
             msg.Encrypt();
             byte[] rgbMsg = msg.EncodeToBytes();
 
-            msg = (EnvelopedMessage) Message.DecodeFromBytes(rgbMsg);
+            msg = (EncryptMessage) Message.DecodeFromBytes(rgbMsg);
             r = msg.RecipientList[0];
             r.SetKey(key128);
             msg.Decrypt(r);

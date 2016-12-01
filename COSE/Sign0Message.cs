@@ -19,11 +19,11 @@ using Org.BouncyCastle.Security;
 
 namespace COSE
 {
-    public class Sign0Message : Message
+    public class Sign1Message : Message
     {
         byte[] rgbContent;
 
-        public Sign0Message()
+        public Sign1Message(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
             m_tag = Tags.Signed0;
         }

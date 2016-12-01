@@ -220,12 +220,6 @@ namespace COSE
         protected bool m_emitContent;
         protected Tags m_tag;
 
-        public Message()
-        {
-            m_emitTag = true;
-            m_emitContent = true;
-        }
-
         public Message(Boolean fEmitTag, Boolean fEmitContent)
         {
             m_emitTag = fEmitTag;
@@ -269,7 +263,7 @@ namespace COSE
                 return sig;
 
             case Tags.Signed0:
-                Sign0Message sig0 = new Sign0Message();
+                Sign1Message sig0 = new Sign1Message();
                 sig0.DecodeFromCBORObject(messageObject);
                 return sig0;
             
@@ -285,13 +279,13 @@ namespace COSE
                 return mac0;
 
             case Tags.Enveloped:         // It is an encrytion message
-                EnvelopedMessage enc = new EnvelopedMessage();
+                EncryptMessage enc = new EncryptMessage();
 
                 enc.DecodeFromCBORObject(messageObject);
                 return enc;
 
             case Tags.Encrypted:
-                EncryptMessage enc0 = new EncryptMessage();
+                Encrypt0Message enc0 = new Encrypt0Message();
                 enc0.DecodeFromCBORObject(messageObject);
                 return enc0;
 
