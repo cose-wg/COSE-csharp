@@ -238,7 +238,7 @@ namespace COSE
             }
             else {
                 s_PRNG.NextBytes(IV);
-                AddUnprotected(HeaderKeys.IV, CBORObject.FromObject(IV));
+                AddAttribute(HeaderKeys.IV, CBORObject.FromObject(IV), Attributes.UNPROTECTED);
             }
 
             if (K == null) {
@@ -381,7 +381,7 @@ namespace COSE
             }
             else {
                 s_PRNG.NextBytes(IV);
-                AddUnprotected(HeaderKeys.IV, CBORObject.FromObject(IV));
+                AddAttribute(HeaderKeys.IV, CBORObject.FromObject(IV), Attributes.UNPROTECTED);
             }
 
             if (K == null) {
@@ -476,7 +476,7 @@ namespace COSE
             }
             else {
                 s_PRNG.NextBytes(IV);
-                AddUnprotected(HeaderKeys.IV, CBORObject.FromObject(IV));
+                AddAttribute(HeaderKeys.IV, CBORObject.FromObject(IV), Attributes.UNPROTECTED);
             }
 
             if (K == null) throw new CoseException("Internal error");
@@ -698,7 +698,7 @@ namespace COSE
                 else throw new CoseException("Algorithm incorrectly encoded");
 
                 m_key = key;
-                AddUnprotected(HeaderKeys.Algorithm, algorithm);
+                AddAttribute(HeaderKeys.Algorithm, algorithm, Attributes.UNPROTECTED);
             }
             else {
                 if (key[CoseKeyKeys.KeyType].Type == CBORType.Number) {
@@ -733,7 +733,7 @@ namespace COSE
                         algorithm =  AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_128;
                         break;
                     }
-                    AddUnprotected(HeaderKeys.Algorithm, algorithm);
+                    AddAttribute(HeaderKeys.Algorithm, algorithm, Attributes.UNPROTECTED);
                     m_key = key;
                 }
                 else if (key[CoseKeyKeys.KeyType].Type == CBORType.TextString) {
@@ -764,7 +764,7 @@ namespace COSE
                     if (!validUsage) throw new CoseException("Key cannot be used for encryption");
                 }
 
-                if (key[CoseKeyKeys.KeyIdentifier] != null) AddUnprotected(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier]);
+                if (key[CoseKeyKeys.KeyIdentifier] != null) AddAttribute(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier], Attributes.UNPROTECTED);
 
                 SetContext("Rec_Recipient");
             }
@@ -936,7 +936,7 @@ namespace COSE
                 if (objProtected.Count > 0) rgbProtected = objProtected.EncodeToBytes();
                 else rgbProtected = new byte[0];
                 if (m_counterSignerList.Count() == 1) {
-                    AddUnprotected(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbEncrypted));
+                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbEncrypted), Attributes.UNPROTECTED);
                 }
                 else {
                     foreach (CounterSignature sig in m_counterSignerList) {
@@ -1034,12 +1034,12 @@ namespace COSE
                         byte[] salt = new byte[10];
                         s_PRNG.NextBytes(salt);
                         objSalt = CBORObject.FromObject(salt);
-                        AddUnprotected("p2s", objSalt);
+                        AddAttribute("p2s", objSalt, Attributes.UNPROTECTED);
                     }
                     objIterCount = FindAttribute("p2c");
                     if (objIterCount == null) {
                         objIterCount = CBORObject.FromObject(8000);
-                        AddUnprotected("p2c", objIterCount);
+                        AddAttribute("p2c", objIterCount, Attributes.UNPROTECTED);
                     }
                     rgbKey = PBKF2(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), objSalt.GetByteString(), objIterCount.AsInt32(), 128 / 8, new Sha256Digest());
                     AES_KeyWrap(128, rgbKey);
@@ -1052,12 +1052,12 @@ namespace COSE
                         byte[] salt = new byte[10];
                         s_PRNG.NextBytes(salt);
                         objSalt = CBORObject.FromObject(salt);
-                        AddUnprotected("p2s", objSalt);
+                        AddAttribute("p2s", objSalt, Attributes.UNPROTECTED);
                     }
                     objIterCount = FindAttribute("p2c");
                     if (objIterCount == null) {
                         objIterCount = CBORObject.FromObject(8000);
-                        AddUnprotected("p2c", objIterCount);
+                        AddAttribute("p2c", objIterCount, Attributes.UNPROTECTED);
                     }
                     rgbKey = PBKF2(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), objSalt.GetByteString(), objIterCount.AsInt32(), 192 / 8, new Sha256Digest());
                     AES_KeyWrap(192, rgbKey);
@@ -1070,12 +1070,12 @@ namespace COSE
                         byte[] salt = new byte[10];
                         s_PRNG.NextBytes(salt);
                         objSalt = CBORObject.FromObject(salt);
-                        AddUnprotected("p2s", objSalt);
+                        AddAttribute("p2s", objSalt, Attributes.UNPROTECTED);
                     }
                     objIterCount = FindAttribute("p2c");
                     if (objIterCount == null) {
                         objIterCount = CBORObject.FromObject(8000);
-                        AddUnprotected("p2c", objIterCount);
+                        AddAttribute("p2c", objIterCount, Attributes.UNPROTECTED);
                     }
                     rgbKey = PBKF2(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), objSalt.GetByteString(), objIterCount.AsInt32(), 256 / 8, new Sha256Digest());
                     AES_KeyWrap(256, rgbKey);
@@ -1310,7 +1310,7 @@ namespace COSE
                         if (FindAttribute(CoseKeyParameterKeys.HKDF_Context_PartyU_nonce) == null) {
                             byte[] rgbAPU = new byte[512 / 8];
                             s_PRNG.NextBytes(rgbAPU);
-                            AddUnprotected(CoseKeyParameterKeys.HKDF_Context_PartyU_nonce, CBORObject.FromObject(rgbAPU));
+                            AddAttribute(CoseKeyParameterKeys.HKDF_Context_PartyU_nonce, CBORObject.FromObject(rgbAPU), Attributes.UNPROTECTED);
                         }
                         byte[] rgbSecret = ECDH_GenerateSecret(m_key);
                         return HKDF(rgbSecret, cbitKey, alg, new Sha256Digest());
@@ -1321,7 +1321,7 @@ namespace COSE
                         if (FindAttribute(CoseKeyParameterKeys.HKDF_Context_PartyU_nonce) == null) {
                             byte[] rgbAPU = new byte[512 / 8];
                             s_PRNG.NextBytes(rgbAPU);
-                            AddUnprotected(CoseKeyParameterKeys.HKDF_Context_PartyU_nonce, CBORObject.FromObject(rgbAPU));
+                            AddAttribute(CoseKeyParameterKeys.HKDF_Context_PartyU_nonce, CBORObject.FromObject(rgbAPU), Attributes.UNPROTECTED);
                         }
                         byte[] rgbSecret = ECDH_GenerateSecret(m_key);
                         return HKDF(rgbSecret, cbitKey, alg, new Sha512Digest());
@@ -1535,7 +1535,7 @@ namespace COSE
                 break;
             }
 
-            AddUnprotected(HeaderKeys.EphemeralKey, epk);
+            AddAttribute(HeaderKeys.EphemeralKey, epk, Attributes.UNPROTECTED);
         }
 
         private byte[] PadBytes(byte[] rgbIn, int outSize)
@@ -1945,11 +1945,11 @@ namespace COSE
     {
         public Encrypt0Message() : base(true, true)
         {
-            context = "Encrypt1";
+            context = "Encrypted";
             m_tag = Tags.Encrypted;
         }
 
-        public Encrypt0Message(bool fEmitTag, bool fEmitContent) :base(fEmitTag, fEmitContent)
+        public Encrypt0Message(bool fEmitTag, bool fEmitContent=true) :base(fEmitTag, fEmitContent)
         {
             context = "Encrypted";
             m_tag = Tags.Encrypted;
@@ -1991,7 +1991,7 @@ namespace COSE
                 if (objProtected.Count > 0) objX = CBORObject.FromObject(objProtected.EncodeToBytes());
                 else objX = CBORObject.FromObject(new byte[0]);
                 if (m_counterSignerList.Count() == 1) {
-                    AddUnprotected(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbEncrypted));
+                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbEncrypted), Attributes.UNPROTECTED);
                 }
                 else {
                     foreach (CounterSignature sig in m_counterSignerList) {
@@ -2106,7 +2106,7 @@ namespace COSE
 
             if (m_counterSignerList.Count() != 0) {
                 if (m_counterSignerList.Count() == 1) {
-                    AddUnprotected(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtect, rgbEncrypted));
+                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtect, rgbEncrypted), Attributes.UNPROTECTED);
                 }
                 else {
                     foreach (CounterSignature sig in m_counterSignerList) {
