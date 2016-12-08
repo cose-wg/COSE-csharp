@@ -325,7 +325,7 @@ namespace JOSE
             byte[] saveContent = rgbContent;
             if (objProtected.ContainsKey("zip")) {
                 MemoryStream stm2 = new MemoryStream();
-                DeflateStream zipStm = new DeflateStream(stm2, CompressionLevel.Optimal);
+                DeflateStream zipStm = new DeflateStream(stm2, CompressionMode.Compress);
 
                 zipStm.Write(rgbContent, 0, rgbContent.Length);
                 zipStm.Close();

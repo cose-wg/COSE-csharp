@@ -883,9 +883,9 @@ namespace examples
                 }
 
                 switch (destination) {
-                case 0: msg.AddAttribute(cborKey, cborValue, true); break;
-                case 1: msg.AddAttribute(cborKey, cborValue, false); break;
-                case 2: msg.AddDontSend(cborKey, cborValue); break;
+                case 0: msg.AddAttribute(cborKey, cborValue, COSE.Attributes.PROTECTED); break;
+                case 1: msg.AddAttribute(cborKey, cborValue, COSE.Attributes.UNPROTECTED); break;
+                case 2: msg.AddAttribute(cborKey, cborValue, COSE.Attributes.DO_NOT_SEND); break;
                 case 4: map[cborKey] = cborValue; break;
                 }
             }
@@ -965,10 +965,10 @@ namespace examples
                 COSE.Key myKey = GetKey(control["sender_key"]);
                 recipient.SetSenderKey(myKey);
                 if (myKey.ContainsName(COSE.CoseKeyKeys.KeyIdentifier)) {
-                    recipient.AddAttribute(COSE.HeaderKeys.StaticKey_ID, CBORObject.FromObject(myKey.AsBytes(COSE.CoseKeyKeys.KeyIdentifier)), false);
+                    recipient.AddAttribute(COSE.HeaderKeys.StaticKey_ID, CBORObject.FromObject(myKey.AsBytes(COSE.CoseKeyKeys.KeyIdentifier)), COSE.Attributes.UNPROTECTED);
                 }
                 else {
-                    recipient.AddAttribute(COSE.HeaderKeys.StaticKey, myKey.PublicKey().AsCBOR(), false);
+                    recipient.AddAttribute(COSE.HeaderKeys.StaticKey, myKey.PublicKey().AsCBOR(), COSE.Attributes.UNPROTECTED);
                 }
             }
             return recipient;
@@ -1467,7 +1467,7 @@ namespace examples
 
                 if (recip["sender_key"] != null) {
                     if (recipX.FindAttribute(COSE.HeaderKeys.StaticKey) == null) {
-                        recipX.AddDontSend(COSE.HeaderKeys.StaticKey, GetKey(recip["sender_key"], true).AsCBOR());
+                        recipX.AddAttribute(COSE.HeaderKeys.StaticKey, GetKey(recip["sender_key"], true).AsCBOR(), COSE.Attributes.DO_NOT_SEND);
                     }
                 }
 
@@ -1524,7 +1524,7 @@ namespace examples
                 CBORObject cnStatic = recip["sender_key"];
                 if (cnStatic != null) {
                     if (recipX.FindAttribute(COSE.HeaderKeys.StaticKey) == null) {
-                        recipX.AddDontSend(COSE.HeaderKeys.StaticKey, GetKey(cnStatic, true).AsCBOR());
+                        recipX.AddAttribute(COSE.HeaderKeys.StaticKey, GetKey(cnStatic, true).AsCBOR(), COSE.Attributes.DO_NOT_SEND);
                     }
                 }
 
