@@ -35,11 +35,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="CBOR, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\examples\packages\PeterO.Cbor.2.4.2\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\CBOR.dll</HintPath>
+      <HintPath>..\examples\packages\PeterO.Cbor.2.4.2\lib\portable-net40+s150+win+wpa81+wp80\CBOR.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Numbers, Version=0.2.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\examples\packages\PeterO.Numbers.0.2.2\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\Numbers.dll</HintPath>
+      <HintPath>..\examples\packages\PeterO.Numbers.0.2.2\lib\portable-net40+s150+win+wpa81+wp80\Numbers.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
