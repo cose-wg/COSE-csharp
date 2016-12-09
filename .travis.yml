@@ -5,6 +5,7 @@ solution: examples/examples.sln
 script:
   - git clone --depth 1 https://github.com/cose-wg/Examples Regressions
   - git clone --depth 1 https://github.com/ietf-jose/cookbook cookbook
+  - xbuild /p:Configuration=Release cose/cose.sln
   - xbuild /p:Configuration=Release examples/examples.sln
   - mono examples/examples/bin/Release/examples.exe --cose Regressions
   - mono examples/examples/bin/Release/examples.exe --jose cookbook
