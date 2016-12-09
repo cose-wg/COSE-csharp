@@ -25,7 +25,7 @@ using Org.BouncyCastle.Utilities.Encoders;
 
 using System.Diagnostics;
 
-namespace COSE
+namespace Com.AugustCellars.COSE
 {
     public abstract class EncryptCommon : Message
     {

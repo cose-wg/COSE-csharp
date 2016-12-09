@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using PeterO.Cbor;
 
-namespace COSE
+namespace Com.AugustCellars.COSE
 {
     public class PrettyPrint
     {

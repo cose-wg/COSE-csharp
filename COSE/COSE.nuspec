@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>Com.AugustCellars.COSE</id>
+    <version>0.0.0.1</version>
+    <authors>Jim Schaad</authors>
+    <owners>jimsch</owners>
+    <licenseUrl>https://github.com/cose-wg/COSE-csharp/license.md</licenseUrl>
+    <projectUrl>https://github.com/cose-wg/COSE-csharp</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <releaseNotes>This version is at best an alpha version.  It can and will change in radical ways between now and a real release.</releaseNotes>
+    <description>An implementation of the CBOR Object Signing and Encryption standards.</description>
+    <copyright>Copyright @2016 Jim Schaad</copyright>
+    <tags>COSE CBOR</tags>
+    <dependencies>
+      <dependency id="PeterO.CBOR" version="2.4.2"/>
+      <dependency id="PeterO.Numbers" version="0.2.2"/>
+      <dependency id="BouncyCastle" version="1.8.1"/>
+    </dependencies>
+  </metadata>
+</package>

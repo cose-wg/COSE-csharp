@@ -14,7 +14,7 @@ using Org.BouncyCastle.Crypto.Macs;
 
 using System.Diagnostics;
 
-namespace COSE
+namespace Com.AugustCellars.COSE
 {
 
     public class MAC0Message : MacMessageCommon

@@ -5,7 +5,7 @@ using System.Text;
 
 using PeterO.Cbor;
 
-namespace COSE
+namespace Com.AugustCellars.COSE
 {
     public class Attributes
     {

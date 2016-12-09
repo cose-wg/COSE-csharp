@@ -3,7 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PeterO.Cbor;
-using COSE;
+using Com.AugustCellars.COSE;
 
 namespace COSETests
 {
@@ -164,7 +164,7 @@ namespace COSETests
         public void unknownAlgorithm()
         {
             EncryptMessage msg = new EncryptMessage();
-            msg.AddAttribute(HeaderKeys.Algorithm, CBORObject.FromObject("Unknown"), true);
+            msg.AddAttribute(HeaderKeys.Algorithm, CBORObject.FromObject("Unknown"), Attributes.PROTECTED);
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);
@@ -176,7 +176,7 @@ namespace COSETests
         public void unsupportedAlgorithm()
         {
             EncryptMessage msg = new EncryptMessage();
-            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.HMAC_SHA_256, true);
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.HMAC_SHA_256, Attributes.PROTECTED);
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);
@@ -188,7 +188,7 @@ namespace COSETests
         public void nullKey()
         {
             EncryptMessage msg = new EncryptMessage();
-            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
             msg.SetContent(strContent);
             msg.Encrypt();
         }
@@ -198,7 +198,7 @@ namespace COSETests
         public void noContent()
         {
             EncryptMessage msg = new EncryptMessage();
-            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);
             msg.Encrypt();
@@ -209,8 +209,8 @@ namespace COSETests
         public void badIV()
         {
             EncryptMessage msg = new EncryptMessage();
-            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
-            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject("IV"), false);
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
+            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject("IV"), Attributes.UNPROTECTED);
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);
@@ -222,8 +222,8 @@ namespace COSETests
         public void incorrectIV()
         {
             EncryptMessage msg = new EncryptMessage();
-            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
-            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV128), false);
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
+            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV128), Attributes.UNPROTECTED);
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);
@@ -235,8 +235,8 @@ namespace COSETests
         {
             EncryptMessage msg = new EncryptMessage(false, true);
 
-            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
-            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
+            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), Attributes.UNPROTECTED);
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);
@@ -252,8 +252,8 @@ namespace COSETests
         {
             EncryptMessage msg = new EncryptMessage(true, false);
 
-            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
-            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
+            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), Attributes.UNPROTECTED);
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);
@@ -273,8 +273,8 @@ namespace COSETests
             //        thrown.expect(CoseException.class);
             //        thrown.expectMessage("No Enveloped Content Specified");
 
-            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
-            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
+            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), Attributes.UNPROTECTED);
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);
@@ -298,8 +298,8 @@ namespace COSETests
             //        thrown.expect(CoseException.class);
             //        thrown.expectMessage("No Enveloped Content Specified");
 
-            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
-            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
+            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), Attributes.UNPROTECTED);
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);
@@ -317,8 +317,8 @@ namespace COSETests
         {
             EncryptMessage msg = new EncryptMessage(true, false);
 
-            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
-            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
+            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), Attributes.UNPROTECTED);
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);
@@ -340,8 +340,8 @@ namespace COSETests
         public void roundTrip()
         {
             EncryptMessage msg = new EncryptMessage();
-            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, true);
-            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), false);
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
+            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), Attributes.UNPROTECTED);
             msg.SetContent(strContent);
             Recipient r = new Recipient(key128, AlgorithmValues.Direct);
             msg.AddRecipient(r);

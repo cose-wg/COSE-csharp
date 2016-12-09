@@ -8,7 +8,7 @@ using Org.BouncyCastle.Security;
 
 using PeterO.Cbor;
 
-namespace COSE
+namespace Com.AugustCellars.COSE
 {
 
     public enum Tags
