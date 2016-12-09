@@ -6,8 +6,8 @@ script:
   - git clone --depth 1 https://github.com/cose-wg/Examples Regressions
   - git clone --depth 1 https://github.com/ietf-jose/cookbook cookbook
   - ls examples/packages
-  - ls examples/packages/Peter0.cbor.2.4.2
-  - ls examples/packages/Peter0.cbor.2.4.2/portable-net40+s150+win+wpa81+wp80
+  - ls examples/packages/Peter0.Cbor.2.4.2
+  - ls examples/packages/Peter0.Cbor.2.4.2/portable-net40+s150+win+wpa81+wp80
   - xbuild /p:Configuration=Release cose/cose.sln
   - xbuild /p:Configuration=Release examples/examples.sln
   - mono examples/examples/bin/Release/examples.exe --cose Regressions
