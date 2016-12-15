@@ -17,6 +17,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug40\</OutputPath>
+    <IntermediateOutputPath>obj\Debug40</IntermediateOutputPath>
     <DefineConstants>TRACE;DEBUG;USE_ARRAY FOR_EXAMPLES</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -25,6 +26,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release40\</OutputPath>
+    <IntermediateOutputPath>obj\Release40</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
