@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>Com.AugustCellars.COSE</id>
-    <version>0.0.0.2</version>
+    <version>0.0.0.3</version>
     <authors>Jim Schaad</authors>
     <owners>jimsch</owners>
     <licenseUrl>https://github.com/cose-wg/COSE-csharp/license.md</licenseUrl>
