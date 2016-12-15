@@ -14,12 +14,12 @@ using Org.BouncyCastle.Crypto.Macs;
 
 using System.Diagnostics;
 
-namespace COSE
+namespace Com.AugustCellars.COSE
 {
 
     public class MAC0Message : MacMessageCommon
     {
-        public MAC0Message()
+        public MAC0Message(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
             strContext = "MAC0";
             m_tag = Tags.MAC0;
@@ -226,7 +226,7 @@ namespace COSE
     public class MACMessage : MacMessageCommon
     {
 
-        public MACMessage()
+        public MACMessage(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
             m_tag = Tags.MAC;
             strContext = "MAC";
@@ -569,6 +569,8 @@ namespace COSE
         protected byte[] rgbTag;
         protected byte[] rgbContent;
         protected string strContext = "";
+
+        protected MacMessageCommon(bool fEmitTag, bool fEmitContent) : base(fEmitTag, fEmitContent) { }
 
         public void SetContent(byte[] keyBytes)
         {

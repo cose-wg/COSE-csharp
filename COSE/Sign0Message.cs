@@ -17,13 +17,13 @@ using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Security;
 
-namespace COSE
+namespace Com.AugustCellars.COSE
 {
-    public class Sign0Message : Message
+    public class Sign1Message : Message
     {
         byte[] rgbContent;
 
-        public Sign0Message()
+        public Sign1Message(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
             m_tag = Tags.Signed0;
         }
@@ -121,8 +121,8 @@ namespace COSE
 
         public void AddSigner(Key key, CBORObject algorithm = null)
         {
-            if (algorithm != null) AddAttribute(HeaderKeys.Algorithm, algorithm, false);
-            if (key.ContainsName(CoseKeyKeys.KeyIdentifier)) AddUnprotected(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier]);
+            if (algorithm != null) AddAttribute(HeaderKeys.Algorithm, algorithm, Attributes.UNPROTECTED);
+            if (key.ContainsName(CoseKeyKeys.KeyIdentifier)) AddAttribute(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier], Attributes.UNPROTECTED);
 
             if (key.ContainsName("use")) {
                 string usage = key.AsString("use");

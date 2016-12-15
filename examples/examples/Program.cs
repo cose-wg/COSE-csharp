@@ -5,7 +5,7 @@ using System.Text;
 using System.IO;
 
 using PeterO.Cbor;
-using JOSE;
+using Com.AugustCellars.COSE;
 
 namespace examples
 {
@@ -17,8 +17,8 @@ namespace examples
 
         static Outputs[] RgOutputs = new Outputs[] { Outputs.cborDiag, Outputs.cbor  /*, Outputs.cbor, Outputs.cborFlatten*/ };
 
-        static COSE.KeySet allkeys = new COSE.KeySet();
-        static COSE.KeySet allPubKeys = new COSE.KeySet();
+        static KeySet allkeys = new KeySet();
+        static KeySet allPubKeys = new KeySet();
 
         static string RootDir = "c:\\projects\\COSE\\examples";
 
@@ -61,12 +61,12 @@ namespace examples
 
         static void RunCoseExamples()
         { 
-            COSE.Key.NewKey();
+            Key.NewKey();
 
-            COSE.EdDSA25517.SelfTest();
-            COSE.EdDSA448.SelfTest();
+            EdDSA25517.SelfTest();
+            EdDSA448.SelfTest();
 
-            COSE.Recipient.FUseCompressed = true;
+            Recipient.FUseCompressed = true;
             RunTestsInDirectory("X25519-tests");
 
             RunTestsInDirectory("spec-examples");
@@ -86,7 +86,7 @@ namespace examples
 
             }
 
-            COSE.Recipient.FUseCompressed = false;
+            Recipient.FUseCompressed = false;
 
             RunTestsInDirectory("hmac-examples");
             RunTestsInDirectory("cbc-mac-examples");
@@ -178,7 +178,7 @@ namespace examples
                     }
                 }
             }
-            COSE.Message.SetPRNG(prng);
+            Message.SetPRNG(prng);
             JOSE.Message.SetPRNG(prng);
 
             prng.Reset();
@@ -241,7 +241,7 @@ namespace examples
                     modified = true;
                 }
             }
-            catch (COSE.CoseException e) {
+            catch (CoseException e) {
                 Console.WriteLine(String.Format("COSE threw an error '{0}'.", e.ToString()));
             }
             catch (JOSE.JOSE_Exception e) {
@@ -259,7 +259,7 @@ namespace examples
             CBORObject sign = input["sign"];
             CBORObject signers;
 
-            COSE.SignMessage msg = new COSE.SignMessage();
+            SignMessage msg = new SignMessage();
 
             msg.ForceArray(true);
 
@@ -323,7 +323,7 @@ namespace examples
             CBORObject input = control["input"];
             CBORObject sign = input["sign0"];
 
-            COSE.Sign0Message msg = new COSE.Sign0Message();
+            Sign0Message msg = new Sign0Message();
 
             msg.ForceArray(true);
 
@@ -332,7 +332,7 @@ namespace examples
 
             if (!sign.ContainsKey("alg")) throw new Exception("Signer missing alg field");
 
-            COSE.Key key = GetKey(sign["key"]);
+            Key key = GetKey(sign["key"]);
 
             msg.AddSigner(key, AlgorithmMap(sign["alg"]));
 
@@ -362,7 +362,7 @@ namespace examples
         {
             CBORObject cnInput = cnControl["input"];
             CBORObject cnSign;
-            COSE.Sign0Message hSig;
+            Sign1Message hSig;
             bool fFail;
 
             byte[] rgb = FromHex(cnControl["output"]["cbor"].AsString());
@@ -372,17 +372,17 @@ namespace examples
                 cnSign = cnInput["sign0"];
 
             try {
-                COSE.Message msg = COSE.Message.DecodeFromBytes(rgb, COSE.Tags.Signed0);
-                hSig = (COSE.Sign0Message) msg;
+                Message msg = Message.DecodeFromBytes(rgb, Tags.Signed0);
+                hSig = (Sign1Message) msg;
             }
-            catch (COSE.CoseException) {
+            catch (CoseException) {
                 if (fFail) return true;
                 return false;
             }
 
             SetRecievingAttributes(hSig, cnSign);
 
-            COSE.Key cnkey = GetKey(cnSign["key"], true);
+            Key cnkey = GetKey(cnSign["key"], true);
 
             bool fFailInput = HasFailMarker(cnInput);
 
@@ -406,7 +406,7 @@ namespace examples
             CBORObject input = control["input"];
             CBORObject encrypt = input["encrypted"];
 
-            COSE.EncryptMessage msg = new COSE.EncryptMessage();
+            EncryptMessage msg = new EncryptMessage();
 
             msg.ForceArray(true);
 
@@ -427,10 +427,10 @@ namespace examples
 
             byte[] rgbKey;
 
-            COSE.Key key;
+            Key key;
             key = GetKey(encrypt["recipients"][0]["key"]);
 
-            rgbKey = key[COSE.CoseKeyParameterKeys.Octet_k].GetByteString();
+            rgbKey = key[CoseKeyParameterKeys.Octet_k].GetByteString();
 
             {
                 msg.Encrypt(rgbKey);
@@ -466,8 +466,8 @@ namespace examples
             byte[] rgbData = FromHex(control["output"]["cbor"].AsString());
 
             try {
-                COSE.Message msg = COSE.Message.DecodeFromBytes(rgbData, COSE.Tags.Encrypted);
-                COSE.EncryptMessage enc0 = (COSE.EncryptMessage) msg;
+                Message msg = Message.DecodeFromBytes(rgbData, Tags.Encrypted);
+                Encrypt0Message enc0 = (Encrypt0Message) msg;
 
                 CBORObject cnEncrypt = cnInput["encrypted"];
                 SetRecievingAttributes(msg, cnEncrypt);
@@ -475,7 +475,7 @@ namespace examples
                 CBORObject cnRecipients = cnEncrypt["recipients"];
                 cnRecipients = cnRecipients[0];
 
-                COSE.Key cnKey = GetKey(cnRecipients["key"], true);
+                Key cnKey = GetKey(cnRecipients["key"], true);
 
                 CBORObject kk = cnKey[CBORObject.FromObject(-1)];
 
@@ -502,7 +502,7 @@ namespace examples
             CBORObject input = control["input"];
             CBORObject encrypt = input["enveloped"];
 
-            COSE.EnvelopedMessage msg = new COSE.EnvelopedMessage();
+            EnvelopedMessage msg = new EnvelopedMessage();
 
             msg.ForceArray(true);
 
@@ -535,7 +535,7 @@ namespace examples
                 CBORObject rList = GetSection(intermediates, "recipients");
 
                 for (int iRecipient = 0; iRecipient < msg.RecipientList.Count; iRecipient++) {
-                    COSE.Recipient r = msg.RecipientList[iRecipient];
+                    Recipient r = msg.RecipientList[iRecipient];
 
                     SetField(rList[iRecipient], "Context_hex", r.getContext(), ref fDirty);
                     SetField(rList[iRecipient], "Secret_hex", r.getSecret(), ref fDirty);
@@ -545,7 +545,7 @@ namespace examples
                         CBORObject rList2 = GetSection(rList[iRecipient], "recipients");
 
                         for (int iRecipient2 = 0; iRecipient2 < r.RecipientList.Count; iRecipient2++) {
-                            COSE.Recipient r2 = r.RecipientList[iRecipient2];
+                            Recipient r2 = r.RecipientList[iRecipient2];
 
                             SetField(rList2[iRecipient2], "Context_hex", r2.getContext(), ref fDirty);
                             SetField(rList2[iRecipient2], "Secret_hex", r2.getSecret(), ref fDirty);
@@ -583,7 +583,7 @@ namespace examples
             CBORObject input = control["input"];
             CBORObject mac = input["mac"];
 
-            COSE.MACMessage msg = new COSE.MACMessage();
+            MACMessage msg = new MACMessage();
 
             if (control.ContainsKey("alg")) {
                 control.Remove(CBORObject.FromObject("alg"));
@@ -615,7 +615,7 @@ namespace examples
             CBORObject rList = GetSection(intermediates, "recipients");
 
             for (int iRecipient = 0; iRecipient < msg.RecipientList.Count; iRecipient++) {
-                COSE.Recipient r = msg.RecipientList[iRecipient];
+                Recipient r = msg.RecipientList[iRecipient];
 
                 SetField(rList[iRecipient], "Context_hex", r.getContext(), ref fDirty);
                 SetField(rList[iRecipient], "Secret_hex", r.getSecret(), ref fDirty);
@@ -625,7 +625,7 @@ namespace examples
                     CBORObject rList2 = GetSection(rList[iRecipient], "recipients");
 
                     for (int iRecipient2 = 0; iRecipient2 < r.RecipientList.Count; iRecipient2++) {
-                        COSE.Recipient r2 = r.RecipientList[iRecipient2];
+                        Recipient r2 = r.RecipientList[iRecipient2];
 
                         SetField(rList2[iRecipient2], "Context_hex", r2.getContext(), ref fDirty);
                         SetField(rList2[iRecipient2], "Secret_hex", r2.getSecret(), ref fDirty);
@@ -651,7 +651,7 @@ namespace examples
             CBORObject input = control["input"];
             CBORObject mac = input["mac0"];
 
-            COSE.MAC0Message msg = new COSE.MAC0Message();
+            MAC0Message msg = new MAC0Message();
 
             if (control.ContainsKey("alg")) {
                 control.Remove(CBORObject.FromObject("alg"));
@@ -669,12 +669,12 @@ namespace examples
 
             if ((!mac.ContainsKey("recipients")) || (mac["recipients"].Type != CBORType.Array)) throw new Exception("Missing or malformed recipients");
 
-            COSE.Key key;
+            Key key;
 
             key = GetKey(mac["recipients"][0]["key"]);
 
             {
-                byte[] rgbKey = key[COSE.CoseKeyParameterKeys.Octet_k].GetByteString();
+                byte[] rgbKey = key[CoseKeyParameterKeys.Octet_k].GetByteString();
                 msg.Compute(rgbKey);
 
                 CBORObject intermediates = GetSection(control, "intermediates");
@@ -704,8 +704,8 @@ namespace examples
             try {
                 fFailBody = HasFailMarker(control);
 
-                COSE.Message msg = COSE.Message.DecodeFromBytes(rgbData, COSE.Tags.MAC0);
-                COSE.MAC0Message mac0 = (COSE.MAC0Message) msg;
+                Message msg = Message.DecodeFromBytes(rgbData, Tags.MAC0);
+                MAC0Message mac0 = (MAC0Message) msg;
 
                 CBORObject cnMac = cnInput["mac0"];
                 SetRecievingAttributes(msg, cnMac);
@@ -713,7 +713,7 @@ namespace examples
                 CBORObject cnRecipients = cnMac["recipients"];
                 cnRecipients = cnRecipients[0];
 
-                COSE.Key cnKey = GetKey(cnRecipients["key"], true);
+                Key cnKey = GetKey(cnRecipients["key"], true);
 
                 CBORObject kk = cnKey[CBORObject.FromObject(-1)];
 
@@ -798,12 +798,12 @@ namespace examples
             return null;
         }
 
-        static void AddAttributes(COSE.Attributes msg, CBORObject items, int destination)
+        static void AddAttributes(Attributes msg, CBORObject items, int destination)
         {
             _AddAttributes(msg, null, items, destination);
         }
 
-        static void _AddAttributes(COSE.Attributes msg, CBORObject map, CBORObject items, int destination)
+        static void _AddAttributes(Attributes msg, CBORObject map, CBORObject items, int destination)
         {
             foreach (CBORObject cborKey2 in items.Keys) {
                 CBORObject cborValue = items[cborKey2];
@@ -817,38 +817,38 @@ namespace examples
 
                 switch (cborKey.AsString()) {
                 case "alg":
-                    cborKey = COSE.HeaderKeys.Algorithm;
+                    cborKey = HeaderKeys.Algorithm;
                     cborValue = AlgorithmMap(cborValue);
                     break;
 
                 case "kid":
-                    cborKey = COSE.HeaderKeys.KeyId;
+                    cborKey = HeaderKeys.KeyId;
                     binFromText:
                     if (cborValue.Type == CBORType.TextString) cborValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cborValue.AsString()));
                     break;
 
                 case "epk":
-                    cborKey = COSE.HeaderKeys.EphemeralKey;
+                    cborKey = HeaderKeys.EphemeralKey;
                     break;
 
                 case "spk":
-                    cborKey = COSE.CoseKeyParameterKeys.ECDH_StaticKey;
+                    cborKey = CoseKeyParameterKeys.ECDH_StaticKey;
                     cborValue = GetKey(cborValue).EncodeToCBORObject();
                     break;
 
-                case "salt": cborKey = COSE.CoseKeyParameterKeys.HKDF_Salt; goto binFromText;
-                case "apu_id": cborKey = COSE.CoseKeyParameterKeys.HKDF_Context_PartyU_ID; goto binFromText;
-                case "apv_id": cborKey = COSE.CoseKeyParameterKeys.HKDF_Context_PartyV_ID; goto binFromText;
-                case "apu_nonce": cborKey = COSE.CoseKeyParameterKeys.HKDF_Context_PartyU_nonce; goto binFromText;
-                case "apv_nonce": cborKey = COSE.CoseKeyParameterKeys.HKDF_Context_PartyV_nonce; goto binFromText;
-                case "apu_other": cborKey = COSE.CoseKeyParameterKeys.HKDF_Context_PartyU_Other; goto binFromText;
-                case "apv_other": cborKey = COSE.CoseKeyParameterKeys.HKDF_Context_PartyV_Other; goto binFromText;
-                case "pub_other": cborKey = COSE.CoseKeyParameterKeys.HKDF_SuppPub_Other; goto binFromText;
-                case "priv_other": cborKey = COSE.CoseKeyParameterKeys.HKDF_SuppPriv_Other; goto binFromText;
-                case "spk_kid": cborKey = COSE.CoseKeyParameterKeys.ECDH_StaticKey_kid; goto binFromText;
+                case "salt": cborKey = CoseKeyParameterKeys.HKDF_Salt; goto binFromText;
+                case "apu_id": cborKey = CoseKeyParameterKeys.HKDF_Context_PartyU_ID; goto binFromText;
+                case "apv_id": cborKey = CoseKeyParameterKeys.HKDF_Context_PartyV_ID; goto binFromText;
+                case "apu_nonce": cborKey = CoseKeyParameterKeys.HKDF_Context_PartyU_nonce; goto binFromText;
+                case "apv_nonce": cborKey = CoseKeyParameterKeys.HKDF_Context_PartyV_nonce; goto binFromText;
+                case "apu_other": cborKey = CoseKeyParameterKeys.HKDF_Context_PartyU_Other; goto binFromText;
+                case "apv_other": cborKey = CoseKeyParameterKeys.HKDF_Context_PartyV_Other; goto binFromText;
+                case "pub_other": cborKey = CoseKeyParameterKeys.HKDF_SuppPub_Other; goto binFromText;
+                case "priv_other": cborKey = CoseKeyParameterKeys.HKDF_SuppPriv_Other; goto binFromText;
+                case "spk_kid": cborKey = CoseKeyParameterKeys.ECDH_StaticKey_kid; goto binFromText;
 
-                case "IV": cborKey = COSE.HeaderKeys.IV; goto binFromText;
-                case "partialIV": cborKey = COSE.HeaderKeys.PartialIV; goto binFromText;
+                case "IV": cborKey = HeaderKeys.IV; goto binFromText;
+                case "partialIV": cborKey = HeaderKeys.PartialIV; goto binFromText;
 #if false
                     if (cborValue.Type == CBORType.TextString) {
                         cborValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cborValue.AsString()));
@@ -862,12 +862,12 @@ namespace examples
 #endif
 
                 case "crit":
-                    cborKey = COSE.HeaderKeys.Critical;
+                    cborKey = HeaderKeys.Critical;
 
                     break;
 
                 case "op time":
-                    cborKey = COSE.HeaderKeys.OperationTime; {
+                    cborKey = HeaderKeys.OperationTime; {
                         DateTime when = DateTime.Parse(cborValue.AsString());
                         cborValue = CBORObject.FromObject((long) (when - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds);
 
@@ -875,7 +875,7 @@ namespace examples
                     break;
 
                 case "ctyp":
-                    cborKey = COSE.HeaderKeys.ContentType;
+                    cborKey = HeaderKeys.ContentType;
                     break;
 
                 default:
@@ -883,9 +883,9 @@ namespace examples
                 }
 
                 switch (destination) {
-                case 0: msg.AddAttribute(cborKey, cborValue, true); break;
-                case 1: msg.AddAttribute(cborKey, cborValue, false); break;
-                case 2: msg.AddDontSend(cborKey, cborValue); break;
+                case 0: msg.AddAttribute(cborKey, cborValue, Attributes.PROTECTED); break;
+                case 1: msg.AddAttribute(cborKey, cborValue, Attributes.UNPROTECTED); break;
+                case 2: msg.AddAttribute(cborKey, cborValue, Attributes.DO_NOT_SEND); break;
                 case 4: map[cborKey] = cborValue; break;
                 }
             }
@@ -906,22 +906,22 @@ namespace examples
             }
         }
 
-        static void AddExternalData(COSE.Message msg, CBORObject externData)
+        static void AddExternalData(Message msg, CBORObject externData)
         {
             msg.SetExternalData(FromHex(externData.AsString()));
         }
 
-        static void AddExternalData(COSE.Recipient msg, CBORObject externData)
+        static void AddExternalData(Recipient msg, CBORObject externData)
         {
             msg.SetExternalData(FromHex(externData.AsString()));
         }
 
-        static void AddExternalData(COSE.Signer msg, CBORObject externData)
+        static void AddExternalData(Signer msg, CBORObject externData)
         {
             msg.SetExternalData(FromHex(externData.AsString()));
         }
 
-        static void AddCounterSignature(COSE.Message msg, CBORObject items)
+        static void AddCounterSignature(Message msg, CBORObject items)
         {
             if (items.Type == CBORType.Map) {
                 if ((!items.ContainsKey("signers")) || (items["signers"].Type != CBORType.Array)) throw new Exception("Missing or malformed counter signatures");
@@ -931,16 +931,16 @@ namespace examples
             }
         }
 
-        static COSE.Recipient GetRecipient(CBORObject control)
+        static Recipient GetRecipient(CBORObject control)
         {
             CBORObject alg = GetAttribute(control, "alg");
 
-            COSE.Key key = null;
+            Key key = null;
 
             if (control["key"] != null) key = GetKey(control["key"]);
 
             alg = AlgorithmMap(CBORObject.FromObject(alg.AsString()));
-            COSE.Recipient recipient = new COSE.Recipient(key, alg);
+            Recipient recipient = new Recipient(key, alg);
 
             if (control.ContainsKey("alg")) {
                 control.Remove(CBORObject.FromObject("alg"));
@@ -962,13 +962,13 @@ namespace examples
             }
 
             if (control.ContainsKey("sender_key")) {
-                COSE.Key myKey = GetKey(control["sender_key"]);
+                Key myKey = GetKey(control["sender_key"]);
                 recipient.SetSenderKey(myKey);
-                if (myKey.ContainsName(COSE.CoseKeyKeys.KeyIdentifier)) {
-                    recipient.AddAttribute(COSE.HeaderKeys.StaticKey_ID, CBORObject.FromObject(myKey.AsBytes(COSE.CoseKeyKeys.KeyIdentifier)), false);
+                if (myKey.ContainsName(CoseKeyKeys.KeyIdentifier)) {
+                    recipient.AddAttribute(HeaderKeys.StaticKey_ID, CBORObject.FromObject(myKey.AsBytes(CoseKeyKeys.KeyIdentifier)), Attributes.UNPROTECTED);
                 }
                 else {
-                    recipient.AddAttribute(COSE.HeaderKeys.StaticKey, myKey.PublicKey().AsCBOR(), false);
+                    recipient.AddAttribute(HeaderKeys.StaticKey, myKey.PublicKey().AsCBOR(), Attributes.UNPROTECTED);
                 }
             }
             return recipient;
@@ -981,7 +981,7 @@ namespace examples
             if (!control.ContainsKey("alg")) throw new Exception("Recipient missing alg field");
 
             if (control.ContainsKey("key")) {
-                key = new JOSE.Key(JSON.Parse(control["key"].ToJSONString()));
+                key = new JOSE.Key(JOSE.JSON.Parse(control["key"].ToJSONString()));
             }
             else if (control.ContainsKey("pwd")) {
                 key = new JOSE.Key();
@@ -1001,25 +1001,25 @@ namespace examples
             if (control.ContainsKey("unprotected_jose")) AddAttributes(recipient, control["unprotected_jose"], false);
 
             if (control.ContainsKey("sender_key")) {
-                JOSE.Key myKey = new JOSE.Key(JSON.Parse(control["sender_key"].ToJSONString()));
+                JOSE.Key myKey = new JOSE.Key(JOSE.JSON.Parse(control["sender_key"].ToJSONString()));
                 recipient.SetSenderKey(myKey);
             }
             return recipient;
         }
 
-        static COSE.Signer GetSigner(CBORObject control, bool fCounterSign = false)
+        static Signer GetSigner(CBORObject control, bool fCounterSign = false)
         {
             CBORObject alg = GetAttribute(control, "alg");
             if (control.ContainsKey("alg")) {
                 control.Remove(CBORObject.FromObject("alg"));
             }
 
-            COSE.Key key = GetKey(control["key"]);
+            Key key = GetKey(control["key"]);
 
-            COSE.Signer signer;
+            Signer signer;
 
-            if (fCounterSign) signer = new COSE.CounterSignature(key, alg);
-            else signer = new COSE.Signer(key, control["alg"]);
+            if (fCounterSign) signer = new CounterSignature(key, alg);
+            else signer = new Signer(key, control["alg"]);
 
             if (control.ContainsKey("protected")) AddAttributes(signer, control["protected"], 0);
             if (control.ContainsKey("unprotected")) AddAttributes(signer, control["unprotected"], 1);
@@ -1033,7 +1033,7 @@ namespace examples
         {
             if (!control.ContainsKey("alg")) throw new Exception("Signer missing alg field");
 
-            JOSE.Key key = new JOSE.Key(JSON.Parse(control["key"].ToJSONString()));
+            JOSE.Key key = new JOSE.Key(JOSE.JSON.Parse(control["key"].ToJSONString()));
 
             JOSE.Signer signer = new JOSE.Signer(key, control["alg"].AsString());
 
@@ -1043,9 +1043,9 @@ namespace examples
             return signer;
         }
 
-        static COSE.Key GetKey(CBORObject control, bool fPublicKey = false)
+        static Key GetKey(CBORObject control, bool fPublicKey = false)
         {
-            COSE.Key key = new COSE.Key();
+            Key key = new Key();
             CBORObject newKey;
             CBORObject newValue;
             string type = control["kty"].AsString();
@@ -1057,12 +1057,12 @@ namespace examples
             foreach (string item in keys) {
                 switch (item) {
                 case "kty":
-                    newKey = COSE.CoseKeyKeys.KeyType;
+                    newKey = CoseKeyKeys.KeyType;
                     switch (control[item].AsString()) {
-                    case "OKP": newValue = COSE.GeneralValues.KeyType_OKP; goto NewValue;
-                    case "EC": newValue = COSE.GeneralValues.KeyType_EC; goto NewValue;
-                    case "RSA": newValue = COSE.GeneralValues.KeyType_RSA; goto NewValue;
-                    case "oct": newValue = COSE.GeneralValues.KeyType_Octet; goto NewValue;
+                    case "OKP": newValue = GeneralValues.KeyType_OKP; goto NewValue;
+                    case "EC": newValue = GeneralValues.KeyType_EC; goto NewValue;
+                    case "RSA": newValue = GeneralValues.KeyType_RSA; goto NewValue;
+                    case "oct": newValue = GeneralValues.KeyType_Octet; goto NewValue;
                     default:
                         break;
                     }
@@ -1071,12 +1071,12 @@ namespace examples
                     break;
 
                 case "kid":
-                    newKey = COSE.CoseKeyKeys.KeyIdentifier;
+                    newKey = CoseKeyKeys.KeyIdentifier;
                     newValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(control[item].AsString()));
                     goto NewValue;
 
                 case "kid_hex":
-                    newKey = COSE.CoseKeyKeys.KeyIdentifier;
+                    newKey = CoseKeyKeys.KeyIdentifier;
                     BinaryValue:
                     if (oFix != 0) {
                         byte[] v = base64urldecode(control[item].AsString());
@@ -1094,28 +1094,28 @@ namespace examples
                     break;
 
                 case "alg":
-                    newKey = COSE.CoseKeyKeys.Algorithm;
+                    newKey = CoseKeyKeys.Algorithm;
                     goto TextValue;
 
                 // ECDSA parameters
                 case "crv":
-                    newKey = COSE.CoseKeyParameterKeys.EC_Curve;
+                    newKey = CoseKeyParameterKeys.EC_Curve;
                     switch (control[item].AsString()) {
                     case "P-256":
-                        newValue = COSE.GeneralValues.P256;
+                        newValue = GeneralValues.P256;
                         break;
 
                     case "P-384":
-                        newValue = COSE.GeneralValues.P384;
+                        newValue = GeneralValues.P384;
                         break;
 
                     case "P-521":
-                        newValue = COSE.GeneralValues.P521;
+                        newValue = GeneralValues.P521;
                         oFix = 66;
                         break;
 
                     case "X25519":
-                        newValue = COSE.GeneralValues.X25519;
+                        newValue = GeneralValues.X25519;
                         break;
 
                     default:
@@ -1134,28 +1134,28 @@ namespace examples
                     break;
 
                 case "x":
-                    if (type == "OKP") newKey = COSE.CoseKeyParameterKeys.OKP_X;
-                    else newKey = COSE.CoseKeyParameterKeys.EC_X;
+                    if (type == "OKP") newKey = CoseKeyParameterKeys.OKP_X;
+                    else newKey = CoseKeyParameterKeys.EC_X;
                     goto BinaryValue;
 
-                case "y": newKey = COSE.CoseKeyParameterKeys.EC_Y; goto BinaryValue;
+                case "y": newKey = CoseKeyParameterKeys.EC_Y; goto BinaryValue;
 
-                case "e": newKey = COSE.CoseKeyParameterKeys.RSA_e; goto BinaryValue;
-                case "n": newKey = COSE.CoseKeyParameterKeys.RSA_n; goto BinaryValue;
+                case "e": newKey = CoseKeyParameterKeys.RSA_e; goto BinaryValue;
+                case "n": newKey = CoseKeyParameterKeys.RSA_n; goto BinaryValue;
 
                 case "d":
                     // if (!fPublicKey) continue;
-                    if (type == "RSA") newKey = COSE.CoseKeyParameterKeys.RSA_d;
-                    else if (type == "OKP") newKey = COSE.CoseKeyParameterKeys.OKP_D;
-                    else newKey = COSE.CoseKeyParameterKeys.EC_D;
+                    if (type == "RSA") newKey = CoseKeyParameterKeys.RSA_d;
+                    else if (type == "OKP") newKey = CoseKeyParameterKeys.OKP_D;
+                    else newKey = CoseKeyParameterKeys.EC_D;
                     goto BinaryValue;
 
-                case "k": newKey = COSE.CoseKeyParameterKeys.Octet_k; goto BinaryValue;
-                case "p": newKey = COSE.CoseKeyParameterKeys.RSA_p; goto BinaryValue;
-                case "q": newKey = COSE.CoseKeyParameterKeys.RSA_q; goto BinaryValue;
-                case "dp": newKey = COSE.CoseKeyParameterKeys.RSA_dP; goto BinaryValue;
-                case "dq": newKey = COSE.CoseKeyParameterKeys.RSA_dQ; goto BinaryValue;
-                case "qi": newKey = COSE.CoseKeyParameterKeys.RSA_qInv; goto BinaryValue;
+                case "k": newKey = CoseKeyParameterKeys.Octet_k; goto BinaryValue;
+                case "p": newKey = CoseKeyParameterKeys.RSA_p; goto BinaryValue;
+                case "q": newKey = CoseKeyParameterKeys.RSA_q; goto BinaryValue;
+                case "dp": newKey = CoseKeyParameterKeys.RSA_dP; goto BinaryValue;
+                case "dq": newKey = CoseKeyParameterKeys.RSA_dQ; goto BinaryValue;
+                case "qi": newKey = CoseKeyParameterKeys.RSA_qInv; goto BinaryValue;
 
                 default:
                     throw new Exception("Unrecognized field name " + item + " in key object");
@@ -1164,7 +1164,7 @@ namespace examples
 
             allkeys.AddKey(key);
 
-            COSE.Key pubKey = key.PublicKey();
+            Key pubKey = key.PublicKey();
             if (pubKey != null) {
                 allPubKeys.AddKey(key.PublicKey());
             }
@@ -1212,32 +1212,32 @@ namespace examples
             return bytes;
         }
 
-        public static CBORObject AsCbor(JSON json)
+        public static CBORObject AsCbor(JOSE.JSON json)
         {
             CBORObject obj;
 
             switch (json.nodeType) {
-            case JsonType.array:
+            case JOSE.JsonType.array:
                 obj = CBORObject.NewArray();
-                foreach (JSON pair in json.array) {
+                foreach (JOSE.JSON pair in json.array) {
                     obj.Add(AsCbor(pair));
                 }
                 return obj;
 
-            case JsonType.map:
+            case JOSE.JsonType.map:
                 obj = CBORObject.NewMap();
-                foreach (KeyValuePair<string, JSON> pair in json.map) {
+                foreach (KeyValuePair<string, JOSE.JSON> pair in json.map) {
                     obj.Add(pair.Key, AsCbor(pair.Value));
                 }
                 return obj;
 
-            case JsonType.number:
+            case JOSE.JsonType.number:
                 return CBORObject.FromObject(json.number);
 
-            case JsonType.text:
+            case JOSE.JsonType.text:
                 return CBORObject.FromObject(json.text);
 
-            case JsonType.unknown:
+            case JOSE.JsonType.unknown:
             default:
                 throw new Exception("Can deal with unknown JSON node type");
             }
@@ -1252,56 +1252,56 @@ namespace examples
             }
 
             switch (old.AsString()) {
-            case "A128GCM": return COSE.AlgorithmValues.AES_GCM_128;
-            case "A192GCM": return COSE.AlgorithmValues.AES_GCM_192;
-            case "A256GCM": return COSE.AlgorithmValues.AES_GCM_256;
-            case "A128KW": return COSE.AlgorithmValues.AES_KW_128;
-            case "A192KW": return COSE.AlgorithmValues.AES_KW_192;
-            case "A256KW": return COSE.AlgorithmValues.AES_KW_256;
-            case "RSA-OAEP": return COSE.AlgorithmValues.RSA_OAEP;
-            case "RSA-OAEP-256": return COSE.AlgorithmValues.RSA_OAEP_256;
-            case "HS256": return COSE.AlgorithmValues.HMAC_SHA_256;
-            case "HS256/64": return COSE.AlgorithmValues.HMAC_SHA_256_64;
-            case "HS384": return COSE.AlgorithmValues.HMAC_SHA_384;
-            case "HS512": return COSE.AlgorithmValues.HMAC_SHA_512;
-            case "ES256": return COSE.AlgorithmValues.ECDSA_256;
-            case "ES384": return COSE.AlgorithmValues.ECDSA_384;
-            case "ES512": return COSE.AlgorithmValues.ECDSA_512;
-            case "PS256": return COSE.AlgorithmValues.RSA_PSS_256;
-            case "PS512": return COSE.AlgorithmValues.RSA_PSS_512;
-            case "direct": return COSE.AlgorithmValues.Direct;
-            case "AES-CMAC-128/64": return COSE.AlgorithmValues.AES_CMAC_128_64;
-            case "AES-CMAC-256/64": return COSE.AlgorithmValues.AES_CMAC_256_64;
-            case "AES-MAC-128/64": return COSE.AlgorithmValues.AES_CBC_MAC_128_64;
-            case "AES-MAC-256/64": return COSE.AlgorithmValues.AES_CBC_MAC_256_64;
-            case "AES-MAC-128/128": return COSE.AlgorithmValues.AES_CBC_MAC_128_128;
-            case "AES-MAC-256/128": return COSE.AlgorithmValues.AES_CBC_MAC_256_128;
-            case "AES-CCM-16-128/64": return COSE.AlgorithmValues.AES_CCM_16_64_128;
-            case "AES-CCM-16-128/128": return COSE.AlgorithmValues.AES_CCM_16_128_128;
-            case "AES-CCM-16-256/64": return COSE.AlgorithmValues.AES_CCM_16_64_256;
-            case "AES-CCM-16-256/128": return COSE.AlgorithmValues.AES_CCM_16_128_256;
-            case "AES-CCM-64-128/64": return COSE.AlgorithmValues.AES_CCM_64_64_128;
-            case "AES-CCM-64-128/128": return COSE.AlgorithmValues.AES_CCM_64_128_128;
-            case "AES-CCM-64-256/64": return COSE.AlgorithmValues.AES_CCM_64_64_256;
-            case "AES-CCM-64-256/128": return COSE.AlgorithmValues.AES_CCM_64_128_256;
-            case "HKDF-HMAC-SHA-256": return COSE.AlgorithmValues.HKDF_HMAC_SHA_256;
-            case "HKDF-HMAC-SHA-512": return COSE.AlgorithmValues.HKDF_HMAC_SHA_512;
-            case "HKDF-AES-128": return COSE.AlgorithmValues.HKDF_AES_128;
-            case "HKDF-AES-256": return COSE.AlgorithmValues.HKDF_AES_256;
-            case "ECDH-ES": return COSE.AlgorithmValues.ECDH_ES_HKDF_256;
-            case "ECDH-ES-512": return COSE.AlgorithmValues.ECDH_ES_HKDF_512;
-            case "ECDH-SS": return COSE.AlgorithmValues.ECDH_SS_HKDF_256;
-            case "ECDH-SS-256": return COSE.AlgorithmValues.ECDH_SS_HKDF_256;
-            case "ECDH-SS-512": return COSE.AlgorithmValues.ECDH_SS_HKDF_512;
-            case "ECDH-ES+A128KW": return COSE.AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_128;
-            case "ECDH-SS+A128KW": return COSE.AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_128;
-            case "ECDH-ES-A128KW": return COSE.AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_128;
-            case "ECDH-SS-A128KW": return COSE.AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_128;
-            case "ECDH-ES-A192KW": return COSE.AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_192;
-            case "ECDH-SS-A192KW": return COSE.AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_192;
-            case "ECDH-ES-A256KW": return COSE.AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_256;
-            case "ECDH-SS-A256KW": return COSE.AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_256;
-            case "ChaCha-Poly1305": return COSE.AlgorithmValues.ChaCha20_Poly1305;
+            case "A128GCM": return AlgorithmValues.AES_GCM_128;
+            case "A192GCM": return AlgorithmValues.AES_GCM_192;
+            case "A256GCM": return AlgorithmValues.AES_GCM_256;
+            case "A128KW": return AlgorithmValues.AES_KW_128;
+            case "A192KW": return AlgorithmValues.AES_KW_192;
+            case "A256KW": return AlgorithmValues.AES_KW_256;
+            case "RSA-OAEP": return AlgorithmValues.RSA_OAEP;
+            case "RSA-OAEP-256": return AlgorithmValues.RSA_OAEP_256;
+            case "HS256": return AlgorithmValues.HMAC_SHA_256;
+            case "HS256/64": return AlgorithmValues.HMAC_SHA_256_64;
+            case "HS384": return AlgorithmValues.HMAC_SHA_384;
+            case "HS512": return AlgorithmValues.HMAC_SHA_512;
+            case "ES256": return AlgorithmValues.ECDSA_256;
+            case "ES384": return AlgorithmValues.ECDSA_384;
+            case "ES512": return AlgorithmValues.ECDSA_512;
+            case "PS256": return AlgorithmValues.RSA_PSS_256;
+            case "PS512": return AlgorithmValues.RSA_PSS_512;
+            case "direct": return AlgorithmValues.Direct;
+            case "AES-CMAC-128/64": return AlgorithmValues.AES_CMAC_128_64;
+            case "AES-CMAC-256/64": return AlgorithmValues.AES_CMAC_256_64;
+            case "AES-MAC-128/64": return AlgorithmValues.AES_CBC_MAC_128_64;
+            case "AES-MAC-256/64": return AlgorithmValues.AES_CBC_MAC_256_64;
+            case "AES-MAC-128/128": return AlgorithmValues.AES_CBC_MAC_128_128;
+            case "AES-MAC-256/128": return AlgorithmValues.AES_CBC_MAC_256_128;
+            case "AES-CCM-16-128/64": return AlgorithmValues.AES_CCM_16_64_128;
+            case "AES-CCM-16-128/128": return AlgorithmValues.AES_CCM_16_128_128;
+            case "AES-CCM-16-256/64": return AlgorithmValues.AES_CCM_16_64_256;
+            case "AES-CCM-16-256/128": return AlgorithmValues.AES_CCM_16_128_256;
+            case "AES-CCM-64-128/64": return AlgorithmValues.AES_CCM_64_64_128;
+            case "AES-CCM-64-128/128": return AlgorithmValues.AES_CCM_64_128_128;
+            case "AES-CCM-64-256/64": return AlgorithmValues.AES_CCM_64_64_256;
+            case "AES-CCM-64-256/128": return AlgorithmValues.AES_CCM_64_128_256;
+            case "HKDF-HMAC-SHA-256": return AlgorithmValues.HKDF_HMAC_SHA_256;
+            case "HKDF-HMAC-SHA-512": return AlgorithmValues.HKDF_HMAC_SHA_512;
+            case "HKDF-AES-128": return AlgorithmValues.HKDF_AES_128;
+            case "HKDF-AES-256": return AlgorithmValues.HKDF_AES_256;
+            case "ECDH-ES": return AlgorithmValues.ECDH_ES_HKDF_256;
+            case "ECDH-ES-512": return AlgorithmValues.ECDH_ES_HKDF_512;
+            case "ECDH-SS": return AlgorithmValues.ECDH_SS_HKDF_256;
+            case "ECDH-SS-256": return AlgorithmValues.ECDH_SS_HKDF_256;
+            case "ECDH-SS-512": return AlgorithmValues.ECDH_SS_HKDF_512;
+            case "ECDH-ES+A128KW": return AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_128;
+            case "ECDH-SS+A128KW": return AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_128;
+            case "ECDH-ES-A128KW": return AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_128;
+            case "ECDH-SS-A128KW": return AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_128;
+            case "ECDH-ES-A192KW": return AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_192;
+            case "ECDH-SS-A192KW": return AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_192;
+            case "ECDH-ES-A256KW": return AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_256;
+            case "ECDH-SS-A256KW": return AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_256;
+            case "ChaCha-Poly1305": return AlgorithmValues.ChaCha20_Poly1305;
             default: return old;
             }
         }
@@ -1331,32 +1331,32 @@ namespace examples
                 }
             }
             else if (alg.Type == CBORType.Number) {
-                switch ((COSE.AlgorithmValuesInt) alg.AsInt32()) {
-                case COSE.AlgorithmValuesInt.AES_GCM_128:
-                case COSE.AlgorithmValuesInt.AES_CCM_16_64_128:
-                case COSE.AlgorithmValuesInt.AES_CCM_64_64_128:
-                case COSE.AlgorithmValuesInt.AES_CCM_16_128_128:
-                case COSE.AlgorithmValuesInt.AES_CCM_64_128_128:
-                case COSE.AlgorithmValuesInt.AES_KW_128:
+                switch ((AlgorithmValuesInt) alg.AsInt32()) {
+                case AlgorithmValuesInt.AES_GCM_128:
+                case AlgorithmValuesInt.AES_CCM_16_64_128:
+                case AlgorithmValuesInt.AES_CCM_64_64_128:
+                case AlgorithmValuesInt.AES_CCM_16_128_128:
+                case AlgorithmValuesInt.AES_CCM_64_128_128:
+                case AlgorithmValuesInt.AES_KW_128:
                     cbitKey = 128;
                     break;
 
-                case COSE.AlgorithmValuesInt.AES_GCM_192:
-                case COSE.AlgorithmValuesInt.AES_KW_192:
+                case AlgorithmValuesInt.AES_GCM_192:
+                case AlgorithmValuesInt.AES_KW_192:
                     cbitKey = 192;
                     break;
 
-                case COSE.AlgorithmValuesInt.AES_GCM_256:
-                case COSE.AlgorithmValuesInt.AES_CCM_16_64_256:
-                case COSE.AlgorithmValuesInt.AES_CCM_64_64_256:
-                case COSE.AlgorithmValuesInt.AES_CCM_16_128_256:
-                case COSE.AlgorithmValuesInt.AES_CCM_64_128_256:
-                case COSE.AlgorithmValuesInt.AES_KW_256:
-                case COSE.AlgorithmValuesInt.HMAC_SHA_256:
+                case AlgorithmValuesInt.AES_GCM_256:
+                case AlgorithmValuesInt.AES_CCM_16_64_256:
+                case AlgorithmValuesInt.AES_CCM_64_64_256:
+                case AlgorithmValuesInt.AES_CCM_16_128_256:
+                case AlgorithmValuesInt.AES_CCM_64_128_256:
+                case AlgorithmValuesInt.AES_KW_256:
+                case AlgorithmValuesInt.HMAC_SHA_256:
                     cbitKey = 256;
                     break;
 
-                case COSE.AlgorithmValuesInt.HMAC_SHA_512:
+                case AlgorithmValuesInt.HMAC_SHA_512:
                     cbitKey = 512;
                     break;
 
@@ -1420,7 +1420,7 @@ namespace examples
                     Console.Write(" ");
                 }
             }
-            catch (COSE.CoseException e) {
+            catch (CoseException e) {
                 Console.WriteLine();
                 Console.WriteLine(String.Format("COSE threw an error '{0}'.", e.ToString()));
             }
@@ -1445,12 +1445,12 @@ namespace examples
             for (int iRecipient = 0; iRecipient < encrypt["recipients"].Count; iRecipient++) {
 
                 bool fFail = HasFailMarker(control) || HasFailMarker(encrypt);
-                COSE.EnvelopedMessage msg;
+                EncryptMessage msg;
 
                 try {
 
-                    COSE.Message msgX = COSE.Message.DecodeFromBytes(rgb, COSE.Tags.Enveloped);
-                    msg = (COSE.EnvelopedMessage) msgX;
+                    Message msgX = Message.DecodeFromBytes(rgb, Tags.Enveloped);
+                    msg = (EncryptMessage) msgX;
                 }
                 catch(Exception) {
                     if (fFail) return true;
@@ -1461,13 +1461,13 @@ namespace examples
                 if (encrypt.ContainsKey("external")) AddExternalData(msg, encrypt["external"]);
 
                 CBORObject recip = encrypt["recipients"][iRecipient];
-                COSE.Recipient recipX = msg.RecipientList[iRecipient];
+                Recipient recipX = msg.RecipientList[iRecipient];
 
                 recipX = SetRecievingAttributes(recipX, recip);
 
                 if (recip["sender_key"] != null) {
-                    if (recipX.FindAttribute(COSE.HeaderKeys.StaticKey) == null) {
-                        recipX.AddDontSend(COSE.HeaderKeys.StaticKey, GetKey(recip["sender_key"], true).AsCBOR());
+                    if (recipX.FindAttribute(HeaderKeys.StaticKey) == null) {
+                        recipX.AddAttribute(HeaderKeys.StaticKey, GetKey(recip["sender_key"], true).AsCBOR(), Attributes.DO_NOT_SEND);
                     }
                 }
 
@@ -1497,15 +1497,15 @@ namespace examples
 
             for (int iRecipient = 0; iRecipient < mac["recipients"].Count; iRecipient++) {
                 CBORObject recip = mac["recipients"][iRecipient];
-                COSE.MACMessage msg;
+                MACMessage msg;
 
                 bool fFail = HasFailMarker(mac) || HasFailMarker(control);
 
                 try {
-                    COSE.Message msgX = COSE.Message.DecodeFromBytes(rgb, COSE.Tags.MAC);
-                    msg = (COSE.MACMessage) msgX;
+                    Message msgX = Message.DecodeFromBytes(rgb, Tags.MAC);
+                    msg = (MACMessage) msgX;
                 }
-                catch (COSE.CoseException) {
+                catch (CoseException) {
                     // Check for expected decode failure
                     if (fFail) return true;
                     return false;
@@ -1515,16 +1515,16 @@ namespace examples
 
                 SetRecievingAttributes(msg, mac);
 
-                COSE.Recipient recipX = msg.RecipientList[iRecipient];
-                COSE.Key key = GetKey(recip["key"], false);
+                Recipient recipX = msg.RecipientList[iRecipient];
+                Key key = GetKey(recip["key"], false);
                 recipX.SetKey(key);
 
                 recipX = SetRecievingAttributes(recipX, recip);
 
                 CBORObject cnStatic = recip["sender_key"];
                 if (cnStatic != null) {
-                    if (recipX.FindAttribute(COSE.HeaderKeys.StaticKey) == null) {
-                        recipX.AddDontSend(COSE.HeaderKeys.StaticKey, GetKey(cnStatic, true).AsCBOR());
+                    if (recipX.FindAttribute(HeaderKeys.StaticKey) == null) {
+                        recipX.AddAttribute(HeaderKeys.StaticKey, GetKey(cnStatic, true).AsCBOR(), Attributes.DO_NOT_SEND);
                     }
                 }
 
@@ -1557,11 +1557,11 @@ namespace examples
                 byte[] rgb = FromHex(cnControl["output"]["cbor"].AsString());
                 int i = 0;
                 foreach (CBORObject cnSigner in cnSigners.Values) {
-                    COSE.SignMessage signMsg = null;
+                    SignMessage signMsg = null;
 
                     try {
-                        COSE.Message msg = COSE.Message.DecodeFromBytes(rgb, COSE.Tags.Signed);
-                        signMsg = (COSE.SignMessage) msg;
+                        Message msg = Message.DecodeFromBytes(rgb, Tags.Signed);
+                        signMsg = (SignMessage) msg;
                     }
                     catch (Exception e) {
                         if (fFailBody) return true;
@@ -1570,8 +1570,8 @@ namespace examples
 
                     SetRecievingAttributes(signMsg, cnMessage);
 
-                    COSE.Key cnKey = GetKey(cnSigner["key"]);
-                    COSE.Signer hSigner = signMsg.SignerList[i];
+                    Key cnKey = GetKey(cnSigner["key"]);
+                    Signer hSigner = signMsg.SignerList[i];
 
                     SetRecievingAttributes(hSigner, cnSigner);
 
@@ -1616,9 +1616,9 @@ namespace examples
             return false;
         }
 
-        static COSE.Recipient SetRecievingAttributes(COSE.Recipient recip, CBORObject control)
+        static Recipient SetRecievingAttributes(Recipient recip, CBORObject control)
         {
-            COSE.Key key = null;
+            Key key = null;
 
             if (control.ContainsKey("unsent")) AddAttributes(recip, control["unsent"], 2);
 
@@ -1631,23 +1631,23 @@ namespace examples
             return recip;
         }
 
-        static void SetRecievingAttributes(COSE.Message recip, CBORObject control)
+        static void SetRecievingAttributes(Message recip, CBORObject control)
         {
             if (control.ContainsKey("unsent")) AddAttributes(recip, control["unsent"], 2);
 
             if (control.ContainsKey("external")) AddExternalData(recip, control["external"]);
         }
 
-        static void SetRecievingAttributes(COSE.Signer recip, CBORObject control)
+        static void SetRecievingAttributes(Signer recip, CBORObject control)
         {
             if (control.ContainsKey("unsent")) AddAttributes(recip, control["unsent"], 2);
 
             if (control.ContainsKey("external")) AddExternalData(recip, control["external"]);
         }
 
-        static void CheckCounterSignatures(COSE.Message msg, CBORObject cSigInfo)
+        static void CheckCounterSignatures(Message msg, CBORObject cSigInfo)
         {
-            CBORObject cSigs = msg.FindAttribute(COSE.HeaderKeys.CounterSignature);
+            CBORObject cSigs = msg.FindAttribute(HeaderKeys.CounterSignature);
 
             if (cSigs == null) throw new Exception("No counter signature found");
 
@@ -1658,9 +1658,9 @@ namespace examples
 #if false
             int iCSign;
             for (iCSign = 0; iCSign < cSigConfig.Count; iCSign++) {
-                COSE.CounterSignature sig;
+                CounterSignature sig;
                 if (cSigs[0].Type != CBORType.Array) {
-                    sig = new COSE.CounterSignature();
+                    sig = new CounterSignature();
                     sig.DecodeFromCBORObject(cSigs);
                 }
                 else {

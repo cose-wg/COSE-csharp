@@ -10,7 +10,7 @@ using Org.BouncyCastle.Asn1.X9;
 
 using Org.BouncyCastle.Crypto.Digests;
 
-namespace COSE
+namespace Com.AugustCellars.COSE
 {
 #if false
     public class CfrgCurves

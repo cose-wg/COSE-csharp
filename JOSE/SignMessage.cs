@@ -385,8 +385,8 @@ namespace JOSE
                     ecdsa.Init(true, param);
 
                     BigInteger[] sig = ecdsa.GenerateSignature(bytesToBeSigned);
-                    byte[] r = sig[0].ToByteArray();
-                    byte[] s = sig[1].ToByteArray();
+                    byte[] r = sig[0].ToByteArrayUnsigned();
+                    byte[] s = sig[1].ToByteArrayUnsigned();
                     byte[] sigs = new byte[r.Length + s.Length];
                     Array.Copy(r, sigs, r.Length);
                     Array.Copy(s, 0, sigs, r.Length, s.Length);
@@ -412,7 +412,7 @@ namespace JOSE
             case "EdDSA": {
                     switch (keyToSign.AsString("crv")) {
                     case "Ed25519":
-                        COSE.EdDSA25517 x = new COSE.EdDSA25517();
+                        Com.AugustCellars.COSE.EdDSA25517 x = new Com.AugustCellars.COSE.EdDSA25517();
                         return x.Sign(keyToSign.AsBytes("x"), keyToSign.AsBytes("d"), bytesToBeSigned);
                     }
                 }
@@ -425,7 +425,7 @@ namespace JOSE
         public void Verify(Key key, SignMessage msg)
         {
             string alg = FindAttr("alg", msg).AsString();
-            COSE.EdDSA eddsa;
+            Com.AugustCellars.COSE.EdDSA eddsa;
 
             IDigest digest;
             IDigest digest2;
@@ -520,8 +520,8 @@ namespace JOSE
                     byte[] o1 = new byte[digest.GetDigestSize()];
                     digest.DoFinal(o1, 0);
                     
-                    BigInteger r = new BigInteger(signature, 0, signature.Length / 2);
-                    BigInteger s = new BigInteger(signature, signature.Length / 2, signature.Length / 2);
+                    BigInteger r = new BigInteger(1, signature, 0, signature.Length / 2);
+                    BigInteger s = new BigInteger(1, signature, signature.Length / 2, signature.Length / 2);
 
                     if (!ecdsa.VerifySignature(o1, r, s)) throw new JOSE_Exception("Signature did not validate");
                 }
@@ -552,13 +552,13 @@ namespace JOSE
                 if (key.AsString("kty") != "OKP") throw new JOSE_Exception("Wrong Key Type");
                 switch (key.AsString("crv")) {
                 case "Ed25519":
-                    eddsa = new COSE.EdDSA25517();
+                    eddsa = new Com.AugustCellars.COSE.EdDSA25517();
                     break;
 
                 default:
                     throw new JOSE_Exception("Unknown OKP curve");
                 }
-                COSE.EdDSAPoint eddsaPoint = eddsa.DecodePoint(key.AsBytes("x"));
+                Com.AugustCellars.COSE.EdDSAPoint eddsaPoint = eddsa.DecodePoint(key.AsBytes("x"));
 
                 byte[] toVerify = new byte[protectedB64.Length + rgbDot.Length + msg.payloadB64.Length];
                 Array.Copy(protectedB64, 0, toVerify, 0, protectedB64.Length);

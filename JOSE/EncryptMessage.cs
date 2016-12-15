@@ -325,7 +325,7 @@ namespace JOSE
             byte[] saveContent = rgbContent;
             if (objProtected.ContainsKey("zip")) {
                 MemoryStream stm2 = new MemoryStream();
-                DeflateStream zipStm = new DeflateStream(stm2, CompressionLevel.Optimal);
+                DeflateStream zipStm = new DeflateStream(stm2, CompressionMode.Compress);
 
                 zipStm.Write(rgbContent, 0, rgbContent.Length);
                 zipStm.Close();
@@ -1198,7 +1198,7 @@ namespace JOSE
             else {
                 switch (epk.AsString("crv")) {
                 case "X25519":
-                    return COSE.X25519.CalculateAgreement(epk.AsBytes("x"), key.AsBytes("d"));
+                    return Com.AugustCellars.COSE.X25519.CalculateAgreement(epk.AsBytes("x"), key.AsBytes("d"));
 
                 default:
                     throw new JOSE_Exception("Unsupported curve");
@@ -1230,7 +1230,7 @@ namespace JOSE
             else if (m_key.AsString("kty") == "OKP") {
                 switch (m_key.AsString("crv")) {
                 case "X25519":
-                    COSE.X25519KeyPair item = COSE.X25519.GenerateKeyPair();
+                    Com.AugustCellars.COSE.X25519KeyPair item = Com.AugustCellars.COSE.X25519.GenerateKeyPair();
 
                     epk.Add("kty", "OKP");
                     epk.Add("crv", "X25519");
@@ -1288,7 +1288,7 @@ namespace JOSE
             else {
                 switch (epk.AsString("crv")) {
                 case "X25519":
-                    return COSE.X25519.CalculateAgreement(epk.AsBytes("x"), key.AsBytes("d"));
+                    return Com.AugustCellars.COSE.X25519.CalculateAgreement(epk.AsBytes("x"), key.AsBytes("d"));
 
                 default:
                     throw new JOSE_Exception("Unsupported curve");

@@ -17,7 +17,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.EC;
 using Org.BouncyCastle.Math.EC;
 
-namespace COSE
+namespace Com.AugustCellars.COSE
 {
     public class Key
     {

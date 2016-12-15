@@ -17,14 +17,14 @@ using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Security;
 
-namespace COSE
+namespace Com.AugustCellars.COSE
 {
     public class SignMessage : Message
     {
         List<Signer> signerList = new List<Signer>();
         byte[] rgbContent;
 
-        public SignMessage()
+        public SignMessage(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
             m_tag = Tags.Signed;
         }
@@ -122,7 +122,7 @@ namespace COSE
 
             if (m_counterSignerList.Count() != 0) {
                 if (m_counterSignerList.Count() == 1) {
-                    AddUnprotected(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbContent));
+                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbContent), Attributes.UNPROTECTED);
                 }
                 else {
                     foreach (CounterSignature sig in m_counterSignerList) {
@@ -188,8 +188,8 @@ namespace COSE
 
         public Signer(Key key, CBORObject algorithm = null)
         {
-            if (algorithm != null) AddAttribute(HeaderKeys.Algorithm, algorithm, false);
-            if (key.ContainsName(CoseKeyKeys.KeyIdentifier)) AddUnprotected(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier]);
+            if (algorithm != null) AddAttribute(HeaderKeys.Algorithm, algorithm, Attributes.UNPROTECTED);
+            if (key.ContainsName(CoseKeyKeys.KeyIdentifier)) AddAttribute(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier], Attributes.UNPROTECTED);
 
             if (key.ContainsName("use")) {
                 string usage = key.AsString("use");
@@ -622,8 +622,8 @@ namespace COSE
             byte[] rgbBody = null;
 
             if (m_msgToSign != null) {
-                if (m_msgToSign.GetType() == typeof(EnvelopedMessage)) {
-                    EnvelopedMessage msg = (EnvelopedMessage) m_msgToSign;
+                if (m_msgToSign.GetType() == typeof(EncryptMessage)) {
+                    EncryptMessage msg = (EncryptMessage) m_msgToSign;
                     msg.Encrypt();
                     CBORObject obj = msg.EncodeToCBORObject();
                     if (obj[1].Type != CBORType.ByteString) throw new Exception("Internal error");

@@ -8,7 +8,7 @@ using Org.BouncyCastle.Security;
 
 using PeterO.Cbor;
 
-namespace COSE
+namespace Com.AugustCellars.COSE
 {
 
     public enum Tags
@@ -220,12 +220,6 @@ namespace COSE
         protected bool m_emitContent;
         protected Tags m_tag;
 
-        public Message()
-        {
-            m_emitTag = true;
-            m_emitContent = true;
-        }
-
         public Message(Boolean fEmitTag, Boolean fEmitContent)
         {
             m_emitTag = fEmitTag;
@@ -269,7 +263,7 @@ namespace COSE
                 return sig;
 
             case Tags.Signed0:
-                Sign0Message sig0 = new Sign0Message();
+                Sign1Message sig0 = new Sign1Message();
                 sig0.DecodeFromCBORObject(messageObject);
                 return sig0;
             
@@ -285,13 +279,13 @@ namespace COSE
                 return mac0;
 
             case Tags.Enveloped:         // It is an encrytion message
-                EnvelopedMessage enc = new EnvelopedMessage();
+                EncryptMessage enc = new EncryptMessage();
 
                 enc.DecodeFromCBORObject(messageObject);
                 return enc;
 
             case Tags.Encrypted:
-                EncryptMessage enc0 = new EncryptMessage();
+                Encrypt0Message enc0 = new Encrypt0Message();
                 enc0.DecodeFromCBORObject(messageObject);
                 return enc0;
 
@@ -346,101 +340,7 @@ namespace COSE
 
 
 
-    public class Attributes
-    {
-        protected CBORObject objProtected = CBORObject.NewMap();
-        protected CBORObject objUnprotected = CBORObject.NewMap();
-        protected CBORObject objDontSend = CBORObject.NewMap();
-        protected byte[] externalData = new byte[0];
-        protected byte[] rgbProtected;
-
-        public void AddAttribute(string name, string value, bool fProtected)
-        {
-            if (fProtected) AddProtected(name, value);
-            else AddUnprotected(name, value);
-        }
-
-        public void AddAttribute(string name, CBORObject value, bool fProtected)
-        {
-            if (fProtected) AddProtected(name, value);
-            else AddUnprotected(name, value);
-        }
-
-        public void AddAttribute(CBORObject key, CBORObject value, bool fProtected)
-        {
-            if (fProtected) AddProtected(key, value);
-            else AddUnprotected(key, value);
-        }
-
-        public void AddProtected(string label, string value)
-        {
-            AddProtected(label, CBORObject.FromObject(value)); 
-        }
-
-        public void AddProtected(string label, CBORObject value)
-        {
-            AddProtected(CBORObject.FromObject(label), value);
-        }
-
-        public void AddUnprotected(string label, string value)
-        {
-            AddUnprotected(label, CBORObject.FromObject(label));
-        }
-
-        public void AddUnprotected(string label, CBORObject value)
-        {
-            AddUnprotected(CBORObject.FromObject(label), value);
-        }
-
-        public void AddProtected(CBORObject label, CBORObject value)
-        {
-            RemoveAttribute(label);
-            objProtected.Add(label, value);
-        }
-
-        public void AddUnprotected(CBORObject label, CBORObject value)
-        {
-            RemoveAttribute(label);
-            objUnprotected.Add(label, value);
-        }
-
-        public void AddDontSend(CBORObject label, CBORObject value)
-        {
-            RemoveAttribute(label);
-            objDontSend.Add(label, value);
-        }
-
-        public CBORObject FindAttribute(CBORObject label)
-        {
-            if (objProtected.ContainsKey(label)) return objProtected[label];
-            if (objUnprotected.ContainsKey(label)) return objUnprotected[label];
-            if (objDontSend.ContainsKey(label)) return objDontSend[label];
-            return null;
-        }
-
-        public CBORObject FindAttribute(int label)
-        {
-            return FindAttribute(CBORObject.FromObject(label));
-        }
-
-        public CBORObject FindAttribute(string label)
-        {
-            return FindAttribute(CBORObject.FromObject(label));
-        }
-
-        private void RemoveAttribute(CBORObject label)
-        {
-            if (objProtected.ContainsKey(label)) objProtected.Remove(label);
-            if (objUnprotected.ContainsKey(label)) objUnprotected.Remove(label);
-            if (objDontSend.ContainsKey(label)) objDontSend.Remove(label);
-        }
-
-        public void SetExternalData(byte[] newData)
-        {
-            externalData = newData;
-        }
-    }
-
+ 
         [Serializable]
     public class CoseException : Exception
 
