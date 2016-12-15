@@ -2,10 +2,16 @@ language: csharp
 mono:
   - latest
 solution: examples/examples.sln
+install:
+   - nuget restore examples/examples.sln
+   - nuget restore COSE/COSE.Net40.sln
+   - nuget restore COSE/COSE.Net45.sln
 script:
   - git clone --depth 1 https://github.com/cose-wg/Examples Regressions
   - git clone --depth 1 https://github.com/ietf-jose/cookbook cookbook
-  - xbuild /p:Configuration=Release examples/examples.sln
+  - cd COSE && xbuild /p:Configuration=Release COSE.Net40.sln
+  - cd COSE && xbuild /p:Configuration=Release COSE.Net45.sln
+  - cd examples && xbuild /p:Configuration=Release examples.sln
   - mono examples/examples/bin/Release/examples.exe --cose Regressions
   - mono examples/examples/bin/Release/examples.exe --jose cookbook
   
