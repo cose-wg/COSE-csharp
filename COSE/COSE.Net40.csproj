@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes.cs" />
     <Compile Include="ChaCha20Poly1305.cs" />
     <Compile Include="EncryptMessage.cs" />
     <Compile Include="Key.cs" />
