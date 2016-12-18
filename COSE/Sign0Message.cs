@@ -21,8 +21,6 @@ namespace Com.AugustCellars.COSE
 {
     public class Sign1Message : Message
     {
-        byte[] rgbContent;
-
         public Sign1Message(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
             m_tag = Tags.Signed0;
@@ -103,16 +101,6 @@ namespace Com.AugustCellars.COSE
 
             obj.Add(rgbSignature);
             return obj;
-        }
-
-        public void SetContent(byte[] keyBytes)
-        {
-            rgbContent = keyBytes;
-        }
-
-        public void SetContent(string contentString)
-        {
-            rgbContent = UTF8Encoding.ASCII.GetBytes(contentString);
         }
 
         Key keyToSign;

@@ -33,14 +33,13 @@ namespace Com.AugustCellars.COSE
         protected string context;
 
         protected byte[] rgbEncrypted;
-        protected byte[] rgbContent;
         byte[] m_cek;
 
         public EncryptCommon(Boolean fEmitTag, Boolean fEmitContent) : base(fEmitTag, fEmitContent) { }
 
         protected void DecryptWithKey(byte[] CEK)
         {
-            if (rgbEncrypted == null) throw new CoseException("No Encrypted Content supplied");
+            if (rgbEncrypted == null) throw new CoseException("No Encrypted Content Specified.");
             if (CEK == null) throw new CoseException("Null Key Supplied");
 
             CBORObject alg = FindAttribute(HeaderKeys.Algorithm);
@@ -149,25 +148,7 @@ namespace Com.AugustCellars.COSE
         }
 #endif
 
-        public byte[] GetContent()
-        {
-            return rgbContent;
-        }
 
-        public string GetContentAsString()
-        {
-            return UTF8Encoding.ASCII.GetString(rgbContent);
-        }
-
-        public void SetContent(byte[] keyBytes)
-        {
-            rgbContent = keyBytes;
-        }
-
-        public void SetContent(string contentString)
-        {
-            rgbContent = UTF8Encoding.ASCII.GetBytes(contentString);
-        }
 
         public byte[] GetEncryptedContent()
         {
@@ -187,7 +168,7 @@ namespace Com.AugustCellars.COSE
         public int GetKeySize(CBORObject alg)
         {
             if (alg.Type == CBORType.TextString) {
-                throw new CoseException("Unrecognized Algorithm Specified");
+                throw new CoseException("Unknown Algorithm Specified");
             }
             else if (alg.Type == CBORType.Number) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
@@ -210,7 +191,7 @@ namespace Com.AugustCellars.COSE
                     return 256;
 
                 default:
-                    throw new CoseException("Unrecognized Algorithm Specified");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
 
             }
@@ -232,9 +213,9 @@ namespace Com.AugustCellars.COSE
             IV = new byte[96 / 8];
             cbor = FindAttribute(HeaderKeys.IV);
             if (cbor != null) {
-                if (cbor.Type != CBORType.ByteString) throw new CoseException("IV is incorreclty formed.");
-                if (cbor.GetByteString().Length > IV.Length) throw new CoseException("IV is too long.");
-                Array.Copy(cbor.GetByteString(), 0, IV, IV.Length - cbor.GetByteString().Length, cbor.GetByteString().Length);
+                if (cbor.Type != CBORType.ByteString) throw new CoseException("IV is incorrectly formed.");
+                if (cbor.GetByteString().Length != IV.Length) throw new CoseException("IV size is incorrect.");
+                Array.Copy(cbor.GetByteString(), IV, IV.Length);
             }
             else {
                 s_PRNG.NextBytes(IV);
@@ -1941,90 +1922,6 @@ namespace Com.AugustCellars.COSE
 #endif // FOR_EXAMPLES
     }
 
-    public class Encrypt0Message : EncryptCommon
-    {
-        public Encrypt0Message() : base(true, true)
-        {
-            context = "Encrypted";
-            m_tag = Tags.Encrypted;
-        }
-
-        public Encrypt0Message(bool fEmitTag, bool fEmitContent=true) :base(fEmitTag, fEmitContent)
-        {
-            context = "Encrypted";
-            m_tag = Tags.Encrypted;
-        }
-
-        virtual public void DecodeFromCBORObject(CBORObject obj)
-        {
-            if (obj.Count != 3) throw new CoseException("Invalid Encryption structure");
-
-            //  Protected values.
-            if (obj[0].Type == CBORType.ByteString) {
-                if (obj[0].GetByteString().Length == 0) objProtected = CBORObject.NewMap();
-                else objProtected = CBORObject.DecodeFromBytes(obj[0].GetByteString());
-                if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid Encryption Structure");
-            }
-            else {
-                throw new CoseException("Invalid Encryption structure");
-            }
-
-            //  Unprotected attributes
-            if (obj[1].Type == CBORType.Map) objUnprotected = obj[1];
-            else throw new CoseException("Invalid Encryption Structure");
-
-            // Cipher Text
-            if (obj[2].Type == CBORType.ByteString) rgbEncrypted = obj[2].GetByteString();
-            else if (!obj[2].IsNull) {               // Detached content - will need to get externally
-                throw new CoseException("Invalid Encryption Structure");
-            }
-        }
-
-        public override CBORObject Encode()
-        {
-            CBORObject obj;
-
-            if (rgbEncrypted == null) throw new CoseException("Must call Encrypt first");
-
-            if (m_counterSignerList.Count() != 0) {
-                CBORObject objX;
-                if (objProtected.Count > 0) objX = CBORObject.FromObject(objProtected.EncodeToBytes());
-                else objX = CBORObject.FromObject(new byte[0]);
-                if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbEncrypted), Attributes.UNPROTECTED);
-                }
-                else {
-                    foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(rgbProtected, rgbEncrypted);
-                    }
-                }
-            }
-            obj = CBORObject.NewArray();
-
-            if (objProtected.Count > 0) {
-                obj.Add(objProtected.EncodeToBytes());
-            }
-            else obj.Add(CBORObject.FromObject(new byte[0]));
-
-            obj.Add(objUnprotected); // Add unprotected attributes
-
-            if (m_emitContent) obj.Add(rgbEncrypted);      // Add ciphertext
-            else obj.Add(CBORObject.Null);
-
-            return obj;
-        }
-
-        public byte[] Decrypt(byte[] rgbKey)
-        {
-            DecryptWithKey(rgbKey);
-            return rgbContent;
-        }
-
-        public void Encrypt(byte[] rgbKey)
-        {
-            EncryptWithKey(rgbKey);
-        }
-    }
 
     public class EncryptMessage : EncryptCommon
     {

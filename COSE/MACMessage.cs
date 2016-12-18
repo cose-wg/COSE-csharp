@@ -567,20 +567,9 @@ namespace Com.AugustCellars.COSE
     public abstract class MacMessageCommon : Message
     {
         protected byte[] rgbTag;
-        protected byte[] rgbContent;
         protected string strContext = "";
 
         protected MacMessageCommon(bool fEmitTag, bool fEmitContent) : base(fEmitTag, fEmitContent) { }
-
-        public void SetContent(byte[] keyBytes)
-        {
-            rgbContent = keyBytes;
-        }
-
-        public void SetContent(string contentString)
-        {
-            rgbContent = UTF8Encoding.ASCII.GetBytes(contentString);
-        }
 
 #if FOR_EXAMPLES
         public byte[] BuildContentBytes()

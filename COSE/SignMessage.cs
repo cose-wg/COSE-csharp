@@ -22,7 +22,6 @@ namespace Com.AugustCellars.COSE
     public class SignMessage : Message
     {
         List<Signer> signerList = new List<Signer>();
-        byte[] rgbContent;
 
         public SignMessage(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
@@ -155,16 +154,6 @@ namespace Com.AugustCellars.COSE
                 obj.Add(null);      // No recipients - set to null
             }
             return obj;
-        }
-
-        public void SetContent(byte[] keyBytes)
-        {
-            rgbContent = keyBytes;
-        }
-
-        public void SetContent(string contentString)
-        {
-            rgbContent = UTF8Encoding.ASCII.GetBytes(contentString);
         }
 
         public bool Validate(Signer signer)

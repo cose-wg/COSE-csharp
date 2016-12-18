@@ -13,7 +13,10 @@ namespace Com.AugustCellars.COSE
 
     public enum Tags
     { 
-        Encrypted = 16, Enveloped =96,Signed = 98, MAC = 97, MAC0=17, Signed0=18, Unknown = 0
+        [Obsolete]
+        Encrypted = 16,
+        Enveloped =96, Signed = 98, MAC = 97, MAC0=17, Signed0=18, Unknown = 0,
+        Encrypt0 = 16
     }
 
     public class RecordKeys
@@ -219,6 +222,7 @@ namespace Com.AugustCellars.COSE
         protected bool m_emitTag = true;
         protected bool m_emitContent;
         protected Tags m_tag;
+        protected byte[] rgbContent;
 
         public Message(Boolean fEmitTag, Boolean fEmitContent)
         {
@@ -284,7 +288,7 @@ namespace Com.AugustCellars.COSE
                 enc.DecodeFromCBORObject(messageObject);
                 return enc;
 
-            case Tags.Encrypted:
+            case Tags.Encrypt0:
                 Encrypt0Message enc0 = new Encrypt0Message();
                 enc0.DecodeFromCBORObject(messageObject);
                 return enc0;
@@ -336,6 +340,23 @@ namespace Com.AugustCellars.COSE
         }
 
         public abstract CBORObject Encode();
+
+        public Boolean HasContent()
+        {
+            return rgbContent != null;
+        }
+
+        public byte[] GetContent() { return rgbContent; }
+        public string GetContentAsString()
+        {
+            return UTF8Encoding.ASCII.GetString(rgbContent);
+        }
+
+        public void SetContent(byte[] contentIn) { rgbContent = contentIn; }
+        public void SetContent(String contentString)
+        {
+            rgbContent = UTF8Encoding.ASCII.GetBytes(contentString);
+        }
     }
 
 
