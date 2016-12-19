@@ -18,7 +18,7 @@ script:
   - xbuild /p:Configuration=Release examples.sln
   - cd ..
   - cd COSE
-  - mono ../testrunner/NUnit.ConsoleRunner.3.5.0/tools/nunit3-console.exe ./COSE.Tests/bin/Release/COSE.Tests.dll
+  - mono ../testrunner/NUnit.ConsoleRunner.3.5.0/tools/nunit3-console.exe ./COSE.Tests/bin/Release40/COSE.Tests.dll
   - cd ..
   - mono examples/examples/bin/Release/examples.exe --cose Regressions
   - mono examples/examples/bin/Release/examples.exe --jose cookbook
