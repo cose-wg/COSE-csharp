@@ -15,8 +15,11 @@ namespace Com.AugustCellars.COSE
     { 
         [Obsolete]
         Encrypted = 16,
-        Enveloped =96, Signed = 98, MAC = 97, MAC0=17, Signed0=18, Unknown = 0,
-        Encrypt0 = 16
+        [Obsolete]
+        Enveloped =96,
+        Signed = 98, MAC = 97, MAC0=17, Signed0=18, Unknown = 0,
+        Encrypt0 = 16,
+        Encrypt = 96
     }
 
     public class RecordKeys
@@ -282,7 +285,7 @@ namespace Com.AugustCellars.COSE
                 mac0.DecodeFromCBORObject(messageObject);
                 return mac0;
 
-            case Tags.Enveloped:         // It is an encrytion message
+            case Tags.Encrypt:         // It is an encrytion message
                 EncryptMessage enc = new EncryptMessage();
 
                 enc.DecodeFromCBORObject(messageObject);
@@ -307,6 +310,7 @@ namespace Com.AugustCellars.COSE
             return obj3.EncodeToBytes();
         }
 
+        [Obsolete]
         public void ForceArray(bool f)
         {
             m_forceArray = f;
