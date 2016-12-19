@@ -22,4 +22,3 @@ script:
   - cd ..
   - mono examples/examples/bin/Release/examples.exe --cose Regressions
   - mono examples/examples/bin/Release/examples.exe --jose cookbook
-d
