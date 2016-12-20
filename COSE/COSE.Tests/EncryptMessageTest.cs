@@ -118,7 +118,7 @@ namespace Com.AugustCellars.COSE
             msg.SetContent(rgbContent);
             CoseException e = Assert.Throws<CoseException>(() =>
                 msg.Encrypt());
-            Assert.That(e.Message, Is.EqualTo("Unsupported Algorithm Specified"));
+            Assert.That(e.Message, Is.EqualTo("Incorrect key size" /*"Unsupported Algorithm Specified"*/));
         }
 
         [Test]

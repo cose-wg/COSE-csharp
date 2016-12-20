@@ -168,7 +168,7 @@ namespace Com.AugustCellars.COSE
         public int GetKeySize(CBORObject alg)
         {
             if (alg.Type == CBORType.TextString) {
-                throw new CoseException("Unsupported Algorithm Specified");
+                throw new CoseException("Unknown Algorithm Specified");
             }
             else if (alg.Type == CBORType.Number) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
@@ -191,7 +191,7 @@ namespace Com.AugustCellars.COSE
                     return 256;
 
                 default:
-                    throw new CoseException("Unsupported Algorithm Specified");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
 
             }
@@ -1200,7 +1200,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new CoseException("NYI");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
             else if (alg.Type == CBORType.Number) {
