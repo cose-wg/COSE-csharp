@@ -33,14 +33,13 @@ namespace Com.AugustCellars.COSE
         protected string context;
 
         protected byte[] rgbEncrypted;
-        protected byte[] rgbContent;
         byte[] m_cek;
 
         public EncryptCommon(Boolean fEmitTag, Boolean fEmitContent) : base(fEmitTag, fEmitContent) { }
 
         protected void DecryptWithKey(byte[] CEK)
         {
-            if (rgbEncrypted == null) throw new CoseException("No Encrypted Content supplied");
+            if (rgbEncrypted == null) throw new CoseException("No Encrypted Content Specified.");
             if (CEK == null) throw new CoseException("Null Key Supplied");
 
             CBORObject alg = FindAttribute(HeaderKeys.Algorithm);
@@ -149,25 +148,7 @@ namespace Com.AugustCellars.COSE
         }
 #endif
 
-        public byte[] GetContent()
-        {
-            return rgbContent;
-        }
 
-        public string GetContentAsString()
-        {
-            return UTF8Encoding.ASCII.GetString(rgbContent);
-        }
-
-        public void SetContent(byte[] keyBytes)
-        {
-            rgbContent = keyBytes;
-        }
-
-        public void SetContent(string contentString)
-        {
-            rgbContent = UTF8Encoding.ASCII.GetBytes(contentString);
-        }
 
         public byte[] GetEncryptedContent()
         {
@@ -187,7 +168,7 @@ namespace Com.AugustCellars.COSE
         public int GetKeySize(CBORObject alg)
         {
             if (alg.Type == CBORType.TextString) {
-                throw new CoseException("Unrecognized Algorithm Specified");
+                throw new CoseException("Unknown Algorithm Specified");
             }
             else if (alg.Type == CBORType.Number) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
@@ -210,7 +191,7 @@ namespace Com.AugustCellars.COSE
                     return 256;
 
                 default:
-                    throw new CoseException("Unrecognized Algorithm Specified");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
 
             }
@@ -232,9 +213,9 @@ namespace Com.AugustCellars.COSE
             IV = new byte[96 / 8];
             cbor = FindAttribute(HeaderKeys.IV);
             if (cbor != null) {
-                if (cbor.Type != CBORType.ByteString) throw new CoseException("IV is incorreclty formed.");
-                if (cbor.GetByteString().Length > IV.Length) throw new CoseException("IV is too long.");
-                Array.Copy(cbor.GetByteString(), 0, IV, IV.Length - cbor.GetByteString().Length, cbor.GetByteString().Length);
+                if (cbor.Type != CBORType.ByteString) throw new CoseException("IV is incorrectly formed.");
+                if (cbor.GetByteString().Length != IV.Length) throw new CoseException("IV size is incorrect.");
+                Array.Copy(cbor.GetByteString(), IV, IV.Length);
             }
             else {
                 s_PRNG.NextBytes(IV);
@@ -608,7 +589,6 @@ namespace Com.AugustCellars.COSE
 
     public class Recipient : EncryptCommon
     {
-        RecipientType m_recipientType;
         Key m_key;
         Key m_senderKey;
         List<Recipient> recipientList = new List<Recipient>();
@@ -618,16 +598,10 @@ namespace Com.AugustCellars.COSE
             if (algorithm != null) {
                 if (algorithm.Type == CBORType.TextString) {
                     switch (algorithm.AsString()) {
-                    case "dir":  // Direct encryption mode
-                        if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid parameters");
-                        m_recipientType = RecipientType.direct;
-                        break;
-
                     case "A128GCMKW":
                     case "A192GCMKW":
                     case "A256GCMKW":
                         if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid Parameter");
-                        m_recipientType = RecipientType.keyWrap;
                         break;
 
 
@@ -635,7 +609,6 @@ namespace Com.AugustCellars.COSE
                     case "PBES2-HS256+A192KW":
                     case "PBES-HS256+A256KW":
                         if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid Parameter");
-                        m_recipientType = RecipientType.password;
                         break;
 
                     default:
@@ -649,26 +622,22 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.Direct_HKDF_AES_128:
                     case AlgorithmValuesInt.Direct_HKDF_AES_256:
                         if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid parameters");
-                    m_recipientType = RecipientType.direct;
-                    break;
+                        break;
 
 
                     case AlgorithmValuesInt.RSA_OAEP:
                     case AlgorithmValuesInt.RSA_OAEP_256:
                         if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_RSA)) throw new CoseException("Invalid Parameter");
-                        m_recipientType = RecipientType.keyTransport;
                         break;
 
                     case AlgorithmValuesInt.AES_KW_128:
                     case AlgorithmValuesInt.AES_KW_192:
                     case AlgorithmValuesInt.AES_KW_256:
                         if ((key != null) && (key[CoseKeyKeys.KeyType].Equals( GeneralValues.KeyType_Octet))) throw new CoseException("Invalid Parameter");
-                        m_recipientType = RecipientType.keyWrap;
                         break;
 
                     case AlgorithmValuesInt.DIRECT:  // Direct encryption mode
                         if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid parameters");
-                        m_recipientType = RecipientType.direct;
                         break;
 
                     case AlgorithmValuesInt.ECDH_ES_HKDF_256_AES_KW_128:
@@ -678,7 +647,6 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_192:
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_256:
                         if ((key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) && (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) throw new CoseException("Invalid Parameter");
-                        m_recipientType = RecipientType.keyAgree;
                         break;
 
                     case AlgorithmValuesInt.ECDH_ES_HKDF_256:
@@ -688,7 +656,6 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.ECDH_SS_HKDF_512:
 #endif // DEBUG
                         if ((key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) && (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) throw new CoseException("Invalid Parameters");
-                        m_recipientType = RecipientType.keyAgreeDirect;
                         break;
 
                     default:
@@ -704,7 +671,6 @@ namespace Com.AugustCellars.COSE
                 if (key[CoseKeyKeys.KeyType].Type == CBORType.Number) {
                     switch ((GeneralValuesInt) key[CoseKeyKeys.KeyType].AsInt32()) {
                     case GeneralValuesInt.KeyType_Octet:
-                        m_recipientType = RecipientType.keyWrap;
                         switch (key.AsBytes(CoseKeyParameterKeys.Octet_k).Length) {
                         case 128 / 8:
                             algorithm = AlgorithmValues.AES_KW_128;
@@ -724,12 +690,10 @@ namespace Com.AugustCellars.COSE
                         break;
 
                     case GeneralValuesInt.KeyType_RSA:
-                        m_recipientType = RecipientType.keyTransport;
                         algorithm = AlgorithmValues.RSA_OAEP_256;
                         break;
 
                     case GeneralValuesInt.KeyType_EC2:
-                        m_recipientType = RecipientType.keyAgree;
                         algorithm =  AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_128;
                         break;
                     }
@@ -779,7 +743,33 @@ namespace Com.AugustCellars.COSE
             get { return recipientList; }
         }
 
-        public RecipientType recipientType { get { return m_recipientType; } }
+        public RecipientType recipientType {
+            get {
+                CBORObject alg = FindAttribute(HeaderKeys.Algorithm);
+                if (alg == null) throw new CoseException("No recipient algorithm set");
+                switch ((AlgorithmValuesInt) alg.AsInt32())
+                {
+                    case AlgorithmValuesInt.DIRECT:
+                    case AlgorithmValuesInt.Direct_HKDF_AES_128:
+                    case AlgorithmValuesInt.Direct_HKDF_AES_256:
+                    case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_256:
+                    case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_512:
+                        return RecipientType.direct;
+
+                    case AlgorithmValuesInt.ECDH_ES_HKDF_256:
+                    case AlgorithmValuesInt.ECDH_ES_HKDF_512:
+                        return RecipientType.keyAgreeDirect;
+
+                    case AlgorithmValuesInt.AES_KW_128:
+                    case AlgorithmValuesInt.AES_KW_192:
+                    case AlgorithmValuesInt.AES_KW_256:
+                        return RecipientType.keyWrap;
+
+                    default:
+                        return RecipientType.keyAgree;
+                }
+            }
+        }
 
         public void AddRecipient(Recipient recipient)
         {
@@ -789,26 +779,26 @@ namespace Com.AugustCellars.COSE
 
         public void DecodeFromCBORObject(CBORObject obj)
         {
-            if ((obj.Count != 3) && (obj.Count != 4)) throw new CoseException("Invalid Encryption structure");
+            if ((obj.Count != 3) && (obj.Count != 4)) throw new CoseException("Invalid Encrypt structure");
 
             //  Protected values.
             if (obj[0].Type == CBORType.ByteString) {
                 if (obj[0].GetByteString().Length == 0) objProtected = CBORObject.NewMap();
                 else objProtected = CBORObject.DecodeFromBytes(obj[0].GetByteString());
-                if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid Encryption Structure");
+                if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid Encrypt structure");
             }
             else {
-                throw new CoseException("Invalid Encryption structure");
+                throw new CoseException("Invalid Encrypt structure");
             }
 
             //  Unprotected attributes
             if (obj[1].Type == CBORType.Map) objUnprotected = obj[1];
-            else throw new CoseException("Invalid Encryption Structure");
+            else throw new CoseException("Invalid Encrypt structure");
 
             // Cipher Text
             if (obj[2].Type == CBORType.ByteString) rgbEncrypted = obj[2].GetByteString();
             else if (!obj[2].IsNull) {               // Detached content - will need to get externally
-                throw new CoseException("Invalid Encryption Structure");
+                throw new CoseException("Invalid Encrypt structure");
             }
 
             // Recipients
@@ -821,7 +811,7 @@ namespace Com.AugustCellars.COSE
                         recipientList.Add(recip);
                     }
                 }
-                else throw new CoseException("Invalid Encryption Structure");
+                else throw new CoseException("Invalid Encrypt structure");
             }
         }
 
@@ -1210,7 +1200,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new CoseException("NYI");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
             else if (alg.Type == CBORType.Number) {
@@ -1328,7 +1318,7 @@ namespace Com.AugustCellars.COSE
                     }
 
                 default:
-                    throw new CoseException("Unknown algorithm");
+                    throw new CoseException("Unsupported algorithm");
                 }
             }
             else if (keyManagement.Type == CBORType.TextString) {
@@ -1338,7 +1328,7 @@ namespace Com.AugustCellars.COSE
                     return HKDF(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), cbitKey, alg, new Sha256Digest());
                     
                 default:
-                    throw new CoseException("Unknown algorithm");
+                    throw new CoseException("Unsupported algorithm");
 
                 }
             }
@@ -1941,90 +1931,6 @@ namespace Com.AugustCellars.COSE
 #endif // FOR_EXAMPLES
     }
 
-    public class Encrypt0Message : EncryptCommon
-    {
-        public Encrypt0Message() : base(true, true)
-        {
-            context = "Encrypted";
-            m_tag = Tags.Encrypted;
-        }
-
-        public Encrypt0Message(bool fEmitTag, bool fEmitContent=true) :base(fEmitTag, fEmitContent)
-        {
-            context = "Encrypted";
-            m_tag = Tags.Encrypted;
-        }
-
-        virtual public void DecodeFromCBORObject(CBORObject obj)
-        {
-            if (obj.Count != 3) throw new CoseException("Invalid Encryption structure");
-
-            //  Protected values.
-            if (obj[0].Type == CBORType.ByteString) {
-                if (obj[0].GetByteString().Length == 0) objProtected = CBORObject.NewMap();
-                else objProtected = CBORObject.DecodeFromBytes(obj[0].GetByteString());
-                if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid Encryption Structure");
-            }
-            else {
-                throw new CoseException("Invalid Encryption structure");
-            }
-
-            //  Unprotected attributes
-            if (obj[1].Type == CBORType.Map) objUnprotected = obj[1];
-            else throw new CoseException("Invalid Encryption Structure");
-
-            // Cipher Text
-            if (obj[2].Type == CBORType.ByteString) rgbEncrypted = obj[2].GetByteString();
-            else if (!obj[2].IsNull) {               // Detached content - will need to get externally
-                throw new CoseException("Invalid Encryption Structure");
-            }
-        }
-
-        public override CBORObject Encode()
-        {
-            CBORObject obj;
-
-            if (rgbEncrypted == null) throw new CoseException("Must call Encrypt first");
-
-            if (m_counterSignerList.Count() != 0) {
-                CBORObject objX;
-                if (objProtected.Count > 0) objX = CBORObject.FromObject(objProtected.EncodeToBytes());
-                else objX = CBORObject.FromObject(new byte[0]);
-                if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbEncrypted), Attributes.UNPROTECTED);
-                }
-                else {
-                    foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(rgbProtected, rgbEncrypted);
-                    }
-                }
-            }
-            obj = CBORObject.NewArray();
-
-            if (objProtected.Count > 0) {
-                obj.Add(objProtected.EncodeToBytes());
-            }
-            else obj.Add(CBORObject.FromObject(new byte[0]));
-
-            obj.Add(objUnprotected); // Add unprotected attributes
-
-            if (m_emitContent) obj.Add(rgbEncrypted);      // Add ciphertext
-            else obj.Add(CBORObject.Null);
-
-            return obj;
-        }
-
-        public byte[] Decrypt(byte[] rgbKey)
-        {
-            DecryptWithKey(rgbKey);
-            return rgbContent;
-        }
-
-        public void Encrypt(byte[] rgbKey)
-        {
-            EncryptWithKey(rgbKey);
-        }
-    }
 
     public class EncryptMessage : EncryptCommon
     {
@@ -2037,13 +1943,13 @@ namespace Com.AugustCellars.COSE
         public EncryptMessage() : base(true, true)
         {
             context = "Encrypt";
-            m_tag = Tags.Enveloped;
+            m_tag = Tags.Encrypt;
         }
 
         public EncryptMessage(Boolean emitTag, Boolean emitContent) : base(emitTag, emitContent)
         {
             context = "Enveloped";
-            m_tag = Tags.Enveloped;
+            m_tag = Tags.Encrypt;
         }
 
         public List<Recipient> RecipientList
@@ -2053,26 +1959,26 @@ namespace Com.AugustCellars.COSE
 
         virtual public void DecodeFromCBORObject(CBORObject obj)
         {
-            if (obj.Count != 4) throw new CoseException("Invalid Encryption structure");
+            if (obj.Count != 4) throw new CoseException("Invalid Encrypt structure");
 
             //  Protected values.
             if (obj[0].Type == CBORType.ByteString) {
                 if (obj[0].GetByteString().Length == 0) objProtected = CBORObject.NewMap();
                 else objProtected = CBORObject.DecodeFromBytes(obj[0].GetByteString());
-                if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid Encryption Structure");
+                if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid Encrypt structure");
             }
             else {
-                throw new CoseException("Invalid Encryption structure");
+                throw new CoseException("Invalid Encrypt structure");
             }
 
             //  Unprotected attributes
             if (obj[1].Type == CBORType.Map) objUnprotected = obj[1];
-            else throw new CoseException("Invalid Encryption Structure");
+            else throw new CoseException("Invalid Encrypt structure");
 
             // Cipher Text
             if (obj[2].Type == CBORType.ByteString) rgbEncrypted = obj[2].GetByteString();
             else if (!obj[2].IsNull) {               // Detached content - will need to get externally
-                throw new CoseException("Invalid Encryption Structure");
+                throw new CoseException("Invalid Encrypt structure");
             }
 
             // Recipients
@@ -2084,7 +1990,7 @@ namespace Com.AugustCellars.COSE
                     recipientList.Add(recip);
                 }
             }
-            else throw new CoseException("Invalid Encryption Structure");
+            else throw new CoseException("Invalid Encrypt structure");
         }
 
         public override CBORObject Encode()
@@ -2148,7 +2054,7 @@ namespace Com.AugustCellars.COSE
             recipientList.Add(recipient);
         }
 
-        public virtual void Decrypt(Recipient recipientIn)
+        public virtual byte[] Decrypt(Recipient recipientIn)
         {
             //  Get the CEK
             byte[] CEK = null;
@@ -2177,6 +2083,8 @@ namespace Com.AugustCellars.COSE
             }
 
             DecryptWithKey(CEK);
+
+            return rgbContent;
         }
 
         virtual public void Encrypt()
@@ -2216,7 +2124,7 @@ namespace Com.AugustCellars.COSE
             }
 
             if (recipientTypes == 3) throw new CoseException("It is not legal to mix direct and indirect recipients in a message");
-            if (recipientTypes == 0) throw new CoseException("No Recipients Specified");
+            if (recipientTypes == 0) throw new CoseException("No recipients supplied");
 
             if (ContentKey == null) {
                 ContentKey = new byte[GetKeySize(alg) / 8];

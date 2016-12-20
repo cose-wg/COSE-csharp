@@ -19,6 +19,12 @@ using Org.BouncyCastle.Math.EC;
 
 namespace Com.AugustCellars.COSE
 {
+    public class OneKey : Key
+    {
+        public OneKey() { }
+        public OneKey(CBORObject objKey) : base(objKey) { }
+    }
+
     public class Key
     {
         CBORObject m_map;

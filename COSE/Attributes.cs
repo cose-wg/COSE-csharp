@@ -31,22 +31,29 @@ namespace Com.AugustCellars.COSE
 
         public void AddAttribute(CBORObject label, CBORObject value, int bucket)
         { 
-            RemoveAttribute(label);
+            if ((label.Type != CBORType.Number) && (label.Type != CBORType.TextString))
+            {
+                throw new CoseException("Labels must be integers or strings");
+            }
             switch (bucket) {
                 case 1:
+                    if (rgbProtected != null) throw new CoseException("Operation would modify integrity protected attributes");
+                    RemoveAttribute(label);
                     objProtected.Add(label, value);
                     break;
 
                 case 2:
+                    RemoveAttribute(label);
                     objUnprotected.Add(label, value);
                     break;
 
                 case 4:
+                    RemoveAttribute(label);
                     objDontSend.Add(label, value);
                     break;
 
                 default:
-                    throw new CoseException("Invalid bucket provided to place attribute in");
+                    throw new CoseException("Invalid attribute location given");
             }
         }
 
@@ -132,7 +139,15 @@ namespace Com.AugustCellars.COSE
             return FindAttribute(CBORObject.FromObject(label));
         }
 
-        private void RemoveAttribute(CBORObject label)
+        public CBORObject FindAttribute(CBORObject label, int where)
+        {
+            if (((where & PROTECTED) != 0) && objProtected.ContainsKey(label)) return objProtected[label];
+            if (((where & UNPROTECTED) != 0) && objUnprotected.ContainsKey(label)) return objUnprotected[label];
+            if (((where & DO_NOT_SEND) != 0) && objDontSend.ContainsKey(label)) return objDontSend[label];
+            return null;
+        }
+
+        public void RemoveAttribute(CBORObject label)
         {
             if (objProtected.ContainsKey(label)) objProtected.Remove(label);
             if (objUnprotected.ContainsKey(label)) objUnprotected.Remove(label);

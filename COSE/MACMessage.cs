@@ -567,20 +567,9 @@ namespace Com.AugustCellars.COSE
     public abstract class MacMessageCommon : Message
     {
         protected byte[] rgbTag;
-        protected byte[] rgbContent;
         protected string strContext = "";
 
         protected MacMessageCommon(bool fEmitTag, bool fEmitContent) : base(fEmitTag, fEmitContent) { }
-
-        public void SetContent(byte[] keyBytes)
-        {
-            rgbContent = keyBytes;
-        }
-
-        public void SetContent(string contentString)
-        {
-            rgbContent = UTF8Encoding.ASCII.GetBytes(contentString);
-        }
 
 #if FOR_EXAMPLES
         public byte[] BuildContentBytes()
@@ -591,8 +580,11 @@ namespace Com.AugustCellars.COSE
             CBORObject obj = CBORObject.NewArray();
 
             obj.Add(strContext);
-            if (objProtected.Count > 0) obj.Add(objProtected.EncodeToBytes());
-            else obj.Add(CBORObject.FromObject(new byte[0]));
+            if (rgbProtected == null) {
+                if (objProtected.Count > 0) rgbProtected = objProtected.EncodeToBytes();
+                else rgbProtected = CBORObject.FromObject(new byte[0]).EncodeToBytes();
+            }
+            obj.Add(rgbProtected);
             if (externalData != null) obj.Add(CBORObject.FromObject(externalData));
             else obj.Add(CBORObject.FromObject(new byte[0]));
             obj.Add(rgbContent);
