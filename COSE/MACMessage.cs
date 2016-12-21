@@ -27,7 +27,7 @@ namespace Com.AugustCellars.COSE
 
         public void DecodeFromCBORObject(CBORObject obj)
         {
-            if (obj.Count != 4) throw new CoseException("Invalid MAC structure");
+            if (obj.Count != 4) throw new CoseException("Invalid MAC0 structure");
 
             //  Protected values.
             if (obj[0].Type == CBORType.ByteString) {
@@ -37,33 +37,33 @@ namespace Com.AugustCellars.COSE
                 }
                 else {
                     objProtected = CBORObject.DecodeFromBytes(data);
-                    if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid MAC Structure");
+                    if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid MAC0 structure");
                 }
             }
             else {
-                throw new CoseException("Invalid MAC structure");
+                throw new CoseException("Invalid MAC0 structure");
             }
 
             //  Unprotected attributes
             if (obj[1].Type == PeterO.Cbor.CBORType.Map) objUnprotected = obj[1];
-            else throw new CoseException("Invalid MAC Structure");
+            else throw new CoseException("Invalid MAC0 structure");
 
             // Plain Text
             if (obj[2].Type == CBORType.ByteString) rgbContent = obj[2].GetByteString();
             else if (!obj[2].IsNull) {               // Detached content - will need to get externally
-                throw new CoseException("Invalid MAC Structure");
+                throw new CoseException("Invalid MAC0 structure");
             }
 
             // Authentication tag
             if (obj[3].Type == CBORType.ByteString) rgbTag = obj[3].GetByteString();
-            else throw new CoseException("Invalid MAC Structure");
+            else throw new CoseException("Invalid MAC0 structure");
         }
 
         public override CBORObject Encode()
         {
             CBORObject obj;
 
-            if (rgbTag == null) throw new Exception("Must call Compute before encoding");
+            if (rgbTag == null) throw new CoseException("Must call Compute before encoding");
 
             obj = CBORObject.NewArray();
 
@@ -91,6 +91,8 @@ namespace Com.AugustCellars.COSE
 
             }
 
+            if (rgbContent == null) throw new CoseException("No Content Specified");
+
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
                 case "AES-CMAC-128/64":
@@ -99,7 +101,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm is not recognized");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
             else if (alg.Type == CBORType.Number) {
@@ -119,7 +121,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm not recognized" + alg.AsInt32());
+                    throw new CoseException("MAC algorithm not recognized " + alg.AsInt32());
                 }
             }
             else throw new CoseException("Algorithm incorrectly encoded");
@@ -128,12 +130,18 @@ namespace Com.AugustCellars.COSE
         public bool Validate(Key recipientReceiver)
         {
             byte[] rgbKey = null;
-            int cbitKey;
 
-            if (recipientReceiver[CoseKeyKeys.KeyType].AsInt32() != (int) GeneralValuesInt.KeyType_Octet) {
+            if (recipientReceiver[CoseKeyKeys.KeyType].AsInt32() != (int)GeneralValuesInt.KeyType_Octet) {
                 throw new CoseException("Key type not octet");
             }
             rgbKey = recipientReceiver[CoseKeyParameterKeys.Octet_k].GetByteString();
+
+            return Validate(rgbKey);
+        }
+
+        public bool Validate(byte[] rgbKey)
+        { 
+            int cbitKey;
 
             CBORObject alg = FindAttribute(COSE.HeaderKeys.Algorithm);
             if (alg.Type == CBORType.TextString) {
@@ -147,7 +155,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm is not recognized");
+                    throw new CoseException("Unknown Algoirthm Specified");
                 }
             }
             else if (alg.Type == CBORType.Number) {
@@ -171,7 +179,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm not recognized" + alg.AsInt32());
+                    throw new CoseException("MAC algorithm not recognized " + alg.AsInt32());
                 }
 
             }
@@ -190,7 +198,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm is not recognized");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
             else if (alg.Type == CBORType.Number) {
@@ -210,7 +218,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm not recognized" + alg.AsInt32());
+                    throw new CoseException("MAC algorithm not recognized " + alg.AsInt32());
                 }
             }
             else throw new CoseException("Algorithm incorrectly encoded");
@@ -251,7 +259,7 @@ namespace Com.AugustCellars.COSE
                 byte[] data = obj[0].GetByteString();
                 if (data.Length > 0) {
                     objProtected = CBORObject.DecodeFromBytes(data);
-                    if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid MAC Structure");
+                    if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid MAC structure");
                 }
                 else objProtected = CBORObject.NewMap();
             }
@@ -261,17 +269,17 @@ namespace Com.AugustCellars.COSE
 
             //  Unprotected attributes
             if (obj[1].Type == PeterO.Cbor.CBORType.Map) objUnprotected = obj[1];
-            else throw new CoseException("Invalid MAC Structure");
+            else throw new CoseException("Invalid MAC structure");
 
             // Plain Text
             if (obj[2].Type == CBORType.ByteString) rgbContent = obj[2].GetByteString();
             else if (!obj[2].IsNull) {               // Detached content - will need to get externally
-                throw new CoseException("Invalid MAC Structure");
+                throw new CoseException("Invalid MAC structure");
             }
 
             // Authentication tag
             if (obj[3].Type == CBORType.ByteString) rgbTag = obj[3].GetByteString();
-            else throw new CoseException("Invalid MAC Structure");
+            else throw new CoseException("Invalid MAC structure");
 
 
             // Recipients
@@ -283,7 +291,7 @@ namespace Com.AugustCellars.COSE
                     recipientList.Add(recip);
                 }
             }
-            else throw new CoseException("Invalid MAC Structure");
+            else throw new CoseException("Invalid MAC structure");
         }
 
         public override CBORObject Encode()
@@ -351,7 +359,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm is not recognized");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
             else if (alg.Type == CBORType.Number) {
@@ -375,7 +383,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm not recognized" + alg.AsInt32());
+                    throw new CoseException("MAC algorithm not recognized " + alg.AsInt32());
                 }
             }
             else throw new CoseException("Algorithm incorrectly encoded");
@@ -389,7 +397,7 @@ namespace Com.AugustCellars.COSE
                 switch (key.recipientType) {
                 case RecipientType.direct:
                 case RecipientType.keyAgreeDirect:
-                    if ((recipientTypes & 1) != 0) throw new Exception("It is not legal to have two direct recipients in a message");
+                    if ((recipientTypes & 1) != 0) throw new CoseException("It is not legal to have two direct recipients in a message");
                     recipientTypes |= 1;
                     ContentKey = key.GetKey(alg);
                     break;
@@ -400,7 +408,7 @@ namespace Com.AugustCellars.COSE
                 }
             }
 
-            if (recipientTypes == 3) throw new Exception("It is not legal to mix direct and indirect recipients in a message");
+            if (recipientTypes == 3) throw new CoseException("It is not legal to mix direct and indirect recipients in a message");
 
             if (ContentKey == null) {
                 ContentKey = new byte[cbitKey / 8];
@@ -415,7 +423,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm is not recognized");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
             else if (alg.Type == CBORType.Number) {
@@ -435,7 +443,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm not recognized" + alg.AsInt32());
+                    throw new CoseException("MAC algorithm not recognized " + alg.AsInt32());
                 }
             }
             else throw new CoseException("Algorithm incorrectly encoded");
@@ -470,7 +478,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm is not recognized");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
             else if (alg.Type == CBORType.Number) {
@@ -494,7 +502,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm not recognized" + alg.AsInt32());
+                    throw new CoseException("MAC algorithm not recognized " + alg.AsInt32());
                 }
             }
             else throw new CoseException("Algorithm incorrectly encoded");
@@ -525,7 +533,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm is not recognized");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
             else if (alg.Type == CBORType.Number) {
@@ -545,7 +553,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("MAC algorithm not recognized" + alg.AsInt32());
+                    throw new CoseException("MAC algorithm not recognized " + alg.AsInt32());
                 }
             }
             else throw new CoseException("Algorithm incorrectly encoded");
@@ -632,7 +640,7 @@ namespace Com.AugustCellars.COSE
                 break;
 
             default:
-                throw new Exception("Unrecognized algorithm");
+                throw new CoseException("Unrecognized algorithm");
             }
 
             IMac mac = new CbcBlockCipherMac(aes, cbitTag, null);
@@ -686,7 +694,7 @@ namespace Com.AugustCellars.COSE
                 break;
 
             default:
-                throw new Exception("Unrecognized algorithm");
+                throw new CoseException("Unrecognized algorithm");
             }
 
             if (K.Length != cbitKey / 8) throw new CoseException("Key is incorrectly sized");
@@ -718,7 +726,7 @@ namespace Com.AugustCellars.COSE
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
                 default:
-                    throw new Exception("Unrecognized algorithm");
+                    throw new CoseException("Unrecognized algorithm");
                 }
             }
             else if (alg.Type == CBORType.Number) {
