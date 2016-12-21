@@ -63,7 +63,7 @@
     <Compile Include="Encrypt0MessageTest.cs" />
     <Compile Include="EncryptMessageTest.cs" />
     <Compile Include="MAC0MessageTest.cs"/>
-    <Compile Include="MacMessageTest.cs"/>
+    <Compile Include="MACMessageTest.cs"/>
     <Compile Include="MessageTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
