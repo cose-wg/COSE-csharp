@@ -11,7 +11,7 @@ script:
   - git clone --depth 1 https://github.com/cose-wg/Examples Regressions
   - git clone --depth 1 https://github.com/ietf-jose/cookbook cookbook
   - cd COSE
-  - xbuild /p:Configuration=Release COSE.Net40.sln 
+  - xbuild /v:q /p:Configuration=Release COSE.Net40.sln 
   - xbuild /p:Configuration=Release COSE.Net45.sln
   - cd ..
   - cd examples
