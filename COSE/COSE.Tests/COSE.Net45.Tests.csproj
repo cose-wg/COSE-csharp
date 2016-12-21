@@ -65,6 +65,7 @@
     <Compile Include="Encrypt0MessageTest.cs" />
     <Compile Include="EncryptMessageTest.cs" />
     <Compile Include="MAC0MessageTest.cs" />
+    <Compile Include="MACMesageTest.cs" />
     <Compile Include="MessageTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

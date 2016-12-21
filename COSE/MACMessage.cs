@@ -245,6 +245,7 @@ namespace Com.AugustCellars.COSE
 
         public virtual void AddRecipient(Recipient recipient)
         {
+            if (recipient == null) throw new CoseException("Recipient is null");
             recipient.SetContext("Mac_Recipient");
             recipientList.Add(recipient);
         }
@@ -333,11 +334,18 @@ namespace Com.AugustCellars.COSE
             return obj;
         }
 
- 
+
+public virtual void Compute()
+        {
+            MAC();
+        } 
+
         public virtual void MAC()
         {
             CBORObject alg;
             int cbitKey;
+
+            if (rgbContent == null) throw new CoseException("No Content Specified");
 
             //  Get the algorithm we are using - the default is AES GCM
 
@@ -409,6 +417,7 @@ namespace Com.AugustCellars.COSE
             }
 
             if (recipientTypes == 3) throw new CoseException("It is not legal to mix direct and indirect recipients in a message");
+            if (recipientTypes == 0) throw new CoseException("No recipients supplied");
 
             if (ContentKey == null) {
                 ContentKey = new byte[cbitKey / 8];
