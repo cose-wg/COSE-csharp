@@ -139,7 +139,7 @@ namespace Com.AugustCellars.COSE.Test
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
                 msg = Message.DecodeFromBytes(rgb, Tags.MAC0));
-            Assert.That(e.Message, Is.EqualTo("Invalid MAC structure"));
+            Assert.That(e.Message, Is.EqualTo("Invalid MAC0 structure"));
         }
 
         [Test]
@@ -156,7 +156,7 @@ namespace Com.AugustCellars.COSE.Test
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
                 msg = Message.DecodeFromBytes(rgb, Tags.MAC0));
-            Assert.That(e.Message, Is.EqualTo("Invalid MAC structure"));
+            Assert.That(e.Message, Is.EqualTo("Invalid MAC0 structure"));
         }
 
         [Test]
@@ -173,7 +173,7 @@ namespace Com.AugustCellars.COSE.Test
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
                 msg = Message.DecodeFromBytes(rgb, Tags.MAC0));
-            Assert.That(e.Message, Is.EqualTo("Invalid MAC structure"));
+            Assert.That(e.Message, Is.EqualTo("Invalid MAC0 structure"));
         }
 
         [Test]
@@ -190,7 +190,7 @@ namespace Com.AugustCellars.COSE.Test
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
                 msg = Message.DecodeFromBytes(rgb, Tags.MAC0));
-            Assert.That(e.Message, Is.EqualTo("Invalid MAC structure"));
+            Assert.That(e.Message, Is.EqualTo("Invalid MAC0 structure"));
         }
 
         [Test]
@@ -207,7 +207,7 @@ namespace Com.AugustCellars.COSE.Test
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
                 msg = Message.DecodeFromBytes(rgb, Tags.MAC0));
-            Assert.That(e.Message, Is.EqualTo("Invalid MAC structure"));
+            Assert.That(e.Message, Is.EqualTo("Invalid MAC0 structure"));
         }
     }
 }

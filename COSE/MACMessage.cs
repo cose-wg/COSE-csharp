@@ -41,7 +41,7 @@ namespace Com.AugustCellars.COSE
                 }
             }
             else {
-                throw new CoseException("Invalid MAC structure");
+                throw new CoseException("Invalid MAC0 structure");
             }
 
             //  Unprotected attributes
