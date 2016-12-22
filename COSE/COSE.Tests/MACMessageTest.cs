@@ -104,7 +104,7 @@ namespace COSE.Tests
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.HMAC_SHA_256, Attributes.PROTECTED);
             msg.SetContent(rgbContent);
             CoseException e = Assert.Throws<CoseException>(() =>
-        msg.Compute());
+                msg.Compute());
             Assert.That(e.Message, Is.EqualTo("No recipients supplied"));
         }
 
@@ -117,7 +117,7 @@ namespace COSE.Tests
 
             msg.SetContent(rgbContent);
             CoseException e = Assert.Throws<CoseException>(() =>
-        msg.Compute());
+                msg.Compute());
             Assert.That(e.Message, Is.EqualTo("No Algorithm Specified"));
         }
 
@@ -130,7 +130,7 @@ namespace COSE.Tests
             msg.AddAttribute(HeaderKeys.Algorithm, CBORObject.FromObject("Unknown"), Attributes.PROTECTED);
             msg.SetContent(rgbContent);
             CoseException e = Assert.Throws<CoseException>(() =>
-        msg.Compute());
+                msg.Compute());
             Assert.That(e.Message, Is.EqualTo("Unknown Algorithm Specified"));
         }
 
@@ -143,7 +143,7 @@ namespace COSE.Tests
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_CCM_16_64_256, Attributes.PROTECTED);
             msg.SetContent(rgbContent);
             CoseException e = Assert.Throws<CoseException>(() =>
-        msg.Compute());
+                msg.Compute());
             Assert.That(e.Message, Is.EqualTo("MAC algorithm not recognized 11"));
         }
 
@@ -155,41 +155,36 @@ namespace COSE.Tests
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.HMAC_SHA_256, Attributes.PROTECTED);
             CoseException e = Assert.Throws<CoseException>(() =>
-        msg.Compute());
+                msg.Compute());
             Assert.That(e.Message, Is.EqualTo("No Content Specified"));
         }
 
         [Test]
         public void macDecodeWrongBasis()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewMap();
-
 
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC));
+                Message.DecodeFromBytes(rgb, Tags.MAC));
             Assert.That(e.Message, Is.EqualTo("Message is not a COSE security message."));
         }
 
         [Test]
         public void macDecodeWrongCount()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC));
+                Message.DecodeFromBytes(rgb, Tags.MAC));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC structure"));
         }
 
         [Test]
         public void macDecodeBadProtected()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
@@ -197,17 +192,15 @@ namespace COSE.Tests
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC));
+                Message.DecodeFromBytes(rgb, Tags.MAC));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC structure"));
         }
 
         [Test]
         public void macDecodeBadProtected2()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.False));
             obj.Add(CBORObject.False);
@@ -215,17 +208,15 @@ namespace COSE.Tests
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC));
+                Message.DecodeFromBytes(rgb, Tags.MAC));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC structure"));
         }
 
         [Test]
         public void macDecodeBadUnprotected()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());
             obj.Add(CBORObject.False);
@@ -233,17 +224,15 @@ namespace COSE.Tests
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC));
+                Message.DecodeFromBytes(rgb, Tags.MAC));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC structure"));
         }
 
         [Test]
         public void macDecodeBadContent()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());
             obj.Add(CBORObject.NewMap());
@@ -251,17 +240,15 @@ namespace COSE.Tests
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC));
+                Message.DecodeFromBytes(rgb, Tags.MAC));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC structure"));
         }
 
         [Test]
         public void macDecodeBadTag()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());
             obj.Add(CBORObject.NewMap());
@@ -269,17 +256,15 @@ namespace COSE.Tests
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC));
+                Message.DecodeFromBytes(rgb, Tags.MAC));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC structure"));
         }
 
         [Test]
         public void macDecodeBadRecipients()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());
             obj.Add(CBORObject.NewMap());
@@ -287,10 +272,9 @@ namespace COSE.Tests
             obj.Add(CBORObject.FromObject(rgbContent));
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC));
+                Message.DecodeFromBytes(rgb, Tags.MAC));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC structure"));
         }
 

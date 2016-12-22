@@ -102,111 +102,97 @@ namespace Com.AugustCellars.COSE.Test
         public void macDecodeWrongBasis()
         {
             CBORObject obj = CBORObject.NewMap();
-            Message msg;
-
 
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-            msg = Message.DecodeFromBytes(rgb, Tags.MAC0));
+                Message.DecodeFromBytes(rgb, Tags.MAC0));
             Assert.That(e.Message, Is.EqualTo("Message is not a COSE security message."));
         }
 
         [Test]
         public void macDecodeWrongCount()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC0));
+                Message.DecodeFromBytes(rgb, Tags.MAC0));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC0 structure"));
         }
 
         [Test]
         public void macDecodeBadProtected()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC0));
+                Message.DecodeFromBytes(rgb, Tags.MAC0));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC0 structure"));
         }
 
         [Test]
         public void macDecodeBadProtected2()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.False));
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC0));
+                Message.DecodeFromBytes(rgb, Tags.MAC0));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC0 structure"));
         }
 
         [Test]
         public void macDecodeBadUnprotected()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC0));
+                Message.DecodeFromBytes(rgb, Tags.MAC0));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC0 structure"));
         }
 
         [Test]
         public void macDecodeBadContent()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());
             obj.Add(CBORObject.NewMap());
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC0));
+                Message.DecodeFromBytes(rgb, Tags.MAC0));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC0 structure"));
         }
 
         [Test]
         public void macDecodeBadRecipients()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());
             obj.Add(CBORObject.NewMap());
             obj.Add(new byte[0]);
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.MAC0));
+                Message.DecodeFromBytes(rgb, Tags.MAC0));
             Assert.That(e.Message, Is.EqualTo("Invalid MAC0 structure"));
         }
     }
