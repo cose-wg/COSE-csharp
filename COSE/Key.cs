@@ -23,11 +23,89 @@ namespace Com.AugustCellars.COSE
     {
         public OneKey() { }
         public OneKey(CBORObject objKey) : base(objKey) { }
+
+        new public OneKey PublicKey()
+        {
+            OneKey newKey = new OneKey();
+            switch ((GeneralValuesInt)m_map[CoseKeyKeys.KeyType].AsInt16())
+            {
+                case GeneralValuesInt.KeyType_Octet:
+                    return null;
+
+                case GeneralValuesInt.KeyType_RSA:
+                    newKey.Add(CoseKeyParameterKeys.RSA_n, m_map[CoseKeyParameterKeys.RSA_n]);
+                    newKey.Add(CoseKeyParameterKeys.RSA_e, m_map[CoseKeyParameterKeys.RSA_e]);
+                    break;
+
+                case GeneralValuesInt.KeyType_EC2:
+                    newKey.Add(CoseKeyParameterKeys.EC_Curve, m_map[CoseKeyParameterKeys.EC_Curve]);
+                    newKey.Add(CoseKeyParameterKeys.EC_X, m_map[CoseKeyParameterKeys.EC_X]);
+                    newKey.Add(CoseKeyParameterKeys.EC_Y, m_map[CoseKeyParameterKeys.EC_Y]);
+                    break;
+
+                default:
+                    return null;
+            }
+
+            foreach (CBORObject obj in m_map.Keys) {
+                switch (obj.Type) {
+                    case CBORType.Number:
+                        if (obj.AsInt32() > 0) {
+                            newKey.Add(obj, m_map[obj]);
+                        }
+                        break;
+
+                    case CBORType.TextString:
+                        newKey.Add(obj, m_map[obj]);
+                        break;
+
+                }
+            }
+            return newKey;
+        }
+
+        public static OneKey GenerateKey(AlgorithmValues algorithm = null, CBORObject keyType = null, string parameters = null)
+        {
+            if (keyType != null) {
+                if (keyType.Equals(GeneralValues.KeyType_EC)) {
+                    if (parameters == null) parameters = "P-256";
+                    return generateEC2Key(algorithm, parameters);
+                }
+            }
+            else {
+                
+            }
+            return null;
+        }
+
+        private static OneKey generateEC2Key(AlgorithmValues algorithm, string genParameters)
+        {
+            X9ECParameters p = NistNamedCurves.GetByName(genParameters);
+
+            ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
+
+            ECKeyPairGenerator pGen = new ECKeyPairGenerator();
+            ECKeyGenerationParameters genParam = new ECKeyGenerationParameters(parameters, new Org.BouncyCastle.Security.SecureRandom());
+            pGen.Init(genParam);
+
+            AsymmetricCipherKeyPair p1 = pGen.GenerateKeyPair();
+
+            CBORObject epk = CBORObject.NewMap();
+            epk.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_EC);
+            epk.Add(CoseKeyParameterKeys.EC_Curve, 1 /*  "P-256" */);
+            ECPublicKeyParameters priv = (ECPublicKeyParameters)p1.Public;
+            epk.Add(CoseKeyParameterKeys.EC_X, priv.Q.Normalize().XCoord.ToBigInteger().ToByteArrayUnsigned());
+            epk.Add(CoseKeyParameterKeys.EC_Y, priv.Q.Normalize().YCoord.ToBigInteger().ToByteArrayUnsigned());
+            epk.Add(CoseKeyParameterKeys.EC_D, ((ECPrivateKeyParameters)p1.Private).D.ToByteArrayUnsigned());
+            if (algorithm != null) epk.Add(CoseKeyKeys.Algorithm, algorithm);
+
+            return new OneKey(epk);
+        }
     }
 
     public class Key
     {
-        CBORObject m_map;
+        protected CBORObject m_map;
  
         public Key()
         {
@@ -308,6 +386,7 @@ namespace Com.AugustCellars.COSE
                 return new COSE.Key(epk);
             }
         }
+
     }
 
     public class KeySet
