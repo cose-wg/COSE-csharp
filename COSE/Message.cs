@@ -8,7 +8,7 @@ using Org.BouncyCastle.Security;
 
 using PeterO.Cbor;
 
-#pragma warning disable cs0618 // XXX is obsolete
+#pragma warning disable CS0618 // XXX is obsolete
 
 namespace Com.AugustCellars.COSE
 {
