@@ -198,7 +198,6 @@ namespace Com.AugustCellars.COSE
                         break;
                     }
                 }
-                string usage = key.AsString("key_ops");
                 if (!validUsage) throw new Exception("Key cannot be used for encryption");
             }
 

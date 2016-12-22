@@ -624,8 +624,6 @@ public virtual void Compute()
             //  key sizes are 128, 192 and 256 bits
             //  Authentication tag sizes are 64 and 128 bits
 
-            byte[] IV = new byte[128 / 8];
-
             Debug.Assert(alg.Type == CBORType.Number);
             switch ((AlgorithmValuesInt) alg.AsInt32()) {
             case AlgorithmValuesInt.AES_CBC_MAC_128_64:
@@ -687,8 +685,6 @@ public virtual void Compute()
             //  IV is 128 bits of zeros
             //  key sizes are 128, 192 and 256 bits
             //  Authentication tag sizes are 64 and 128 bits
-
-            byte[] IV = new byte[128 / 8];
 
             Debug.Assert(alg.Type == CBORType.TextString);
             switch (alg.AsString()) {
