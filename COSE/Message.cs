@@ -8,6 +8,8 @@ using Org.BouncyCastle.Security;
 
 using PeterO.Cbor;
 
+#pragma warning disable CS0618 // XXX is obsolete
+
 namespace Com.AugustCellars.COSE
 {
 
@@ -17,7 +19,11 @@ namespace Com.AugustCellars.COSE
         Encrypted = 16,
         [Obsolete]
         Enveloped =96,
-        Signed = 98, MAC = 97, MAC0=17, Signed0=18, Unknown = 0,
+        Signed = 98, MAC = 97, MAC0=17,
+        [Obsolete("Use Sign1")]
+        Signed0 =18,
+        Sign1 = 18,
+        Unknown = 0,
         Encrypt0 = 16,
         Encrypt = 96
     }
@@ -269,7 +275,7 @@ namespace Com.AugustCellars.COSE
                 sig.DecodeFromCBORObject(messageObject);
                 return sig;
 
-            case Tags.Signed0:
+            case Tags.Sign1:
                 Sign1Message sig0 = new Sign1Message();
                 sig0.DecodeFromCBORObject(messageObject);
                 return sig0;

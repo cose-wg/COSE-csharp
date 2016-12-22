@@ -23,7 +23,7 @@ namespace Com.AugustCellars.COSE
     {
         public Sign1Message(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
-            m_tag = Tags.Signed0;
+            m_tag = Tags.Sign1;
         }
 
         public byte[] BEncodeToBytes()
@@ -114,14 +114,14 @@ namespace Com.AugustCellars.COSE
 
             if (key.ContainsName("use")) {
                 string usage = key.AsString("use");
-                if (usage != "sig") throw new Exception("Key cannot be used for encrytion");
+                if (usage != "sig") throw new CoseException("Key cannot be used for encrytion");
             }
 
             if (key.ContainsName(CoseKeyKeys.Key_Operations)) {
                 CBORObject usageObject = key[CoseKeyKeys.Key_Operations];
                 bool validUsage = false;
 
-                if (usageObject.Type != CBORType.Array) throw new Exception("key_ops is incorrectly formed");
+                if (usageObject.Type != CBORType.Array) throw new CoseException("key_ops is incorrectly formed");
                 for (int i = 0; i < usageObject.Count; i++) {
                     switch (usageObject[i].AsString()) {
                     case "encrypt":
@@ -130,13 +130,17 @@ namespace Com.AugustCellars.COSE
                         break;
                     }
                 }
-                string usage = key.AsString("key_ops");
-                if (!validUsage) throw new Exception("Key cannot be used for encryption");
+                if (!validUsage) throw new CoseException("Key cannot be used for encryption");
             }
 
             keyToSign = key;
         }
 
+        public void Sign(OneKey privateKey)
+        {
+            AddSigner(privateKey);
+            PerformSignature();
+        }
 
         public void PerformSignature()
         {
@@ -153,7 +157,7 @@ namespace Com.AugustCellars.COSE
                 signObj.Add(externalData); // External AAD
                 signObj.Add(rgbContent);
 
-                rgbSignature = Sign(toBeSigned());
+                rgbSignature = _Sign(toBeSigned());
 
 #if FOR_EXAMPLES
                 m_toBeSigned = signObj.EncodeToBytes();
@@ -182,9 +186,11 @@ namespace Com.AugustCellars.COSE
             return signObj.EncodeToBytes();
         }
 
-        private byte[] Sign(byte[] bytesToBeSigned)
+        private byte[] _Sign(byte[] bytesToBeSigned)
         {
             CBORObject alg = null; // Get the set algorithm or infer one
+
+            if (rgbContent == null) throw new CoseException("No Content Specified");
 
             alg = FindAttribute(HeaderKeys.Algorithm);
 
@@ -224,7 +230,7 @@ namespace Com.AugustCellars.COSE
                         break;
 
                     default:
-                        throw new Exception("Unknown or unsupported key type " + keyToSign.AsString("kty"));
+                        throw new CoseException("Unknown or unsupported key type " + keyToSign.AsString("kty"));
                     }
                 }
                 else if (keyToSign[CoseKeyKeys.KeyType].Type == CBORType.TextString) {
@@ -246,7 +252,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("Unknown signature algorithm");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
             else if (alg.Type == CBORType.Number) {
@@ -269,7 +275,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new CoseException("Unknown signature algorith");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
             else throw new CoseException("Algorthm incorrectly encoded");
@@ -289,7 +295,7 @@ namespace Com.AugustCellars.COSE
                     }
 
                 default:
-                    throw new CoseException("Unknown Algorithm");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
             else if (alg.Type == CBORType.Number) {
@@ -311,6 +317,9 @@ namespace Com.AugustCellars.COSE
                 case AlgorithmValuesInt.ECDSA_384:
                 case AlgorithmValuesInt.ECDSA_512:
                     {
+                        CBORObject privateKeyD = keyToSign[CoseKeyParameterKeys.EC_D];
+                        if (privateKeyD == null) throw new CoseException("Private key required to sign");
+
                         SecureRandom random = Message.GetPRNG();
 
                         digest.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
@@ -319,7 +328,7 @@ namespace Com.AugustCellars.COSE
 
                         X9ECParameters p = keyToSign.GetCurve();
                         ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
-                        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters("ECDSA", ConvertBigNum(keyToSign[CoseKeyParameterKeys.EC_D]), parameters);
+                        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters("ECDSA", ConvertBigNum(privateKeyD), parameters);
                         ParametersWithRandom param = new ParametersWithRandom(privKey, random);
 
                         ECDsaSigner ecdsa = new ECDsaSigner();
@@ -340,7 +349,7 @@ namespace Com.AugustCellars.COSE
                     }
 
                 default:
-                    throw new CoseException("Unknown Algorithm");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
             else throw new CoseException("Algorithm incorrectly encoded");
@@ -370,7 +379,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new Exception("Unknown signature algorithm");
+                    throw new CoseException("Unknown signature algorithm");
                 }
             }
             else if (alg.Type == CBORType.Number) {

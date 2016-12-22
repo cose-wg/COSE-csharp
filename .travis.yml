@@ -11,11 +11,11 @@ script:
   - git clone --depth 1 https://github.com/cose-wg/Examples Regressions
   - git clone --depth 1 https://github.com/ietf-jose/cookbook cookbook
   - cd COSE
-  - xbuild /p:Configuration=Release COSE.Net40.sln 
-  - xbuild /p:Configuration=Release COSE.Net45.sln
+  - xbuild /v:q /p:Configuration=Release COSE.Net40.sln 
+  - xbuild /v:q /p:Configuration=Release COSE.Net45.sln
   - cd ..
   - cd examples
-  - xbuild /p:Configuration=Release examples.sln
+  - xbuild /v:q /p:Configuration=Release examples.sln
   - cd ..
   - cd COSE
   - mono ../testrunner/NUnit.ConsoleRunner.3.5.0/tools/nunit3-console.exe ./COSE.Tests/bin/Release40/COSE.Tests.dll

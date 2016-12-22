@@ -205,32 +205,28 @@ namespace Com.AugustCellars.COSE.Tests
         public void encryptWrongBasis()
         {
             CBORObject obj = CBORObject.NewMap();
-            Message msg;
 
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.Encrypt0));
+                Message.DecodeFromBytes(rgb, Tags.Encrypt0));
             Assert.That(e.Message, Is.EqualTo("Message is not a COSE security message."));
         }
 
         [Test]
         public void encryptDecodeWrongCount()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.Encrypt0));
+                Message.DecodeFromBytes(rgb, Tags.Encrypt0));
             Assert.That(e.Message, Is.EqualTo("Invalid Encrypt0 structure"));
         }
 
         [Test]
         public void encryptDecodeBadProtected()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.False);
             obj.Add(CBORObject.False);
@@ -238,14 +234,13 @@ namespace Com.AugustCellars.COSE.Tests
 
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.Encrypt0));
+                Message.DecodeFromBytes(rgb, Tags.Encrypt0));
             Assert.That(e.Message, Is.EqualTo("Invalid Encrypt0 structure"));
         }
 
         [Test]
         public void encryptDecodeBadProtected2()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.False));
             obj.Add(CBORObject.False);
@@ -253,14 +248,13 @@ namespace Com.AugustCellars.COSE.Tests
 
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.Encrypt0));
+                Message.DecodeFromBytes(rgb, Tags.Encrypt0));
             Assert.That(e.Message, Is.EqualTo("Invalid Encrypt0 structure"));
         }
 
         [Test]
         public void encryptDecodeBadUnprotected()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());
             obj.Add(CBORObject.False);
@@ -268,39 +262,35 @@ namespace Com.AugustCellars.COSE.Tests
 
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.Encrypt0));
+                Message.DecodeFromBytes(rgb, Tags.Encrypt0));
             Assert.That(e.Message, Is.EqualTo("Invalid Encrypt0 structure"));
         }
 
         [Test]
         public void encryptDecodeBadContent()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());
             obj.Add(CBORObject.NewMap());
             obj.Add(CBORObject.False);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.Encrypt0));
+                Message.DecodeFromBytes(rgb, Tags.Encrypt0));
             Assert.That(e.Message, Is.EqualTo("Invalid Encrypt0 structure"));
         }
 
         [Test]
         public void encryptDecodeBadTag()
         {
-            Message msg;
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());
             obj.Add(CBORObject.NewMap());
             obj.Add(new byte[0]);
 
-
             byte[] rgb = obj.EncodeToBytes();
             CoseException e = Assert.Throws<CoseException>(() =>
-                msg = Message.DecodeFromBytes(rgb, Tags.Encrypt0));
+                Message.DecodeFromBytes(rgb, Tags.Encrypt0));
             Assert.That(e.Message, Is.EqualTo("Invalid Encrypt0 structure"));
 
         }

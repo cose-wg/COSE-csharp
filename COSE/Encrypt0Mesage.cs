@@ -55,27 +55,19 @@ namespace Com.AugustCellars.COSE
 
             if (rgbEncrypted == null) throw new CoseException("Must call Encrypt first");
 
-            if (m_counterSignerList.Count() != 0)
-            {
-                CBORObject objX;
-                if (objProtected.Count > 0) objX = CBORObject.FromObject(objProtected.EncodeToBytes());
-                else objX = CBORObject.FromObject(new byte[0]);
-                if (m_counterSignerList.Count() == 1)
-                {
+            if (m_counterSignerList.Count() != 0) {
+                if (m_counterSignerList.Count() == 1) {
                     AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbEncrypted), Attributes.UNPROTECTED);
                 }
-                else
-                {
-                    foreach (CounterSignature sig in m_counterSignerList)
-                    {
+                else {
+                    foreach (CounterSignature sig in m_counterSignerList) {
                         sig.EncodeToCBORObject(rgbProtected, rgbEncrypted);
                     }
                 }
             }
             obj = CBORObject.NewArray();
 
-            if (objProtected.Count > 0)
-            {
+            if (objProtected.Count > 0) {
                 obj.Add(objProtected.EncodeToBytes());
             }
             else obj.Add(CBORObject.FromObject(new byte[0]));

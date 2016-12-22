@@ -1720,7 +1720,6 @@ namespace Com.AugustCellars.COSE
 
             //  Setup for computing CBC-MAC
             IBlockCipher aes = new AesFastEngine();
-            byte[] IV = new byte[128 / 8];
 
             IMac mac;
 

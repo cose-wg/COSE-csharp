@@ -245,6 +245,7 @@ namespace Com.AugustCellars.COSE
 
         public virtual void AddRecipient(Recipient recipient)
         {
+            if (recipient == null) throw new CoseException("Recipient is null");
             recipient.SetContext("Mac_Recipient");
             recipientList.Add(recipient);
         }
@@ -333,11 +334,18 @@ namespace Com.AugustCellars.COSE
             return obj;
         }
 
- 
+
+public virtual void Compute()
+        {
+            MAC();
+        } 
+
         public virtual void MAC()
         {
             CBORObject alg;
             int cbitKey;
+
+            if (rgbContent == null) throw new CoseException("No Content Specified");
 
             //  Get the algorithm we are using - the default is AES GCM
 
@@ -409,6 +417,7 @@ namespace Com.AugustCellars.COSE
             }
 
             if (recipientTypes == 3) throw new CoseException("It is not legal to mix direct and indirect recipients in a message");
+            if (recipientTypes == 0) throw new CoseException("No recipients supplied");
 
             if (ContentKey == null) {
                 ContentKey = new byte[cbitKey / 8];
@@ -615,8 +624,6 @@ namespace Com.AugustCellars.COSE
             //  key sizes are 128, 192 and 256 bits
             //  Authentication tag sizes are 64 and 128 bits
 
-            byte[] IV = new byte[128 / 8];
-
             Debug.Assert(alg.Type == CBORType.Number);
             switch ((AlgorithmValuesInt) alg.AsInt32()) {
             case AlgorithmValuesInt.AES_CBC_MAC_128_64:
@@ -678,8 +685,6 @@ namespace Com.AugustCellars.COSE
             //  IV is 128 bits of zeros
             //  key sizes are 128, 192 and 256 bits
             //  Authentication tag sizes are 64 and 128 bits
-
-            byte[] IV = new byte[128 / 8];
 
             Debug.Assert(alg.Type == CBORType.TextString);
             switch (alg.AsString()) {
