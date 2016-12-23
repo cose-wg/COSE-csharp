@@ -74,7 +74,7 @@ namespace Com.AugustCellars.COSE
                 if (rgbProtected.Length == 0) objProtected = CBORObject.NewMap();
                 else {
                     objProtected = CBORObject.DecodeFromBytes(rgbProtected);
-                    if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid SignMessage Structure");
+                    if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid SignMessage structure");
                     if (objProtected.Count == 0) rgbProtected = new byte[0];
                 }
             }
@@ -84,16 +84,16 @@ namespace Com.AugustCellars.COSE
 
             //  Unprotected attributes
             if (obj[1].Type == CBORType.Map) objUnprotected = obj[1];
-            else throw new CoseException("Invalid SignMessage Structure");
+            else throw new CoseException("Invalid SignMessage structure");
 
             // Plain Text
             if (obj[2].Type == CBORType.ByteString) rgbContent = obj[2].GetByteString();
             else if (!obj[2].IsNull) {               // Detached content - will need to get externally
-                throw new CoseException("Invalid SignMessage Structure");
+                throw new CoseException("Invalid SignMessage structure");
             }
 
             // Signers
-            if (obj[3].Type != CBORType.Array) throw new CoseException("Invalid SignMessage Structure");
+            if (obj[3].Type != CBORType.Array) throw new CoseException("Invalid SignMessage structure");
             // An array of signers to be processed
             for (int i = 0; i < obj[3].Count; i++) {
                 Signer recip = new Signer();
