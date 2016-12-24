@@ -25,7 +25,7 @@ namespace Com.AugustCellars.COSE
 
         public SignMessage(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
-            m_tag = Tags.Signed;
+            m_tag = Tags.Sign;
         }
 
         public List<Signer> SignerList { get { return signerList; } }
