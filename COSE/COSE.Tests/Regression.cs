@@ -41,7 +41,7 @@ namespace Com.AugustCellars.COSE.Tests
 
         @Parameter // first data value (0) is default
 #endif
-        public /* NOT private */ String directoryName = "Examples";
+        public /* NOT private */ String directoryName = "Regressions";
 
         public int CFails = 0;
 
@@ -55,8 +55,8 @@ namespace Com.AugustCellars.COSE.Tests
             try {
                 directory = new DirectoryInfo(directoryName);
                 if (!directory.Exists) {
-                    Console.WriteLine("Start @ " + Path.Combine("C:\\Projects\\cose", directoryName));
-                    directory = new DirectoryInfo(Path.Combine("C:\\Projects\\cose", directoryName));
+                    Console.WriteLine("Start @ " + "C:\\Projects\\cose\\Examples");
+                    directory = new DirectoryInfo("C:\\Projects\\cose\\Examples");
                 }
             }
             catch (Exception) {
