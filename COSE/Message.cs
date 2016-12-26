@@ -47,7 +47,9 @@ namespace Com.AugustCellars.COSE
         static public readonly CBORObject Critical = CBORObject.FromObject(2);
         static public readonly CBORObject ContentType = CBORObject.FromObject(3);
         static public readonly CBORObject EphemeralKey = CBORObject.FromObject(-1);
+        static public readonly CBORObject ECDH_SPK = CBORObject.FromObject(-2);
         static public readonly CBORObject StaticKey = CBORObject.FromObject(-2);
+        static public readonly CBORObject ECDH_SKID = CBORObject.FromObject(-3);
         static public readonly CBORObject StaticKey_ID = CBORObject.FromObject(-3);
         static public readonly CBORObject KeyId = CBORObject.FromObject(4);
         static public readonly CBORObject IV = CBORObject.FromObject(5);
