@@ -49,18 +49,15 @@ namespace Com.AugustCellars.COSE.Tests
         public void ProcessDirectory()
         {
             CFails = 0;
-            Console.WriteLine("Start @ " + directoryName);
 
             DirectoryInfo directory;
             try {
                 directory = new DirectoryInfo(directoryName);
                 if (!directory.Exists) {
-                    Console.WriteLine("Start @ " + "C:\\Projects\\cose\\Examples");
                     directory = new DirectoryInfo("C:\\Projects\\cose\\Examples");
                 }
             }
             catch (Exception) {
-                Console.WriteLine("Start @ " + Path.Combine("C:\\Projects\\cose", directoryName));
                 directory = new DirectoryInfo(Path.Combine("C:\\Projects\\cose", directoryName));
             }
 
@@ -104,7 +101,6 @@ namespace Com.AugustCellars.COSE.Tests
 
         public void ProcessFile(String test)
         {
-            Console.WriteLine("Test File " + test);
             try {
                 int fails = CFails;
                 Console.Write("Check: " + test);
@@ -113,9 +109,10 @@ namespace Com.AugustCellars.COSE.Tests
                 file.Close();
                 CBORObject foo = CBORObject.FromJSONString(str);
 
-                ProcessJSON(foo);
-                if (fails == CFails) Console.Write("... PASS\n");
-            else Console.Write("... FAIL\n");
+                int x = ProcessJSON(foo);
+                if (x == 1) Console.Write("... Ignored\n");
+                else if (fails == CFails) Console.Write("... PASS\n");
+                else Console.Write("... FAIL\n");
             }
             catch (Exception e) {
                 Console.Write("... FAIL\nException " + e + "\n");
@@ -123,7 +120,7 @@ namespace Com.AugustCellars.COSE.Tests
             }
         }
 
-        public void ProcessJSON(CBORObject control)
+        public int ProcessJSON(CBORObject control)
         {
             CBORObject input = control["input"];
             if (input.ContainsKey("mac0")) {
@@ -152,6 +149,8 @@ namespace Com.AugustCellars.COSE.Tests
                 BuildSign0Message(control);
             }
 #endif
+            else return 1;
+            return 0;
         }
 
 #if false
