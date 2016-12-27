@@ -1952,10 +1952,6 @@ namespace Com.AugustCellars.COSE
     {
         protected List<Recipient> recipientList = new List<Recipient>();
 
-#if FOR_EXAMPLES
-        byte[] m_cek;
-#endif // FOR_EXAMPLES
-
         public EncryptMessage() : base(true, true)
         {
             context = "Encrypt";
