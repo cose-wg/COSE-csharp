@@ -317,6 +317,11 @@ namespace Com.AugustCellars.COSE
                 newKey.Add(CoseKeyParameterKeys.EC_Y, m_map[CoseKeyParameterKeys.EC_Y]);
                 break;
 
+            case GeneralValuesInt.KeyType_OKP:
+                newKey.Add(CoseKeyParameterKeys.OKP_Curve, m_map[CoseKeyParameterKeys.OKP_Curve]);
+                newKey.Add(CoseKeyParameterKeys.OKP_X, m_map[CoseKeyParameterKeys.OKP_X]);
+                break;
+
             default:
                 return null;
             }

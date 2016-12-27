@@ -64,6 +64,7 @@ namespace Com.AugustCellars.COSE.Tests
             foreach (var di in directory.EnumerateDirectories()) {
                 if ((!di.Attributes.HasFlag(FileAttributes.Hidden)) &&
                     (di.FullName.Substring(di.FullName.Length-4) != "\\new")) {
+                    if (di.Name == "chacha-poly-examples") continue;
                     ProcessDirectory(Path.Combine(directory.FullName, di.Name));
                 }
             }
@@ -87,6 +88,7 @@ namespace Com.AugustCellars.COSE.Tests
             foreach (var di in directory.EnumerateDirectories()) {
                 if ((!di.Attributes.HasFlag(FileAttributes.Hidden)) &&
                     (di.FullName.Substring(di.FullName.Length - 4) != "\\new")) {
+                    if (di.Name == "chacha-poly-examples") continue;
                     ProcessDirectory(Path.Combine(directory.FullName, di.Name));
                 }
             }
@@ -103,18 +105,19 @@ namespace Com.AugustCellars.COSE.Tests
         {
             try {
                 int fails = CFails;
-                Console.Write("Check: " + test);
                 StreamReader file  = File.OpenText(test);
                 string str = file.ReadToEnd();
                 file.Close();
                 CBORObject foo = CBORObject.FromJSONString(str);
 
                 int x = ProcessJSON(foo);
-                if (x == 1) Console.Write("... Ignored\n");
-                else if (fails == CFails) Console.Write("... PASS\n");
-                else Console.Write("... FAIL\n");
+                if (fails != CFails) {
+                    Console.Write("Check: " + test);
+                    Console.Write("... FAIL\n");
+                }
             }
             catch (Exception e) {
+                Console.Write("Check: " + test);
                 Console.Write("... FAIL\nException " + e + "\n");
                 CFails++;
             }
@@ -132,10 +135,12 @@ namespace Com.AugustCellars.COSE.Tests
                 VerifyMacTest(control);
                 BuildMacTest(control);
             }
+#endif
             else if (input.ContainsKey("encrypted")) {
                 VerifyEncryptTest(control);
                 BuildEncryptTest(control);
             }
+#if false
             else if (input.ContainsKey("enveloped")) {
                 VerifyEnvelopedTest(control);
                 BuildEnvelopedTest(control);
@@ -153,7 +158,6 @@ namespace Com.AugustCellars.COSE.Tests
             return 0;
         }
 
-#if false
         public void BuildEncryptTest(CBORObject cnControl)
         {
             CBORObject cnFail = cnControl[ "fail"];
@@ -191,7 +195,6 @@ namespace Com.AugustCellars.COSE.Tests
             byte[] rgb = hexStringToByteArray(strExample);
             _VerifyEncrypt(control, rgb);
         }
-
         public void _VerifyEncrypt(CBORObject control, byte[] rgbData)
         {
             CBORObject cnInput = control[ "input"];
@@ -235,6 +238,7 @@ namespace Com.AugustCellars.COSE.Tests
             }
         }
 
+#if false
         void BuildMacTest(CBORObject cnControl)
         {
             int iRecipient;

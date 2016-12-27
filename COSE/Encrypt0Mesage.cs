@@ -11,13 +11,13 @@ namespace Com.AugustCellars.COSE
     {
         public Encrypt0Message() : base(true, true)
         {
-            context = "Encrypted";
+            context = "Encrypt0";
             m_tag = Tags.Encrypt0;
         }
 
         public Encrypt0Message(bool fEmitTag, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
-            context = "Encrypted";
+            context = "Encrypt0";
             m_tag = Tags.Encrypt0;
         }
 
