@@ -747,6 +747,10 @@ namespace Com.AugustCellars.COSE
             get {
                 CBORObject alg = FindAttribute(HeaderKeys.Algorithm);
                 if (alg == null) throw new CoseException("No recipient algorithm set");
+                if (alg.Type == CBORType.TextString) {
+                    throw new CoseException("Unsupported algorithm " + alg.AsString());
+                }
+
                 switch ((AlgorithmValuesInt) alg.AsInt32())
                 {
                     case AlgorithmValuesInt.DIRECT:
