@@ -25,18 +25,18 @@ namespace examples
         static void Main(string[] args)
         {
             if (args.Count() == 0) {
-                // RunCoseExamples();
-                JoseExamples.RunTestsInDirectory(@"c:\Projects\JOSE\cookbook");
+                RunCoseExamples();
+                // JoseExamples.RunTestsInDirectory(@"c:\Projects\JOSE\cookbook");
                 return;
             }
 
             for (int i = 0; i < args.Count(); i++) {
                 switch (args[i]) {
                 case "--cose":
-                    RootDir = "";
                     i++;
                     if (i > args.Count()) PrintCommandLine();
-                    RunTestsInDirectory(args[i]);
+                    RootDir = args[i];
+                    RunTestsInDirectory("");
                     break;
 
                 case "--jose":
@@ -143,7 +143,9 @@ namespace examples
             try {
 #if FOR_EXAMPLES
                 if (ProcessJSON(control, RootDir + "\\new\\" + dir + "\\" + fileName.Replace(".json", ".bin"))) {
-                    fileText = control.ToJSONStringPretty(1);
+                    fileText = control.ToJSONString();
+                    JOSE.JSON j = JOSE.JSON.Parse(fileText);
+                    fileText = j.Serialize(0);
                     StreamWriter file2 = File.CreateText(RootDir + "\\new\\" + dir + "\\" + fileName);
                     file2.Write(fileText);
                     file2.Write("\r\n");
@@ -261,8 +263,6 @@ namespace examples
 
             SignMessage msg = new SignMessage();
 
-            msg.ForceArray(true);
-
             if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
             msg.SetContent(input["plaintext"].AsString());
 
@@ -323,9 +323,7 @@ namespace examples
             CBORObject input = control["input"];
             CBORObject sign = input["sign0"];
 
-            Sign0Message msg = new Sign0Message();
-
-            msg.ForceArray(true);
+            Sign1Message msg = new Sign1Message();
 
             if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
             msg.SetContent(input["plaintext"].AsString());
@@ -372,7 +370,7 @@ namespace examples
                 cnSign = cnInput["sign0"];
 
             try {
-                Message msg = Message.DecodeFromBytes(rgb, Tags.Signed0);
+                Message msg = Message.DecodeFromBytes(rgb, Tags.Sign1);
                 hSig = (Sign1Message) msg;
             }
             catch (CoseException) {
@@ -406,9 +404,7 @@ namespace examples
             CBORObject input = control["input"];
             CBORObject encrypt = input["encrypted"];
 
-            EncryptMessage msg = new EncryptMessage();
-
-            msg.ForceArray(true);
+            Encrypt0Message msg = new Encrypt0Message();
 
             if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
             msg.SetContent(input["plaintext"].AsString());
@@ -433,7 +429,7 @@ namespace examples
             rgbKey = key[CoseKeyParameterKeys.Octet_k].GetByteString();
 
             {
-                msg.Encrypt(rgbKey);
+                msg.EncryptWithKey(rgbKey);
 
                 CBORObject intermediates = GetSection(control, "intermediates");
 
@@ -466,7 +462,7 @@ namespace examples
             byte[] rgbData = FromHex(control["output"]["cbor"].AsString());
 
             try {
-                Message msg = Message.DecodeFromBytes(rgbData, Tags.Encrypted);
+                Message msg = Message.DecodeFromBytes(rgbData, Tags.Encrypt0);
                 Encrypt0Message enc0 = (Encrypt0Message) msg;
 
                 CBORObject cnEncrypt = cnInput["encrypted"];
@@ -502,9 +498,7 @@ namespace examples
             CBORObject input = control["input"];
             CBORObject encrypt = input["enveloped"];
 
-            EnvelopedMessage msg = new EnvelopedMessage();
-
-            msg.ForceArray(true);
+            EncryptMessage msg = new EncryptMessage();
 
             if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
             msg.SetContent(input["plaintext"].AsString());
@@ -589,8 +583,6 @@ namespace examples
                 control.Remove(CBORObject.FromObject("alg"));
             }
 
-            msg.ForceArray(true);
-
             if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
             msg.SetContent(input["plaintext"].AsString());
 
@@ -656,8 +648,6 @@ namespace examples
             if (control.ContainsKey("alg")) {
                 control.Remove(CBORObject.FromObject("alg"));
             }
-
-            msg.ForceArray(true);
 
             if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
             msg.SetContent(input["plaintext"].AsString());
@@ -937,7 +927,7 @@ namespace examples
 
             Key key = null;
 
-            if (control["key"] != null) key = GetKey(control["key"]);
+            if (control["key"] != null) key = GetKey(control["key"], true);
 
             alg = AlgorithmMap(CBORObject.FromObject(alg.AsString()));
             Recipient recipient = new Recipient(key, alg);
@@ -1168,6 +1158,7 @@ namespace examples
             if (pubKey != null) {
                 allPubKeys.AddKey(key.PublicKey());
             }
+            if (fPublicKey && (type!= "oct")) return pubKey;
             return key;
         }
 
@@ -1449,7 +1440,7 @@ namespace examples
 
                 try {
 
-                    Message msgX = Message.DecodeFromBytes(rgb, Tags.Enveloped);
+                    Message msgX = Message.DecodeFromBytes(rgb, Tags.Encrypt);
                     msg = (EncryptMessage) msgX;
                 }
                 catch(Exception) {

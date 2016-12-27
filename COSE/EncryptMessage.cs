@@ -601,14 +601,14 @@ namespace Com.AugustCellars.COSE
                     case "A128GCMKW":
                     case "A192GCMKW":
                     case "A256GCMKW":
-                        if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid Parameter");
+                        if (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid Parameter");
                         break;
 
 
                     case "PBES2-HS256+A128KW":
                     case "PBES2-HS256+A192KW":
                     case "PBES-HS256+A256KW":
-                        if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid Parameter");
+                        if (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid Parameter");
                         break;
 
                     default:
@@ -621,23 +621,23 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_512:
                     case AlgorithmValuesInt.Direct_HKDF_AES_128:
                     case AlgorithmValuesInt.Direct_HKDF_AES_256:
-                        if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid parameters");
+                        if (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid parameters");
                         break;
 
 
                     case AlgorithmValuesInt.RSA_OAEP:
                     case AlgorithmValuesInt.RSA_OAEP_256:
-                        if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_RSA)) throw new CoseException("Invalid Parameter");
+                        if (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_RSA)) throw new CoseException("Invalid Parameter");
                         break;
 
                     case AlgorithmValuesInt.AES_KW_128:
                     case AlgorithmValuesInt.AES_KW_192:
                     case AlgorithmValuesInt.AES_KW_256:
-                        if ((key != null) && (key[CoseKeyKeys.KeyType].Equals( GeneralValues.KeyType_Octet))) throw new CoseException("Invalid Parameter");
+                        if ((key != null) && (!key[CoseKeyKeys.KeyType].Equals( GeneralValues.KeyType_Octet))) throw new CoseException("Invalid Parameter");
                         break;
 
                     case AlgorithmValuesInt.DIRECT:  // Direct encryption mode
-                        if (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid parameters");
+                        if (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid parameters");
                         break;
 
                     case AlgorithmValuesInt.ECDH_ES_HKDF_256_AES_KW_128:
@@ -646,7 +646,7 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_128:
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_192:
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_256:
-                        if ((key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) && (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) throw new CoseException("Invalid Parameter");
+                        if ((!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) && (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) throw new CoseException("Invalid Parameter");
                         break;
 
                     case AlgorithmValuesInt.ECDH_ES_HKDF_256:
@@ -655,7 +655,7 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256:
                     case AlgorithmValuesInt.ECDH_SS_HKDF_512:
 #endif // DEBUG
-                        if ((key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) && (key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) throw new CoseException("Invalid Parameters");
+                        if ((!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) && (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) throw new CoseException("Invalid Parameters");
                         break;
 
                     default:
@@ -758,6 +758,8 @@ namespace Com.AugustCellars.COSE
 
                     case AlgorithmValuesInt.ECDH_ES_HKDF_256:
                     case AlgorithmValuesInt.ECDH_ES_HKDF_512:
+                    case AlgorithmValuesInt.ECDH_SS_HKDF_256:
+                    case AlgorithmValuesInt.ECDH_SS_HKDF_512:
                         return RecipientType.keyAgreeDirect;
 
                     case AlgorithmValuesInt.AES_KW_128:
@@ -859,16 +861,16 @@ namespace Com.AugustCellars.COSE
                     return key.AsBytes(CoseKeyParameterKeys.Octet_k);
 
                 case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_256:
-                    if (m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
+                    if (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
                     return HKDF(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), cbitCEK, algCEK, new Sha256Digest());
 
                 case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_512:
-                    if (m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
+                    if (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
                     return HKDF(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), cbitCEK, algCEK, new Sha512Digest());
 
                 case AlgorithmValuesInt.Direct_HKDF_AES_128:
                 case AlgorithmValuesInt.Direct_HKDF_AES_256:
-                    if (m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
+                    if (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
                     return HKDF_AES(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), cbitCEK, algCEK);
 
                 case AlgorithmValuesInt.RSA_OAEP: return RSA_OAEP_KeyUnwrap(key, new Sha1Digest());
@@ -1486,6 +1488,8 @@ namespace Com.AugustCellars.COSE
             CBORObject epk = CBORObject.NewMap();
             epk.Add(CoseKeyKeys.KeyType, m_key[CoseKeyKeys.KeyType]);
 
+            Key secretKey = new Key();
+
             switch (m_key.GetKeyType()) {
             case GeneralValuesInt.KeyType_OKP:
                 epk.Add(CoseKeyParameterKeys.OKP_Curve, m_key[CoseKeyParameterKeys.OKP_Curve]);
@@ -1493,7 +1497,11 @@ namespace Com.AugustCellars.COSE
                 case GeneralValuesInt.X25519:
                     X25519KeyPair keyPair = X25519.GenerateKeyPair();
                     epk.Add(CoseKeyParameterKeys.OKP_X, keyPair.Public);
-                    epk.Add(CoseKeyParameterKeys.OKP_D, keyPair.Private);
+
+                    secretKey.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_OKP);
+                    secretKey.Add(CoseKeyParameterKeys.OKP_Curve, m_key[CoseKeyParameterKeys.OKP_Curve]);
+                    secretKey.Add(CoseKeyParameterKeys.OKP_D, CBORObject.FromObject(keyPair.Private));
+                    m_senderKey = secretKey;
                     break;
                 }
                 break;
@@ -1522,6 +1530,14 @@ namespace Com.AugustCellars.COSE
                     epk.Add(CoseKeyParameterKeys.EC_X, PadBytes(priv.Q.Normalize().XCoord.ToBigInteger().ToByteArrayUnsigned(), p.Curve.FieldSize));
                     epk.Add(CoseKeyParameterKeys.EC_Y, PadBytes(priv.Q.Normalize().YCoord.ToBigInteger().ToByteArrayUnsigned(), p.Curve.FieldSize));
                 }
+
+                secretKey.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_EC);
+                secretKey.Add(CoseKeyParameterKeys.EC_Curve, m_key[CoseKeyParameterKeys.EC_Curve]);
+                secretKey.Add(CoseKeyParameterKeys.EC_X, epk[CoseKeyParameterKeys.EC_X]);
+                secretKey.Add(CoseKeyParameterKeys.EC_Y, epk[CoseKeyParameterKeys.EC_Y]);
+                ECPrivateKeyParameters priv1 = (ECPrivateKeyParameters)p1.Private;
+                secretKey.Add(CoseKeyParameterKeys.EC_D, CBORObject.FromObject(priv1.D.ToByteArrayUnsigned()));
+                m_senderKey = secretKey;
                 break;
             }
 
@@ -1544,7 +1560,8 @@ namespace Com.AugustCellars.COSE
             if (key[CoseKeyKeys.KeyType].Type != CBORType.Number) throw new CoseException("Not an EC Key");
 
             if (m_senderKey != null) {
-                epk = m_senderKey;
+                epk = key;
+                key = m_senderKey;
             }
             else {
                 CBORObject spkT = FindAttribute(HeaderKeys.StaticKey);
@@ -1566,7 +1583,7 @@ namespace Com.AugustCellars.COSE
 
                 switch ((GeneralValuesInt) epk[CoseKeyParameterKeys.OKP_Curve].AsInt32()) {
                 case GeneralValuesInt.X25519:
-                    temp = X25519.CalculateAgreement(key.AsBytes(CoseKeyParameterKeys.OKP_X), epk.AsBytes(CoseKeyParameterKeys.OKP_D));
+                    temp = X25519.CalculateAgreement(epk.AsBytes(CoseKeyParameterKeys.OKP_X), key.AsBytes(CoseKeyParameterKeys.OKP_D));
                     break;
 
                 default:
@@ -1583,14 +1600,14 @@ namespace Com.AugustCellars.COSE
 
                 //  Get the curve
 
-                X9ECParameters p = key.GetCurve();
-                ECPoint pubPoint = key.GetPoint();
+                X9ECParameters p = epk.GetCurve();
+                ECPoint pubPoint = epk.GetPoint();
 
                 ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
 
                 ECPublicKeyParameters pub = new ECPublicKeyParameters(pubPoint, parameters);
 
-                ECPrivateKeyParameters priv = new ECPrivateKeyParameters(epk.AsBigInteger(CoseKeyParameterKeys.EC_D), parameters);
+                ECPrivateKeyParameters priv = new ECPrivateKeyParameters(key.AsBigInteger(CoseKeyParameterKeys.EC_D), parameters);
 
                 IBasicAgreement e1 = new ECDHBasicAgreement();
                 e1.Init(priv);

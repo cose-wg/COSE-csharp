@@ -104,6 +104,8 @@ namespace JOSE
             case '7':
             case '8':
             case '9':
+            case '-':
+            case '+':
                 offset += ParseNumber(offset);
                 break;
 
@@ -206,15 +208,23 @@ namespace JOSE
             int offset = offsetStart;
 
             int value = 0;
+            int sign = 1;
 
             offset += SkipWhiteSpace(offset);
+            if (source[offset] == '+') offset++;
+            else if (source[offset] == '-') {
+                sign = -1;
+                offset++;
+            }
+
             while (Char.IsDigit(source[offset])) {
                 value = value * 10 + source[offset] - '0';
                 offset += 1;
             }
 
             nodeType = JsonType.number;
-            number = value;
+            number = sign*value;
+
 
             offset += SkipWhiteSpace(offset);
             return offset - offsetStart;
@@ -457,9 +467,10 @@ namespace JOSE
             case JsonType.map:
                 tmp = "{\r\n";
                 foreach (KeyValuePair<string, JSON> pair in map) {
-                    tmp += indent(depth + 1) + '"' + pair.Key + "\": " + pair.Value.Serialize(depth + 1) + ",\r\n";
+                    tmp += indent(depth + 1) + '"' + pair.Key + "\":" + pair.Value.Serialize(depth + 1) + ",\r\n";
                 }
-                tmp = tmp.Substring(0, tmp.Length - 3) + "\r\n" + indent(depth) + "}";
+                if (tmp.Substring(tmp.Length - 3) == ",\r\n") tmp = tmp.Substring(0, tmp.Length - 3) + "\r\n";
+                tmp += indent(depth) + "}";
                 return tmp;
 
             case JsonType.array:
@@ -467,7 +478,8 @@ namespace JOSE
                 foreach (JSON value in array) {
                     tmp += indent(depth + 1) + value.Serialize(depth + 1) + ",\r\n";
                 }
-                tmp = tmp.Substring(0, tmp.Length - 3) + "\r\n" + indent(depth) + "]";
+                if (tmp.Substring(tmp.Length - 3) == ",\r\n") tmp = tmp.Substring(0, tmp.Length - 3) + "\r\n";
+                tmp  += indent(depth) + "]";
                 return tmp;
 
             case JsonType.boolean:
@@ -516,7 +528,7 @@ namespace JOSE
         private string indent(int depth)
         {
             string tmp = "";
-            for (int i = 0; i < depth; i++) tmp += "    ";
+            for (int i = 0; i < depth; i++) tmp += "   ";
             return tmp;
         }
     }

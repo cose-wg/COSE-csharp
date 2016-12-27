@@ -599,7 +599,7 @@ public virtual void Compute()
             obj.Add(strContext);
             if (rgbProtected == null) {
                 if (objProtected.Count > 0) rgbProtected = objProtected.EncodeToBytes();
-                else rgbProtected = CBORObject.FromObject(new byte[0]).EncodeToBytes();
+                else rgbProtected = new byte[0];
             }
             obj.Add(rgbProtected);
             if (externalData != null) obj.Add(CBORObject.FromObject(externalData));
