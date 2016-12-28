@@ -130,12 +130,10 @@ namespace Com.AugustCellars.COSE.Tests
                 VerifyMac0Test(control);
                 BuildMac0Test(control);
             }
-#if false
             else if (input.ContainsKey("mac")) {
                 VerifyMacTest(control);
                 BuildMacTest(control);
             }
-#endif
             else if (input.ContainsKey("encrypted")) {
                 VerifyEncryptTest(control);
                 BuildEncryptTest(control);
@@ -195,10 +193,11 @@ namespace Com.AugustCellars.COSE.Tests
             byte[] rgb = hexStringToByteArray(strExample);
             _VerifyEncrypt(control, rgb);
         }
+
         public void _VerifyEncrypt(CBORObject control, byte[] rgbData)
         {
             CBORObject cnInput = control[ "input"];
-            Boolean fFail = false;
+            // Boolean fFail = false;
             Boolean fFailBody = false;
 
             CBORObject cnFail = control[ "fail"];
@@ -229,16 +228,15 @@ namespace Com.AugustCellars.COSE.Tests
                     byte[] oldContent = UTF8Encoding.UTF8.GetBytes(cnInput[ "plaintext"].AsString());
                     Assert.That(oldContent, Is.EqualTo(rgbContent));
                 }
-                catch (Exception e) {
+                catch (Exception) {
                     if (!fFailBody && ((cnFail == null) || !cnFail.AsBoolean())) CFails++;
                 }
             }
-            catch (Exception e) {
+            catch (Exception) {
                 if (!fFailBody) CFails++;
             }
         }
 
-#if false
         void BuildMacTest(CBORObject cnControl)
         {
             int iRecipient;
@@ -278,7 +276,7 @@ namespace Com.AugustCellars.COSE.Tests
 
             return;
         }
-#endif
+
         public void BuildMac0Test(CBORObject cnControl)
         {
             CBORObject cnFail = cnControl[ "fail"];
@@ -319,8 +317,7 @@ namespace Com.AugustCellars.COSE.Tests
         public void _VerifyMac0(CBORObject control, byte[] rgbData)
         {
             CBORObject cnInput = control[ "input"];
-            int type;
-            Boolean fFail = false;
+            // Boolean fFail = false;
             Boolean fFailBody = false;
 
             try {
@@ -355,11 +352,10 @@ namespace Com.AugustCellars.COSE.Tests
                 }
 
             }
-            catch (Exception e) {
+            catch (Exception) {
                 if (!fFailBody) CFails++;
             }
         }
-#if false
 
         public void VerifyMacTest(CBORObject control)
         {
@@ -412,17 +408,17 @@ namespace Com.AugustCellars.COSE.Tests
                     if (f && (fFail || fFailBody)) CFails++;
                     else if (!f && !(fFail || fFailBody)) CFails++;
                 }
-                catch (Exception e) {
+                catch (Exception) {
                     if (fFail || fFailBody) return;
                     CFails++;
                     return;
                 }
             }
-            catch (Exception e) {
+            catch (Exception) {
                 CFails++;
             }
         }
-
+#if false
         Boolean DecryptMessage(byte[] rgbEncoded, Boolean fFailBody, CBORObject cnEnveloped, CBORObject cnRecipient1, int iRecipient1, CBORObject cnRecipient2, int iRecipient2)
         {
             EncryptMessage hEnc;
@@ -544,7 +540,7 @@ namespace Com.AugustCellars.COSE.Tests
 
             return _ValidateEnveloped(cnControl, rgb);
         }
-
+#endif 
         Recipient BuildRecipient(CBORObject cnRecipient)
         {
             Recipient hRecip = new Recipient();
@@ -582,7 +578,7 @@ namespace Com.AugustCellars.COSE.Tests
 
             return hRecip;
         }
-
+#if false
         void BuildEnvelopedTest(CBORObject cnControl)
         {
             int iRecipient;
@@ -625,8 +621,6 @@ namespace Com.AugustCellars.COSE.Tests
 
         public void SetReceivingAttributes(Attributes msg, CBORObject cnIn)
         {
-            Boolean f = false;
-
             SetAttributes(msg, cnIn[ "unsent"], Attributes.DO_NOT_SEND, true);
 
             CBORObject cnExternal = cnIn[ "external"];
@@ -679,61 +673,60 @@ namespace Com.AugustCellars.COSE.Tests
                     cnKey = HeaderKeys.PartialIV;
                     cnValue = CBORObject.FromObject(hexStringToByteArray(cnAttributes[ attr].AsString()));
                     break;
-#if false
 
                     case "salt":
-                    cnKey = HeaderKeys.HKDF_SALT;
+                    cnKey = CoseKeyParameterKeys.HKDF_Salt;
                     cnValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cnAttributes[ attr].AsString()));
                     break;
 
                     case "apu_id":
-                    cnKey = HeaderKeys.HKDF_Context_PartyU_ID;
+                    cnKey = CoseKeyParameterKeys.HKDF_Context_PartyU_ID;
                     cnValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cnAttributes[ attr].AsString()));
                     break;
 
                     case "apv_id":
-                    cnKey = HeaderKeys.HKDF_Context_PartyV_ID;
+                    cnKey = CoseKeyParameterKeys.HKDF_Context_PartyV_ID;
                     cnValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cnAttributes[ attr].AsString()));
                     break;
 
                     case "apu_nonce":
                     case "apu_nonce_hex":
-                    cnKey = HeaderKeys.HKDF_Context_PartyU_nonce;
+                    cnKey = CoseKeyParameterKeys.HKDF_Context_PartyU_nonce;
                     cnValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cnAttributes[ attr].AsString()));
                     break;
 
                     case "apv_nonce":
-                    cnKey = HeaderKeys.HKDF_Context_PartyV_nonce;
+                    cnKey = CoseKeyParameterKeys.HKDF_Context_PartyV_nonce;
                     cnValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cnAttributes[ attr].AsString()));
                     break;
 
                     case "apu_other":
-                    cnKey = HeaderKeys.HKDF_Context_PartyU_Other;
+                    cnKey = CoseKeyParameterKeys.HKDF_Context_PartyU_Other;
                     cnValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cnAttributes[ attr].AsString()));
                     break;
 
                     case "apv_other":
-                    cnKey = HeaderKeys.HKDF_Context_PartyV_Other;
+                    cnKey = CoseKeyParameterKeys.HKDF_Context_PartyV_Other;
                     cnValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cnAttributes[ attr].AsString()));
                     break;
 
                     case "pub_other":
-                    cnKey = HeaderKeys.HKDF_SuppPub_Other;
+                    cnKey = CoseKeyParameterKeys.HKDF_SuppPub_Other;
                     cnValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cnAttributes[ attr].AsString()));
                     break;
 
                     case "priv_other":
-                    cnKey = HeaderKeys.HKDF_SuppPriv_Other;
+                    cnKey = CoseKeyParameterKeys.HKDF_SuppPriv_Other;
                     cnValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cnAttributes[ attr].AsString()));
                     break;
 
                     case "ctyp":
-                    cnKey = HeaderKeys.CONTENT_TYPE;
+                    cnKey = HeaderKeys.ContentType;
                     cnValue = cnAttributes[ attr];
                     break;
 
                     case "crit":
-                    cnKey = HeaderKeys.CriticalHeaders;
+                    cnKey = HeaderKeys.Critical;
                     cnValue = CBORObject.NewArray();
                     foreach (CBORObject x in cnAttributes[ attr].Values) {
                         cnValue.Add(HeaderMap(x));
@@ -749,7 +742,6 @@ namespace Com.AugustCellars.COSE.Tests
                     cnKey = null;
                     cnValue = null;
                     break;
-#endif
 
                     default:
                     throw new Exception("Attribute " + attr.AsString() + " is not part of SetAttributes");
@@ -873,10 +865,8 @@ namespace Com.AugustCellars.COSE.Tests
                 case "AES-CCM-64-256/128": return AlgorithmValues.AES_CCM_64_128_256;
                 case "HKDF-HMAC-SHA-256": return AlgorithmValues.HKDF_HMAC_SHA_256;
                 case "HKDF-HMAC-SHA-512": return AlgorithmValues.HKDF_HMAC_SHA_512;
-#if false
-                case "HKDF-AES-128": return AlgorithmValues.HKDF_HMAC_AES_128;
-                case "HKDF-AES-256": return AlgorithmValues.HKDF_HMAC_AES_256;
-#endif
+                case "HKDF-AES-128": return AlgorithmValues.HKDF_AES_128;
+                case "HKDF-AES-256": return AlgorithmValues.HKDF_AES_256;
                 case "ECDH-ES": return AlgorithmValues.ECDH_ES_HKDF_256;
                 case "ECDH-ES-512": return AlgorithmValues.ECDH_ES_HKDF_512;
                 case "ECDH-SS": return AlgorithmValues.ECDH_SS_HKDF_256;
@@ -894,7 +884,6 @@ namespace Com.AugustCellars.COSE.Tests
                 default: return old;
             }
         }
-#if false
 
         static CBORObject HeaderMap(CBORObject obj)
         {
@@ -911,7 +900,7 @@ namespace Com.AugustCellars.COSE.Tests
             if (cnFail != null && cnFail.AsBoolean()) return true;
             return false;
         }
-
+#if false
         int _ValidateSigned(CBORObject cnControl, byte[] pbEncoded)
         {
             CBORObject cnInput = cnControl[ "input"];
