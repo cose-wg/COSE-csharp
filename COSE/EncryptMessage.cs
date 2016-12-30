@@ -821,6 +821,28 @@ namespace Com.AugustCellars.COSE
             }
         }
 
+        public byte[] Decrypt(int cbitCEK, CBORObject algCEK, Recipient recipientIn)
+        {
+            byte[] CEK = null;
+            CBORObject algKEK = FindAttribute(HeaderKeys.Algorithm);
+            int cbitKEK = GetKeySize(algKEK);
+
+            foreach (Recipient r in recipientList) {
+                if (r == recipientIn) {
+                    CEK = r.Decrypt(cbitKEK, algKEK, recipientIn);
+                    if (CEK == null) throw new CoseException("Internal Error");
+                    return CEK;
+                }
+                else if (r.recipientList.Count > 0) {
+                    CEK = r.Decrypt(cbitKEK, algKEK, recipientIn);
+                    if (CEK != null) return CEK;        
+                }
+            }
+
+            if (CEK == null) throw new CoseException("Recipient key not found");
+            return null;
+        }
+
         public byte[] Decrypt(int cbitCEK, CBORObject algCEK)
         {
             return Decrypt(m_key, cbitCEK, algCEK);
@@ -2085,6 +2107,9 @@ namespace Com.AugustCellars.COSE
                 try {
                     if (recipient == recipientIn) {
                         CEK = recipient.Decrypt(cbitCEK, alg);
+                    }
+                    else if (recipient.RecipientList.Count > 0) {
+                        CEK = recipient.Decrypt(cbitCEK, alg, recipientIn);
                     }
                     else if (recipientIn == null) {
                         CEK = recipient.Decrypt(cbitCEK, alg);
