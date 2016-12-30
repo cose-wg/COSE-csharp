@@ -65,12 +65,14 @@ namespace Com.AugustCellars.COSE.Tests
                 if ((!di.Attributes.HasFlag(FileAttributes.Hidden)) &&
                     (di.FullName.Substring(di.FullName.Length-4) != "\\new")) {
                     if (di.Name == "chacha-poly-examples") continue;
+                    if (di.Name == "X25519-tests") continue;
                     ProcessDirectory(Path.Combine(directory.FullName, di.Name));
                 }
             }
 
             foreach (var fi in directory.EnumerateFiles()) {
                 if (fi.Extension == ".json") {
+                    if (fi.Name == "Appendix_A.json") continue;
                     ProcessFile(fi.FullName);
                 }
             }
@@ -89,12 +91,14 @@ namespace Com.AugustCellars.COSE.Tests
                 if ((!di.Attributes.HasFlag(FileAttributes.Hidden)) &&
                     (di.FullName.Substring(di.FullName.Length - 4) != "\\new")) {
                     if (di.Name == "chacha-poly-examples") continue;
+                    if (di.Name == "X25519-tests") continue;
                     ProcessDirectory(Path.Combine(directory.FullName, di.Name));
                 }
             }
 
             foreach (var fi in directory.EnumerateFiles()) {
                 if (fi.Extension == ".json") {
+                    if (fi.Name == "Appendix_A.json") continue;
                     ProcessFile(fi.FullName);
                 }
             }
@@ -138,20 +142,20 @@ namespace Com.AugustCellars.COSE.Tests
                 VerifyEncryptTest(control);
                 BuildEncryptTest(control);
             }
-#if false
             else if (input.ContainsKey("enveloped")) {
                 VerifyEnvelopedTest(control);
                 BuildEnvelopedTest(control);
             }
+#if false
             else if (input.ContainsKey("sign")) {
                 ValidateSigned(control);
                 BuildSignedMessage(control);
             }
+#endif
             else if (input.ContainsKey("sign0")) {
                 ValidateSign0(control);
                 BuildSign0Message(control);
             }
-#endif
             else return 1;
             return 0;
         }
@@ -418,7 +422,7 @@ namespace Com.AugustCellars.COSE.Tests
                 CFails++;
             }
         }
-#if false
+
         Boolean DecryptMessage(byte[] rgbEncoded, Boolean fFailBody, CBORObject cnEnveloped, CBORObject cnRecipient1, int iRecipient1, CBORObject cnRecipient2, int iRecipient2)
         {
             EncryptMessage hEnc;
@@ -426,7 +430,6 @@ namespace Com.AugustCellars.COSE.Tests
             Recipient hRecip1;
             Recipient hRecip2;
             Boolean fRet = false;
-            int type;
             OneKey cnkey;
             Message msg;
 
@@ -491,12 +494,12 @@ namespace Com.AugustCellars.COSE.Tests
                     if (fFailBody) fRet = false;
                     else fRet = true;
                 }
-                catch (Exception e) {
+                catch (Exception) {
                     if (!fFailBody) fRet = false;
                     else fRet = true;
                 }
             }
-            catch (Exception e) {
+            catch (Exception) {
                 fRet = false;
             }
 
@@ -506,7 +509,6 @@ namespace Com.AugustCellars.COSE.Tests
         int _ValidateEnveloped(CBORObject cnControl, byte[] rgbEncoded)
         {
             CBORObject cnInput = cnControl["input"];
-            CBORObject cnFail;
             CBORObject cnEnveloped;
             CBORObject cnRecipients;
             int iRecipient;
@@ -540,7 +542,7 @@ namespace Com.AugustCellars.COSE.Tests
 
             return _ValidateEnveloped(cnControl, rgb);
         }
-#endif 
+
         Recipient BuildRecipient(CBORObject cnRecipient)
         {
             Recipient hRecip = new Recipient();
@@ -578,7 +580,7 @@ namespace Com.AugustCellars.COSE.Tests
 
             return hRecip;
         }
-#if false
+
         void BuildEnvelopedTest(CBORObject cnControl)
         {
             int iRecipient;
@@ -617,7 +619,6 @@ namespace Com.AugustCellars.COSE.Tests
 
             return;
         }
-#endif
 
         public void SetReceivingAttributes(Attributes msg, CBORObject cnIn)
         {
@@ -770,6 +771,10 @@ namespace Com.AugustCellars.COSE.Tests
                         case "oct":
                         cnKeyOut[CBORObject.FromObject(1)] = CBORObject.FromObject(4);
                         break;
+
+                        case "OKP":
+                        cnKeyOut[CBORObject.FromObject(1)] = GeneralValues.KeyType_OKP;
+                        break;
                     }
                     break;
 
@@ -785,6 +790,13 @@ namespace Com.AugustCellars.COSE.Tests
 
                         case "P-521":
                         cnValue = CBORObject.FromObject(3);
+                        break;
+
+                        case "X25519":
+                        cnValue = GeneralValues.X25519;
+                        break;
+
+                        default:
                         break;
                     }
 
@@ -1026,13 +1038,12 @@ namespace Com.AugustCellars.COSE.Tests
             int f = _ValidateSigned(cnControl, rgb);
             return f;
         }
-
+#endif 
         int _ValidateSign0(CBORObject cnControl, byte[] pbEncoded)
         {
             CBORObject cnInput = cnControl[ "input"];
             CBORObject cnSign;
             Sign1Message hSig;
-            int type;
             Boolean fFail;
 
             try {
@@ -1044,7 +1055,7 @@ namespace Com.AugustCellars.COSE.Tests
                     Message msg = Message.DecodeFromBytes(pbEncoded, Tags.Sign1);
                     hSig = (Sign1Message)msg;
                 }
-                catch (CoseException e) {
+                catch (CoseException) {
                     if (!fFail) CFails++;
                     return 0;
                 }
@@ -1061,11 +1072,11 @@ namespace Com.AugustCellars.COSE.Tests
                     if (f && (fFail || fFailInput)) CFails++;
                     if (!f && !(fFail || fFailInput)) CFails++;
                 }
-                catch (Exception e) {
+                catch (Exception) {
                     if (!fFail && !fFailInput) CFails++;
                 }
             }
-            catch (Exception e) {
+            catch (Exception) {
                 CFails++;
             }
             return 0;
@@ -1105,7 +1116,7 @@ namespace Com.AugustCellars.COSE.Tests
 
                 rgb = hSignObj.EncodeToBytes();
             }
-            catch (Exception e) {
+            catch (Exception) {
                 CFails++;
                 return 0;
             }
@@ -1113,7 +1124,7 @@ namespace Com.AugustCellars.COSE.Tests
             int f = _ValidateSign0(cnControl, rgb);
             return 0;
         }
-
+#if false
         void CreateCounterSignatures(Message msg, CBORObject cSigInfo)
         {
             try {
