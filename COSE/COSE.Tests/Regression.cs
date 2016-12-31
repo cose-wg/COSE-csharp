@@ -146,12 +146,10 @@ namespace Com.AugustCellars.COSE.Tests
                 VerifyEnvelopedTest(control);
                 BuildEnvelopedTest(control);
             }
-#if false
             else if (input.ContainsKey("sign")) {
                 ValidateSigned(control);
                 BuildSignedMessage(control);
             }
-#endif
             else if (input.ContainsKey("sign0")) {
                 ValidateSign0(control);
                 BuildSign0Message(control);
@@ -912,15 +910,13 @@ namespace Com.AugustCellars.COSE.Tests
             if (cnFail != null && cnFail.AsBoolean()) return true;
             return false;
         }
-#if false
+
         int _ValidateSigned(CBORObject cnControl, byte[] pbEncoded)
         {
             CBORObject cnInput = cnControl[ "input"];
-            CBORObject pFail;
             CBORObject cnSign;
             CBORObject cnSigners;
             SignMessage hSig = null;
-            int type;
             int iSigner;
             Boolean fFailBody;
 
@@ -936,7 +932,7 @@ namespace Com.AugustCellars.COSE.Tests
                         Message msg = Message.DecodeFromBytes(pbEncoded, Tags.Signed);
                         hSig = (SignMessage)msg;
                     }
-                    catch (Exception e) {
+                    catch (Exception) {
                         if (fFailBody) return 0;
 
                     }
@@ -957,14 +953,16 @@ namespace Com.AugustCellars.COSE.Tests
                         Boolean f = hSig.Validate(hSigner);
                         if (!f && !(fFailBody || fFailSigner)) CFails++;
                     }
-                    catch (Exception e) {
+                    catch (Exception) {
                         if (!fFailBody && !fFailSigner) CFails++;
                     }
 
+#if false
                     CBORObject cSignInfo = cnSign[ "countersign"];
                     if (cSignInfo != null) {
                         CheckCounterSignatures(hSig, cSignInfo);
                     }
+#endif
                 }
             }
             catch (Exception e) {
@@ -1021,11 +1019,12 @@ namespace Com.AugustCellars.COSE.Tests
 
                 // hSignObj.Sign();
 
+#if false
                 CBORObject cnCounterSign = cnSign[ "countersign"];
                 if (cnCounterSign != null) {
                     CreateCounterSignatures(hSignObj, cnCounterSign);
                 }
-
+#endif
                 rgb = hSignObj.EncodeToBytes();
             }
             catch (Exception e) {
@@ -1038,7 +1037,7 @@ namespace Com.AugustCellars.COSE.Tests
             int f = _ValidateSigned(cnControl, rgb);
             return f;
         }
-#endif 
+
         int _ValidateSign0(CBORObject cnControl, byte[] pbEncoded)
         {
             CBORObject cnInput = cnControl[ "input"];
