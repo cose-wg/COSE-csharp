@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -43,6 +44,11 @@ namespace Com.AugustCellars.COSE
                     newKey.Add(CoseKeyParameterKeys.EC_Y, m_map[CoseKeyParameterKeys.EC_Y]);
                     break;
 
+                case GeneralValuesInt.KeyType_OKP:
+                    newKey.Add(CoseKeyParameterKeys.EC_Curve, m_map[CoseKeyParameterKeys.EC_Curve]);
+                    newKey.Add(CoseKeyParameterKeys.EC_X, m_map[CoseKeyParameterKeys.EC_X]);
+                    break;
+
                 default:
                     return null;
             }
@@ -64,12 +70,21 @@ namespace Com.AugustCellars.COSE
             return newKey;
         }
 
+        public new X9ECParameters GetCurve()
+        {
+            return base.GetCurve();
+        }
+
         public static OneKey GenerateKey(AlgorithmValues algorithm = null, CBORObject keyType = null, string parameters = null)
         {
             if (keyType != null) {
                 if (keyType.Equals(GeneralValues.KeyType_EC)) {
                     if (parameters == null) parameters = "P-256";
                     return generateEC2Key(algorithm, parameters);
+                }
+                else if (keyType.Equals(GeneralValues.KeyType_OKP)) {
+                    if (parameters == null) parameters = "Ed25519";
+                    return generateEDKey(algorithm, parameters);
                 }
             }
             else {
@@ -100,6 +115,35 @@ namespace Com.AugustCellars.COSE
             if (algorithm != null) epk.Add(CoseKeyKeys.Algorithm, algorithm);
 
             return new OneKey(epk);
+        }
+
+        private static OneKey generateEDKey(AlgorithmValues algorithm, string genParameters)
+        {
+            X25519KeyPair pair = X25519KeyPair.GenerateKeyPair();
+
+            CBORObject epk = CBORObject.NewMap();
+            epk.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_OKP);
+            if (genParameters == "Ed25519") epk.Add(CoseKeyParameterKeys.OKP_Curve, GeneralValues.Ed25519);
+            else if (genParameters == "X25519") epk.Add(CoseKeyParameterKeys.OKP_Curve, GeneralValues.X25519);
+            else throw new Exception("Bad parameter " + genParameters);
+            epk.Add(CoseKeyParameterKeys.OKP_X, pair.Public);
+            epk.Add(CoseKeyParameterKeys.OKP_D, pair.Private);
+            if (algorithm != null) epk.Add(CoseKeyKeys.Algorithm, algorithm);
+
+            return new OneKey(epk);
+        }
+
+        public Boolean HasKid(byte[] kidToMatch)
+        {
+            CBORObject obj = m_map[CoseKeyKeys.KeyIdentifier];
+            if (obj == null) return false;
+
+            byte[] kid = obj.GetByteString();
+            if (kid.Length != kidToMatch.Length) return false;
+
+            Boolean ret = true;
+            for (int i = 0; i < kid.Length; i++) if (kid[i] != kidToMatch[i]) ret = false;
+            return ret;
         }
     }
 
@@ -396,11 +440,11 @@ namespace Com.AugustCellars.COSE
 
     public class KeySet
     {
-        List<Key> m_keyList = new List<Key>();
+        List<OneKey> m_keyList = new List<OneKey>();
 
-        public void AddKey(Key key)
+        public void AddKey(OneKey key)
         {
-            foreach (Key k in m_keyList) {
+            foreach (OneKey k in m_keyList) {
                 if (key.Compare(k)) return;
             }
             m_keyList.Add(key);
@@ -415,6 +459,19 @@ namespace Com.AugustCellars.COSE
             }
 
             return m_array.EncodeToBytes();
+        }
+
+        public IEnumerator<OneKey> GetEnumerator()
+        {
+            return m_keyList.GetEnumerator();
+        }
+
+        public KeySet Where(Func<OneKey, bool> lambda)
+        {
+            List<OneKey> keys = m_keyList.Where(lambda).ToList();
+            KeySet ks = new KeySet();
+            ks.m_keyList = keys;
+            return ks;
         }
     }
 }

@@ -331,7 +331,7 @@ namespace Com.AugustCellars.COSE
                         ECPrivateKeyParameters privKey = new ECPrivateKeyParameters("ECDSA", ConvertBigNum(privateKeyD), parameters);
                         ParametersWithRandom param = new ParametersWithRandom(privKey, random);
 
-                        ECDsaSigner ecdsa = new ECDsaSigner();
+                        ECDsaSigner ecdsa = new ECDsaSigner(new HMacDsaKCalculator(new Sha256Digest()));
                         ecdsa.Init(true, param);
 
                         BigInteger[] sig = ecdsa.GenerateSignature(digestedMessage);
@@ -402,7 +402,7 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new CoseException("Unknown signature algorith");
+                    throw new CoseException("Unknown signature algorithm");
                 }
             }
             else throw new CoseException("Algorthm incorrectly encoded");
@@ -458,6 +458,9 @@ namespace Com.AugustCellars.COSE
                         BigInteger s = new BigInteger(1, rgbSignature, rgbSignature.Length / 2, rgbSignature.Length / 2);
                         return ecdsa.VerifySignature(digestedMessage, r, s);
                     }
+
+                    case AlgorithmValuesInt.EdDSA:
+                        throw new CoseException(("NYI - Ed signatures"));
 
                 default:
                     throw new CoseException("Unknown Algorithm");

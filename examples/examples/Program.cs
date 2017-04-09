@@ -67,7 +67,7 @@ namespace examples
             EdDSA448.SelfTest();
 
             Recipient.FUseCompressed = true;
-            RunTestsInDirectory("X25519-tests");
+            RunTestsInDirectory("CWT");
 
             RunTestsInDirectory("spec-examples");
             {
@@ -325,8 +325,16 @@ namespace examples
 
             Sign1Message msg = new Sign1Message();
 
-            if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
-            msg.SetContent(input["plaintext"].AsString());
+            if (input.ContainsKey("plaintext")) {
+                msg.SetContent(input["plaintext"].AsString());
+            }
+            else if (input.ContainsKey("plaintext_hex")) {
+                msg.SetContent(FromHex(input["plaintext_hex"].AsString()));
+            }
+            else {
+                throw new Exception("missing plaintext field");
+            }
+        
 
             if (!sign.ContainsKey("alg")) throw new Exception("Signer missing alg field");
 
@@ -406,8 +414,15 @@ namespace examples
 
             Encrypt0Message msg = new Encrypt0Message();
 
-            if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
-            msg.SetContent(input["plaintext"].AsString());
+            if (input.ContainsKey("plaintext")) {
+                msg.SetContent(input["plaintext"].AsString());
+            }
+            else if (input.ContainsKey("plaintext_hex")) {
+                msg.SetContent(FromHex(input["plaintext_hex"].AsString()));
+            }
+            else {
+                throw new Exception("missing plaintext field");
+            }
 
             if (encrypt.ContainsKey("protected")) AddAttributes(msg, encrypt["protected"], 0);
             if (encrypt.ContainsKey("unprotected")) AddAttributes(msg, encrypt["unprotected"], 1);
@@ -649,8 +664,14 @@ namespace examples
                 control.Remove(CBORObject.FromObject("alg"));
             }
 
-            if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
-            msg.SetContent(input["plaintext"].AsString());
+            if (input.ContainsKey("plaintext")) {
+                if (input.ContainsKey("plaintext_hex")) throw new Exception("Can't have both plaintext and plaintext_hex");
+                msg.SetContent(input["plaintext"].AsString());
+            }
+            else if (input.ContainsKey("plaintext_hex")) {
+                msg.SetContent(FromHex(input["plaintext_hex"].AsString()));
+            }
+            else throw new Exception("missing plaintext field");
 
             if (mac.ContainsKey("protected")) AddAttributes(msg, mac["protected"], 0);
             if (mac.ContainsKey("unprotected")) AddAttributes(msg, mac["unprotected"], 1);
@@ -659,7 +680,7 @@ namespace examples
 
             if ((!mac.ContainsKey("recipients")) || (mac["recipients"].Type != CBORType.Array)) throw new Exception("Missing or malformed recipients");
 
-            Key key;
+            OneKey key;
 
             key = GetKey(mac["recipients"][0]["key"]);
 
@@ -1033,9 +1054,9 @@ namespace examples
             return signer;
         }
 
-        static Key GetKey(CBORObject control, bool fPublicKey = false)
+        static OneKey GetKey(CBORObject control, bool fPublicKey = false)
         {
-            Key key = new Key();
+            OneKey key = new OneKey();
             CBORObject newKey;
             CBORObject newValue;
             string type = control["kty"].AsString();
@@ -1065,7 +1086,7 @@ namespace examples
                     newValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(control[item].AsString()));
                     goto NewValue;
 
-                case "kid_hex":
+                case "kid_b64":
                     newKey = CoseKeyKeys.KeyIdentifier;
                     BinaryValue:
                     if (oFix != 0) {
@@ -1081,6 +1102,13 @@ namespace examples
                     else {
                         key.Add(newKey, CBORObject.FromObject(base64urldecode(control[item].AsString())));
                     }
+                    break;
+
+                case "kid_hex":
+                    newKey = CoseKeyKeys.KeyIdentifier;
+                    HexValue:
+                    byte[] v2 = FromHex(control[item].AsString());
+                    key.Add(newKey, CBORObject.FromObject(v2));
                     break;
 
                 case "alg":
@@ -1127,10 +1155,15 @@ namespace examples
                     if (type == "OKP") newKey = CoseKeyParameterKeys.OKP_X;
                     else newKey = CoseKeyParameterKeys.EC_X;
                     goto BinaryValue;
+                case "x_hex":
+                    if (type == "OKP") newKey = CoseKeyParameterKeys.OKP_X;
+                    else newKey = CoseKeyParameterKeys.EC_X;
+                    goto HexValue;
 
                 case "y": newKey = CoseKeyParameterKeys.EC_Y; goto BinaryValue;
+                case "y_hex": newKey = CoseKeyParameterKeys.EC_Y; goto HexValue;
 
-                case "e": newKey = CoseKeyParameterKeys.RSA_e; goto BinaryValue;
+                    case "e": newKey = CoseKeyParameterKeys.RSA_e; goto BinaryValue;
                 case "n": newKey = CoseKeyParameterKeys.RSA_n; goto BinaryValue;
 
                 case "d":
@@ -1140,7 +1173,15 @@ namespace examples
                     else newKey = CoseKeyParameterKeys.EC_D;
                     goto BinaryValue;
 
+                case "d_hex":
+                    // if (!fPublicKey) continue;
+                    if (type == "RSA") newKey = CoseKeyParameterKeys.RSA_d;
+                    else if (type == "OKP") newKey = CoseKeyParameterKeys.OKP_D;
+                    else newKey = CoseKeyParameterKeys.EC_D;
+                    goto HexValue;
+
                 case "k": newKey = CoseKeyParameterKeys.Octet_k; goto BinaryValue;
+                case "k_hex": newKey = CoseKeyParameterKeys.Octet_k; goto HexValue;
                 case "p": newKey = CoseKeyParameterKeys.RSA_p; goto BinaryValue;
                 case "q": newKey = CoseKeyParameterKeys.RSA_q; goto BinaryValue;
                 case "dp": newKey = CoseKeyParameterKeys.RSA_dP; goto BinaryValue;
@@ -1154,7 +1195,7 @@ namespace examples
 
             allkeys.AddKey(key);
 
-            Key pubKey = key.PublicKey();
+            OneKey pubKey = key.PublicKey();
             if (pubKey != null) {
                 allPubKeys.AddKey(key.PublicKey());
             }
