@@ -171,11 +171,11 @@ namespace Com.AugustCellars.COSE
 
     public class Signer : Attributes
     {
-        Key keyToSign;
+        OneKey keyToSign;
         byte[] rgbSignature = null;
         protected string context = "Signature";
 
-        public Signer(Key key, CBORObject algorithm = null)
+        public Signer(OneKey key, CBORObject algorithm = null)
         {
             if (algorithm != null) AddAttribute(HeaderKeys.Algorithm, algorithm, Attributes.UNPROTECTED);
             if (key.ContainsName(CoseKeyKeys.KeyIdentifier)) AddAttribute(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier], Attributes.UNPROTECTED);
@@ -209,7 +209,7 @@ namespace Com.AugustCellars.COSE
 
         }
 
-        public void SetKey(Key key)
+        public void SetKey(OneKey key)
         {
             keyToSign = key;
         }
@@ -589,7 +589,7 @@ namespace Com.AugustCellars.COSE
         Message m_msgToSign = null;
         Signer m_signerToSign = null;
 
-        public CounterSignature(Key key, CBORObject algorithm = null) : base(key, algorithm)
+        public CounterSignature(OneKey key, CBORObject algorithm = null) : base(key, algorithm)
         {
             context = "CounterSignature";
         }

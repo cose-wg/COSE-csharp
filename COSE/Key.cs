@@ -16,41 +16,58 @@ using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 
 using Org.BouncyCastle.Crypto.EC;
+using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Math.EC;
 
 namespace Com.AugustCellars.COSE
 {
+    /// <summary>
+    /// Class which holds information about a key
+    /// </summary>
     public class OneKey : Key
     {
+        /// <summary>
+        /// Default constructor to create an empty key object
+        /// </summary>
         public OneKey() { }
+
+        /// <summary>
+        /// Create a key object from a CBOR encoding
+        /// </summary>
+        /// <param name="objKey"></param>
         public OneKey(CBORObject objKey) : base(objKey) { }
 
-        new public OneKey PublicKey()
+        /// <summary>
+        /// Return a new key object which the private key fields filtered out.
+        /// </summary>
+        /// <returns></returns>
+        /// 
+        public OneKey PublicKey()
         {
             OneKey newKey = new OneKey();
             switch ((GeneralValuesInt)m_map[CoseKeyKeys.KeyType].AsInt16())
             {
-                case GeneralValuesInt.KeyType_Octet:
-                    return null;
+            case GeneralValuesInt.KeyType_Octet:
+                return null;
 
-                case GeneralValuesInt.KeyType_RSA:
-                    newKey.Add(CoseKeyParameterKeys.RSA_n, m_map[CoseKeyParameterKeys.RSA_n]);
-                    newKey.Add(CoseKeyParameterKeys.RSA_e, m_map[CoseKeyParameterKeys.RSA_e]);
-                    break;
+            case GeneralValuesInt.KeyType_RSA:
+                newKey.Add(CoseKeyParameterKeys.RSA_n, m_map[CoseKeyParameterKeys.RSA_n]);
+                newKey.Add(CoseKeyParameterKeys.RSA_e, m_map[CoseKeyParameterKeys.RSA_e]);
+                break;
 
-                case GeneralValuesInt.KeyType_EC2:
-                    newKey.Add(CoseKeyParameterKeys.EC_Curve, m_map[CoseKeyParameterKeys.EC_Curve]);
-                    newKey.Add(CoseKeyParameterKeys.EC_X, m_map[CoseKeyParameterKeys.EC_X]);
-                    newKey.Add(CoseKeyParameterKeys.EC_Y, m_map[CoseKeyParameterKeys.EC_Y]);
-                    break;
+            case GeneralValuesInt.KeyType_EC2:
+                newKey.Add(CoseKeyParameterKeys.EC_Curve, m_map[CoseKeyParameterKeys.EC_Curve]);
+                newKey.Add(CoseKeyParameterKeys.EC_X, m_map[CoseKeyParameterKeys.EC_X]);
+                newKey.Add(CoseKeyParameterKeys.EC_Y, m_map[CoseKeyParameterKeys.EC_Y]);
+                break;
 
-                case GeneralValuesInt.KeyType_OKP:
-                    newKey.Add(CoseKeyParameterKeys.EC_Curve, m_map[CoseKeyParameterKeys.EC_Curve]);
-                    newKey.Add(CoseKeyParameterKeys.EC_X, m_map[CoseKeyParameterKeys.EC_X]);
-                    break;
+            case GeneralValuesInt.KeyType_OKP:
+                newKey.Add(CoseKeyParameterKeys.EC_Curve, m_map[CoseKeyParameterKeys.EC_Curve]);
+                newKey.Add(CoseKeyParameterKeys.EC_X, m_map[CoseKeyParameterKeys.EC_X]);
+                break;
 
-                default:
-                    return null;
+            default:
+                throw new CoseException("Key type unrecognized");
             }
 
             foreach (CBORObject obj in m_map.Keys) {
@@ -75,7 +92,7 @@ namespace Com.AugustCellars.COSE
             return base.GetCurve();
         }
 
-        public static OneKey GenerateKey(AlgorithmValues algorithm = null, CBORObject keyType = null, string parameters = null)
+        public static OneKey GenerateKey(CBORObject algorithm = null, CBORObject keyType = null, string parameters = null)
         {
             if (keyType != null) {
                 if (keyType.Equals(GeneralValues.KeyType_EC)) {
@@ -93,7 +110,7 @@ namespace Com.AugustCellars.COSE
             return null;
         }
 
-        private static OneKey generateEC2Key(AlgorithmValues algorithm, string genParameters)
+        private static OneKey generateEC2Key(CBORObject algorithm, string genParameters)
         {
             X9ECParameters p = NistNamedCurves.GetByName(genParameters);
 
@@ -117,7 +134,7 @@ namespace Com.AugustCellars.COSE
             return new OneKey(epk);
         }
 
-        private static OneKey generateEDKey(AlgorithmValues algorithm, string genParameters)
+        private static OneKey generateEDKey(CBORObject algorithm, string genParameters)
         {
             X25519KeyPair pair = X25519KeyPair.GenerateKeyPair();
 
@@ -133,6 +150,38 @@ namespace Com.AugustCellars.COSE
             return new OneKey(epk);
         }
 
+        /// <summary>
+        /// See if the key has an algorithm attribute that matches the parameter.
+        /// If toMatch is null, it will match any algorithm, but requires one be present
+        /// </summary>
+        /// <param name="toMatch">Algorithm to match</param>
+        /// <returns>boolean</returns>
+        public Boolean HasAlgorithm(CBORObject toMatch)
+        {
+            CBORObject obj = m_map[CoseKeyKeys.Algorithm];
+            if (toMatch == null) return obj != null;
+            if (obj == null) return false;
+
+            return obj.Equals(toMatch);
+        }
+
+        /// <summary>
+        /// Does the key have the specified key type?
+        /// </summary>
+        /// <param name="keyType">Key type to be checked.</param>
+        /// <returns></returns>
+        public Boolean HasKeyType(int keyType)
+        {
+            CBORObject obj = m_map[CoseKeyKeys.KeyType];
+            if (obj == null) return false;
+            return obj.AsInt32() == keyType;
+        }
+
+        /// <summary>
+        /// Check to see if the KID value matches
+        /// </summary>
+        /// <param name="kidToMatch">value of key to match</param>
+        /// <returns>boolean</returns>
         public Boolean HasKid(byte[] kidToMatch)
         {
             CBORObject obj = m_map[CoseKeyKeys.KeyIdentifier];
@@ -145,8 +194,34 @@ namespace Com.AugustCellars.COSE
             for (int i = 0; i < kid.Length; i++) if (kid[i] != kidToMatch[i]) ret = false;
             return ret;
         }
+
+        /// <summary>
+        /// Does the key contain a private key value.  This will only return true for 
+        /// asymmetric keys.  A symmetric key will always return false.
+        /// </summary>
+        /// <returns>true if a private key exists.</returns>
+        public Boolean HasPrivateKey()
+        {
+            try {
+                switch ((GeneralValuesInt) m_map[CoseKeyKeys.KeyType].AsInt32()) {
+                case GeneralValuesInt.KeyType_EC2:
+                    return ContainsName(CoseKeyParameterKeys.EC_D);
+
+                case GeneralValuesInt.KeyType_OKP:
+                    return ContainsName(CoseKeyParameterKeys.OKP_D);
+                }
+            }
+            catch (Exception) {
+            }
+
+            return false;
+        }
     }
 
+    /// <summary>
+    /// Old version of the key structure, use OneKey instead.
+    /// </summary>
+    [Obsolete("The class OneKey should be used in place of Key.")]
     public class Key
     {
         protected CBORObject m_map;
@@ -438,40 +513,4 @@ namespace Com.AugustCellars.COSE
 
     }
 
-    public class KeySet
-    {
-        List<OneKey> m_keyList = new List<OneKey>();
-
-        public void AddKey(OneKey key)
-        {
-            foreach (OneKey k in m_keyList) {
-                if (key.Compare(k)) return;
-            }
-            m_keyList.Add(key);
-        }
-
-        public byte[] EncodeToBytes()
-        {
-            CBORObject m_array = CBORObject.NewArray();
-
-            foreach (Key k in m_keyList) {
-                m_array.Add(k.AsCBOR());
-            }
-
-            return m_array.EncodeToBytes();
-        }
-
-        public IEnumerator<OneKey> GetEnumerator()
-        {
-            return m_keyList.GetEnumerator();
-        }
-
-        public KeySet Where(Func<OneKey, bool> lambda)
-        {
-            List<OneKey> keys = m_keyList.Where(lambda).ToList();
-            KeySet ks = new KeySet();
-            ks.m_keyList = keys;
-            return ks;
-        }
-    }
 }

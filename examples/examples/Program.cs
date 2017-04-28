@@ -61,7 +61,7 @@ namespace examples
 
         static void RunCoseExamples()
         { 
-            Key.NewKey();
+            OneKey.NewKey();
 
             EdDSA25517.SelfTest();
             EdDSA448.SelfTest();
@@ -338,7 +338,7 @@ namespace examples
 
             if (!sign.ContainsKey("alg")) throw new Exception("Signer missing alg field");
 
-            Key key = GetKey(sign["key"]);
+            OneKey key = GetKey(sign["key"]);
 
             msg.AddSigner(key, AlgorithmMap(sign["alg"]));
 
@@ -388,7 +388,7 @@ namespace examples
 
             SetRecievingAttributes(hSig, cnSign);
 
-            Key cnkey = GetKey(cnSign["key"], true);
+            OneKey cnkey = GetKey(cnSign["key"], true);
 
             bool fFailInput = HasFailMarker(cnInput);
 
@@ -438,7 +438,7 @@ namespace examples
 
             byte[] rgbKey;
 
-            Key key;
+            OneKey key;
             key = GetKey(encrypt["recipients"][0]["key"]);
 
             rgbKey = key[CoseKeyParameterKeys.Octet_k].GetByteString();
@@ -486,7 +486,7 @@ namespace examples
                 CBORObject cnRecipients = cnEncrypt["recipients"];
                 cnRecipients = cnRecipients[0];
 
-                Key cnKey = GetKey(cnRecipients["key"], true);
+                OneKey cnKey = GetKey(cnRecipients["key"], true);
 
                 CBORObject kk = cnKey[CBORObject.FromObject(-1)];
 
@@ -724,7 +724,7 @@ namespace examples
                 CBORObject cnRecipients = cnMac["recipients"];
                 cnRecipients = cnRecipients[0];
 
-                Key cnKey = GetKey(cnRecipients["key"], true);
+                OneKey cnKey = GetKey(cnRecipients["key"], true);
 
                 CBORObject kk = cnKey[CBORObject.FromObject(-1)];
 
@@ -946,7 +946,7 @@ namespace examples
         {
             CBORObject alg = GetAttribute(control, "alg");
 
-            Key key = null;
+            OneKey key = null;
 
             if (control["key"] != null) key = GetKey(control["key"], true);
 
@@ -973,7 +973,7 @@ namespace examples
             }
 
             if (control.ContainsKey("sender_key")) {
-                Key myKey = GetKey(control["sender_key"]);
+                OneKey myKey = GetKey(control["sender_key"]);
                 recipient.SetSenderKey(myKey);
                 if (myKey.ContainsName(CoseKeyKeys.KeyIdentifier)) {
                     recipient.AddAttribute(HeaderKeys.StaticKey_ID, CBORObject.FromObject(myKey.AsBytes(CoseKeyKeys.KeyIdentifier)), Attributes.UNPROTECTED);
@@ -1025,7 +1025,7 @@ namespace examples
                 control.Remove(CBORObject.FromObject("alg"));
             }
 
-            Key key = GetKey(control["key"]);
+            OneKey key = GetKey(control["key"]);
 
             Signer signer;
 
@@ -1548,7 +1548,7 @@ namespace examples
                 SetRecievingAttributes(msg, mac);
 
                 Recipient recipX = msg.RecipientList[iRecipient];
-                Key key = GetKey(recip["key"], false);
+                OneKey key = GetKey(recip["key"], false);
                 recipX.SetKey(key);
 
                 recipX = SetRecievingAttributes(recipX, recip);
@@ -1602,7 +1602,7 @@ namespace examples
 
                     SetRecievingAttributes(signMsg, cnMessage);
 
-                    Key cnKey = GetKey(cnSigner["key"]);
+                    OneKey cnKey = GetKey(cnSigner["key"]);
                     Signer hSigner = signMsg.SignerList[i];
 
                     SetRecievingAttributes(hSigner, cnSigner);
@@ -1650,7 +1650,7 @@ namespace examples
 
         static Recipient SetRecievingAttributes(Recipient recip, CBORObject control)
         {
-            Key key = null;
+            OneKey key = null;
 
             if (control.ContainsKey("unsent")) AddAttributes(recip, control["unsent"], 2);
 

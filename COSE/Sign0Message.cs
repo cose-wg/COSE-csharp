@@ -103,11 +103,11 @@ namespace Com.AugustCellars.COSE
             return obj;
         }
 
-        Key keyToSign;
+        OneKey keyToSign;
         byte[] rgbSignature = null;
         protected string context = "Signature1";
 
-        public void AddSigner(Key key, CBORObject algorithm = null)
+        public void AddSigner(OneKey key, CBORObject algorithm = null)
         {
             if (algorithm != null) AddAttribute(HeaderKeys.Algorithm, algorithm, Attributes.UNPROTECTED);
             if (key.ContainsName(CoseKeyKeys.KeyIdentifier)) AddAttribute(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier], Attributes.UNPROTECTED);
@@ -355,7 +355,7 @@ namespace Com.AugustCellars.COSE
             else throw new CoseException("Algorithm incorrectly encoded");
         }
 
-        public bool Validate(Key signerKey)
+        public bool Validate(OneKey signerKey)
         {
             CBORObject alg = null; // Get the set algorithm or infer one
 

@@ -35,7 +35,7 @@ namespace Com.AugustCellars.COSE
         protected byte[] rgbEncrypted;
         byte[] m_cek;
 
-        public EncryptCommon(Boolean fEmitTag, Boolean fEmitContent) : base(fEmitTag, fEmitContent) { }
+        protected EncryptCommon(Boolean fEmitTag, Boolean fEmitContent) : base(fEmitTag, fEmitContent) { }
 
         protected void DecryptWithKey(byte[] CEK)
         {
@@ -578,6 +578,8 @@ namespace Com.AugustCellars.COSE
             else obj.Add( objProtected.EncodeToBytes());
             obj.Add(CBORObject.FromObject(externalData));
 
+            Console.WriteLine("COSE AAD = " + BitConverter.ToString(obj.EncodeToBytes()));
+
             return obj.EncodeToBytes();
         }
     }
@@ -589,11 +591,11 @@ namespace Com.AugustCellars.COSE
 
     public class Recipient : EncryptCommon
     {
-        Key m_key;
-        Key m_senderKey;
+        OneKey m_key;
+        OneKey m_senderKey;
         List<Recipient> recipientList = new List<Recipient>();
 
-        public Recipient(Key key, CBORObject algorithm = null) : base(true, true)
+        public Recipient(OneKey key, CBORObject algorithm = null) : base(true, true)
         {
             if (algorithm != null) {
                 if (algorithm.Type == CBORType.TextString) {
@@ -848,7 +850,7 @@ namespace Com.AugustCellars.COSE
             return Decrypt(m_key, cbitCEK, algCEK);
         }
 
-        public byte[] Decrypt(Key key, int cbitCEK, CBORObject algCEK)
+        public byte[] Decrypt(OneKey key, int cbitCEK, CBORObject algCEK)
         {
             CBORObject alg = null;
             byte[] rgbSecret;
@@ -1364,12 +1366,12 @@ namespace Com.AugustCellars.COSE
             throw new CoseException("NYI");
         }
 
-        public void SetKey(COSE.Key recipientKey)
+        public void SetKey(COSE.OneKey recipientKey)
         {
             m_key = recipientKey;
         }
 
-        public void SetSenderKey(COSE.Key senderKey)
+        public void SetSenderKey(COSE.OneKey senderKey)
         {
             m_senderKey = senderKey;
         }
@@ -1391,7 +1393,7 @@ namespace Com.AugustCellars.COSE
             rgbEncrypted = foo.Wrap(rgbContent, 0, rgbContent.Length);
         }
 
-        private byte[] AES_KeyUnwrap(Key keyObject, int keySize, byte[] rgbKey=null)
+        private byte[] AES_KeyUnwrap(OneKey keyObject, int keySize, byte[] rgbKey=null)
         {
             if (keyObject != null) {
                 CBORObject cborKeyType = m_key[CoseKeyKeys.KeyType];
@@ -1421,7 +1423,7 @@ namespace Com.AugustCellars.COSE
             rgbEncrypted = outBytes;
         }
 
-        private byte[] RSA_OAEP_KeyUnwrap(Key key, IDigest digest)
+        private byte[] RSA_OAEP_KeyUnwrap(OneKey key, IDigest digest)
         {
             IAsymmetricBlockCipher cipher = new OaepEncoding(new RsaEngine(), digest);
             RsaKeyParameters pubParameters = new RsaKeyParameters(false, key.AsBigInteger(CoseKeyParameterKeys.RSA_n), key.AsBigInteger(CoseKeyParameterKeys.RSA_e));
@@ -1475,7 +1477,7 @@ namespace Com.AugustCellars.COSE
 
         }
 
-        private byte[] AES_GCM_KeyUnwrap(Key key, int keySize)
+        private byte[] AES_GCM_KeyUnwrap(OneKey key, int keySize)
         {
             if (key.AsString("kty") != "oct") return null;
             byte[] keyBytes = key.AsBytes(CoseKeyParameterKeys.Octet_k);
@@ -1514,7 +1516,7 @@ namespace Com.AugustCellars.COSE
             CBORObject epk = CBORObject.NewMap();
             epk.Add(CoseKeyKeys.KeyType, m_key[CoseKeyKeys.KeyType]);
 
-            Key secretKey = new Key();
+            OneKey secretKey = new OneKey();
 
             switch (m_key.GetKeyType()) {
             case GeneralValuesInt.KeyType_OKP:
@@ -1579,9 +1581,9 @@ namespace Com.AugustCellars.COSE
             return x;
         }
 
-        private byte[] ECDH_GenerateSecret(Key key)
+        private byte[] ECDH_GenerateSecret(OneKey key)
         {
-            Key epk;
+            OneKey epk;
 
             if (key[CoseKeyKeys.KeyType].Type != CBORType.Number) throw new CoseException("Not an EC Key");
 
@@ -1592,12 +1594,12 @@ namespace Com.AugustCellars.COSE
             else {
                 CBORObject spkT = FindAttribute(HeaderKeys.StaticKey);
                 if (spkT != null) {
-                    epk = new Key(spkT);
+                    epk = new OneKey(spkT);
                 }
                 else {
                     CBORObject epkT = FindAttribute(HeaderKeys.EphemeralKey);
                     if (epkT == null) throw new CoseException("No Ephemeral key");
-                    epk = new Key(epkT);
+                    epk = new OneKey(epkT);
                 }
             }
 

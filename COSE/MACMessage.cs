@@ -127,7 +127,7 @@ namespace Com.AugustCellars.COSE
             else throw new CoseException("Algorithm incorrectly encoded");
         }
 
-        public bool Validate(Key recipientReceiver)
+        public bool Validate(OneKey recipientReceiver)
         {
             byte[] rgbKey = null;
 
