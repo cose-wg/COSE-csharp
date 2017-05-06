@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 using Org.BouncyCastle.Security;
 
@@ -251,10 +250,32 @@ namespace Com.AugustCellars.COSE
             s_PRNG = prng;
         }
 
+
+        /// <summary>
+        /// Given a byte array, decode and return the correct COSE message object.
+        /// Message type can be provided explicitly or inferred from the CBOR tag element.
+        /// If the explicit and inferred elements provide different answers, then it fails.
+        /// </summary>
+        /// <param name="messageData"></param>
+        /// <param name="defaultTag"></param>
+        /// <returns></returns>
         public static Message DecodeFromBytes(byte[] messageData, Tags defaultTag = Tags.Unknown)
         {
             CBORObject messageObject = CBORObject.DecodeFromBytes(messageData);
 
+            return DecodeFromCBOR(messageObject, defaultTag);
+        }
+
+        /// <summary>
+        /// Given a CBOR tree, decode and return the correct COSE message object.
+        /// Message type can be provided explicitly or inferred from the CBOR tag element.
+        /// If the explicit and inferred elements provide different answers, then it fails.
+        /// </summary>
+        /// <param name="messageObject"></param>
+        /// <param name="defaultTag"></param>
+        /// <returns></returns>
+        public static Message DecodeFromCBOR(CBORObject messageObject, Tags defaultTag = Tags.Unknown)
+        { 
             if (messageObject.Type != CBORType.Array) throw new CoseException("Message is not a COSE security message.");
 
             if (messageObject.IsTagged) {
@@ -336,6 +357,12 @@ namespace Com.AugustCellars.COSE
         }
 
         public List<Signer> CounterSignerList {  get { return m_counterSignerList; } }
+
+        /// <summary>
+        /// Generate a new CBOR Object based on the message.
+        /// Doing this will force cryptographic operations to be created.
+        /// </summary>
+        /// <returns></returns>
         public CBORObject EncodeToCBORObject()
         {
             CBORObject obj;
