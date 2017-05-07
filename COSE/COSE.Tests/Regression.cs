@@ -168,8 +168,7 @@ namespace Com.AugustCellars.COSE.Tests
 
             Encrypt0Message msg = new Encrypt0Message();
 
-            CBORObject cn = cnInput[ "plaintext"];
-            msg.SetContent(cn.AsString());
+            msg.SetContent(GetContent(cnInput));
 
 
             SetSendingAttributes(msg, cnEncrypt, true);
@@ -227,7 +226,7 @@ namespace Com.AugustCellars.COSE.Tests
                 try {
                     byte[] rgbContent = enc0.Decrypt(kk.GetByteString());
                     if ((cnFail != null) && !cnFail.AsBoolean()) CFails++;
-                    byte[] oldContent = UTF8Encoding.UTF8.GetBytes(cnInput[ "plaintext"].AsString());
+                    byte[] oldContent = GetContent(cnInput);
                     Assert.That(oldContent, Is.EqualTo(rgbContent));
                 }
                 catch (Exception) {
@@ -254,9 +253,7 @@ namespace Com.AugustCellars.COSE.Tests
             CBORObject cnInputs = cnControl[ "input"];
             CBORObject cnEnveloped = cnInputs[ "mac"];
 
-            CBORObject cnContent = cnInputs[ "plaintext"];
-
-            hEncObj.SetContent(cnContent.AsString());
+            hEncObj.SetContent(GetContent(cnInputs));
 
 
             SetSendingAttributes(hEncObj, cnEnveloped, true);
@@ -289,8 +286,7 @@ namespace Com.AugustCellars.COSE.Tests
 
             MAC0Message msg = new MAC0Message();
 
-            CBORObject cn = cnInput[ "plaintext"];
-            msg.SetContent(cn.AsString());
+            msg.SetContent(GetContent(cnInput));
 
 
             SetSendingAttributes(msg, cnEncrypt, true);
@@ -594,9 +590,7 @@ namespace Com.AugustCellars.COSE.Tests
             CBORObject cnInputs = cnControl[ "input"];
             CBORObject cnEnveloped = cnInputs[ "enveloped"];
 
-            CBORObject cnContent = cnInputs[ "plaintext"];
-
-            hEncObj.SetContent(cnContent.AsString());
+            hEncObj.SetContent(GetContent(cnInputs));
 
 
             SetSendingAttributes(hEncObj, cnEnveloped, true);
@@ -806,19 +800,44 @@ namespace Com.AugustCellars.COSE.Tests
                     cnKeyOut[CoseKeyParameterKeys.EC_X] = CBORObject.FromObject(base64urldecode(cnValue.AsString()));
                     break;
 
+                case "x_hex":
+                        cnKeyOut[CoseKeyParameterKeys.EC_X] = CBORObject.FromObject(hexStringToByteArray(cnValue.AsString()));
+                        break;
+
                     case "y":
                     cnKeyOut[CoseKeyParameterKeys.EC_Y] = CBORObject.FromObject(base64urldecode(cnValue.AsString()));
                     break;
 
-                    case "d":
+                case "y_hex":
+                    cnKeyOut[CoseKeyParameterKeys.EC_Y] = CBORObject.FromObject(hexStringToByteArray(cnValue.AsString()));
+                    break;
+
+                case "d":
                     if (!fPublicKey) {
                         cnKeyOut[CoseKeyParameterKeys.EC_D] = CBORObject.FromObject(base64urldecode(cnValue.AsString()));
                     }
                     break;
 
-                    case "k":
+                    case "d_hex":
+                        if (!fPublicKey) {
+                            cnKeyOut[CoseKeyParameterKeys.EC_D] = CBORObject.FromObject(hexStringToByteArray(cnValue.AsString()));
+                        }
+                        break;
+
+                case "k":
                     cnKeyOut[CBORObject.FromObject(-1)] = CBORObject.FromObject(base64urldecode(cnValue.AsString()));
                     break;
+
+                    case "k_hex":
+                        cnKeyOut[CBORObject.FromObject(-1)] = CBORObject.FromObject(hexStringToByteArray(cnValue.AsString()));
+                        break;
+
+                case "kid":
+                case "use":
+                    break;
+
+                default:
+                    throw new Exception("Unknown parameter in BuildKey");
                 }
             }
 
@@ -997,8 +1016,7 @@ namespace Com.AugustCellars.COSE.Tests
                 CBORObject cnInputs = cnControl[ "input"];
                 CBORObject cnSign = cnInputs[ "sign"];
 
-                CBORObject cnContent = cnInputs[ "plaintext"];
-                hSignObj.SetContent(cnContent.AsString());
+                hSignObj.SetContent(GetContent(cnInputs));
 
                 SetSendingAttributes(hSignObj, cnSign, false);
 
@@ -1104,8 +1122,7 @@ namespace Com.AugustCellars.COSE.Tests
                 CBORObject cnInputs = cnControl[ "input"];
                 CBORObject cnSign = cnInputs[ "sign0"];
 
-                CBORObject cnContent = cnInputs[ "plaintext"];
-                hSignObj.SetContent(cnContent.AsString());
+                hSignObj.SetContent(GetContent(cnInputs));
 
                 SetSendingAttributes(hSignObj, cnSign, false);
 
@@ -1205,6 +1222,14 @@ namespace Com.AugustCellars.COSE.Tests
             }
         }
 #endif
+
+        byte[] GetContent(CBORObject cnInputs)
+        {
+            if (cnInputs.ContainsKey("plaintext")) return Encoding.UTF8.GetBytes(  cnInputs["plaintext"].AsString());
+            if (cnInputs.ContainsKey("plaintext_hex")) return hexStringToByteArray(cnInputs["plaintext_hex"].AsString());
+            throw new Exception("Missing content");
+        }
+
         static byte[] base64urldecode(string arg)
         {
             string s = arg;
