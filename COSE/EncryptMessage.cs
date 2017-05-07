@@ -578,7 +578,7 @@ namespace Com.AugustCellars.COSE
             else obj.Add( objProtected.EncodeToBytes());
             obj.Add(CBORObject.FromObject(externalData));
 
-            Console.WriteLine("COSE AAD = " + BitConverter.ToString(obj.EncodeToBytes()));
+            // Console.WriteLine("COSE AAD = " + BitConverter.ToString(obj.EncodeToBytes()));
 
             return obj.EncodeToBytes();
         }
