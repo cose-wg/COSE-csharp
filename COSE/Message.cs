@@ -18,7 +18,10 @@ namespace Com.AugustCellars.COSE
         Encrypted = 16,
         [Obsolete]
         Enveloped =96,
-        Signed = 98, MAC = 97, MAC0=17,
+        [Obsolete("Use Tags.Sign")]
+        Signed = 98, 
+        Sign = 98,
+        MAC = 97, MAC0=17,
         [Obsolete("Use Sign1")]
         Signed0 =18,
         Sign1 = 18,
