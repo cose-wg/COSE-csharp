@@ -61,8 +61,6 @@ namespace examples
 
         static void RunCoseExamples()
         { 
-            OneKey.NewKey();
-
             EdDSA25517.SelfTest();
             EdDSA448.SelfTest();
 
