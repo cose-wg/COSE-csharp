@@ -4,10 +4,10 @@ mono:
 
 env:
   - SLN=COSE.Net40.sln
-    TARGET=NET40
+    TARGET=Net40
     VERSION=Release
   - SLN=COSE.Net45.sln
-    TARGET=NET45
+    TARGET=Net45
     VERSION=Release
 
 install:
