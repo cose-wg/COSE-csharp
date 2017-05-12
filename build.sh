@@ -1,9 +1,8 @@
 #!/bin/bash
 set -ev
 
-nuget restore $SLN
-
 cd COSE
+nuget restore $SLN
 msbuild /v:q /p:Configuration=$VERSION $SLN
 
 mono ../testrunner/NUnit.ConsoleRunner.3.5.0/tools/nunit3-console.exe ./COSE.Tests/bin/$VERSION/$TARGET/COSE.Tests.dll
