@@ -102,7 +102,7 @@ namespace Com.AugustCellars.COSE.Tests
 
             foreach (var fi in directory.EnumerateFiles()) {
                 if (fi.Extension == ".json") {
-                    if (fi.Name == "Appendix_A.json") continue;
+                    if (fi.Name == "Appendix_B.json") continue;
                     ProcessFile(fi.FullName);
                 }
             }
