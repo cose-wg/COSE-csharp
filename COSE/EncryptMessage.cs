@@ -131,14 +131,14 @@ namespace Com.AugustCellars.COSE
             }
 
 #if FOR_EXAMPLES
-            m_cek = ContentKey;
+            _cek = ContentKey;
 #endif // FOR_EXAMPLES
         }
 
 #if FOR_EXAMPLES
         public byte[] getCEK()
         {
-            return this.m_cek;
+            return _cek;
         }
 #endif
 
