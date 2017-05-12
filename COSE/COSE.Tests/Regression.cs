@@ -64,7 +64,9 @@ namespace Com.AugustCellars.COSE.Tests
             foreach (var di in directory.EnumerateDirectories()) {
                 if ((!di.Attributes.HasFlag(FileAttributes.Hidden)) &&
                     (di.FullName.Substring(di.FullName.Length-4) != "\\new")) {
+#if !CHACHA20
                     if (di.Name == "chacha-poly-examples") continue;
+#endif
                     if (di.Name == "X25519-tests") continue;
                     ProcessDirectory(Path.Combine(directory.FullName, di.Name));
                 }
@@ -90,7 +92,9 @@ namespace Com.AugustCellars.COSE.Tests
             foreach (var di in directory.EnumerateDirectories()) {
                 if ((!di.Attributes.HasFlag(FileAttributes.Hidden)) &&
                     (di.FullName.Substring(di.FullName.Length - 4) != "\\new")) {
+#if !CHACHA20
                     if (di.Name == "chacha-poly-examples") continue;
+#endif
                     if (di.Name == "X25519-tests") continue;
                     ProcessDirectory(Path.Combine(directory.FullName, di.Name));
                 }

@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using PeterO.Cbor;
 
-using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
@@ -70,12 +67,12 @@ namespace Com.AugustCellars.COSE
 
             //  Protected values.
             if (obj[0].Type == CBORType.ByteString) {
-                rgbProtected = obj[0].GetByteString();
-                if (rgbProtected.Length == 0) objProtected = CBORObject.NewMap();
+                _rgbProtected = obj[0].GetByteString();
+                if (_rgbProtected.Length == 0) objProtected = CBORObject.NewMap();
                 else {
-                    objProtected = CBORObject.DecodeFromBytes(rgbProtected);
+                    objProtected = CBORObject.DecodeFromBytes(_rgbProtected);
                     if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid SignMessage Structure");
-                    if (objProtected.Count == 0) rgbProtected = new byte[0];
+                    if (objProtected.Count == 0) _rgbProtected = new byte[0];
                 }
             }
             else {
@@ -121,7 +118,7 @@ namespace Com.AugustCellars.COSE
 
             if (m_counterSignerList.Count() != 0) {
                 if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbContent), Attributes.UNPROTECTED);
+                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbContent), UNPROTECTED);
                 }
                 else {
                     foreach (CounterSignature sig in m_counterSignerList) {
@@ -135,7 +132,7 @@ namespace Com.AugustCellars.COSE
 
             obj.Add(rgbContent);
 
-            if ((signerList.Count == 1) && !this.m_forceArray) {
+            if ((signerList.Count == 1) && !m_forceArray) {
                 CBORObject recipient = signerList[0].EncodeToCBORObject(obj[0].EncodeToBytes(), rgbContent);
 
                 for (int i = 0; i < recipient.Count; i++) {
@@ -160,7 +157,7 @@ namespace Com.AugustCellars.COSE
         {
             foreach (Signer x in signerList) {
                 if (x == signer) {
-                    return signer.Validate(rgbContent, rgbProtected);
+                    return signer.Validate(rgbContent, _rgbProtected);
                 }
             }
 
@@ -171,14 +168,14 @@ namespace Com.AugustCellars.COSE
 
     public class Signer : Attributes
     {
-        OneKey keyToSign;
-        byte[] rgbSignature = null;
+        private OneKey _keyToSign;
+        private byte[] _rgbSignature = null;
         protected string context = "Signature";
 
         public Signer(OneKey key, CBORObject algorithm = null)
         {
-            if (algorithm != null) AddAttribute(HeaderKeys.Algorithm, algorithm, Attributes.UNPROTECTED);
-            if (key.ContainsName(CoseKeyKeys.KeyIdentifier)) AddAttribute(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier], Attributes.UNPROTECTED);
+            if (algorithm != null) AddAttribute(HeaderKeys.Algorithm, algorithm, UNPROTECTED);
+            if (key.ContainsName(CoseKeyKeys.KeyIdentifier)) AddAttribute(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier], UNPROTECTED);
 
             if (key.ContainsName("use")) {
                 string usage = key.AsString("use");
@@ -201,7 +198,7 @@ namespace Com.AugustCellars.COSE
                 if (!validUsage) throw new Exception("Key cannot be used for encryption");
             }
 
-            keyToSign = key;
+            _keyToSign = key;
         }
 
         public Signer()
@@ -211,7 +208,7 @@ namespace Com.AugustCellars.COSE
 
         public void SetKey(OneKey key)
         {
-            keyToSign = key;
+            _keyToSign = key;
         }
 
         public void DecodeFromCBORObject(CBORObject obj)
@@ -223,12 +220,12 @@ namespace Com.AugustCellars.COSE
             if (obj[0].Type == CBORType.ByteString) {
                 if (obj[0].GetByteString().Length == 0) {
                     objProtected = CBORObject.NewMap();
-                    rgbProtected = new byte[0];
+                    _rgbProtected = new byte[0];
                 }
                 else {
-                    rgbProtected = obj[0].GetByteString();
-                    objProtected = CBORObject.DecodeFromBytes(rgbProtected);
-                    if (objProtected.Count == 0) rgbProtected = new byte[0];
+                    _rgbProtected = obj[0].GetByteString();
+                    objProtected = CBORObject.DecodeFromBytes(_rgbProtected);
+                    if (objProtected.Count == 0) _rgbProtected = new byte[0];
                 }
             }
             else throw new CoseException("Invalid Signer structure");
@@ -238,13 +235,13 @@ namespace Com.AugustCellars.COSE
             }
             else throw new CoseException("Invalid Signer structure");
 
-            if (obj[2].Type == CBORType.ByteString) rgbSignature = obj[2].GetByteString();
+            if (obj[2].Type == CBORType.ByteString) _rgbSignature = obj[2].GetByteString();
             else throw new CoseException("Invalid Signer structure");
         }
 
         public CBORObject EncodeToCBORObject()
         {
-            if (rgbSignature == null) {
+            if (_rgbSignature == null) {
                 throw new Exception("Must be signed already to use this function call");
             }
             return EncodeToCBORObject(null, null);
@@ -264,10 +261,10 @@ namespace Com.AugustCellars.COSE
             if ((objUnprotected == null)) obj.Add(CBORObject.NewMap());
             else obj.Add(objUnprotected); // Add unprotected attributes
 
-            if (rgbSignature == null) {
-                rgbSignature = Sign(toBeSigned(body, bodyAttributes));
+            if (_rgbSignature == null) {
+                _rgbSignature = Sign(toBeSigned(body, bodyAttributes));
             }
-            obj.Add(rgbSignature);
+            obj.Add(_rgbSignature);
             return obj;
         }
 
@@ -294,20 +291,20 @@ namespace Com.AugustCellars.COSE
 
         private byte[] Sign(byte[] bytesToBeSigned)
         {
-            CBORObject alg = null; // Get the set algorithm or infer one
+            CBORObject alg; // Get the set algorithm or infer one
 
             alg = FindAttribute(HeaderKeys.Algorithm);
 
             if (alg == null) {
-                if (keyToSign[CoseKeyKeys.KeyType].Type == CBORType.Number) {
-                    switch ((GeneralValuesInt) keyToSign[CoseKeyKeys.KeyType].AsInt32()) {
+                if (_keyToSign[CoseKeyKeys.KeyType].Type == CBORType.Number) {
+                    switch ((GeneralValuesInt) _keyToSign[CoseKeyKeys.KeyType].AsInt32()) {
                     case GeneralValuesInt.KeyType_RSA:
                         alg = CBORObject.FromObject("PS256");
                         break;
 
                     case GeneralValuesInt.KeyType_EC2:
-                        if (keyToSign[CoseKeyParameterKeys.EC_Curve].Type == CBORType.Number) {
-                            switch ((GeneralValuesInt) keyToSign[CoseKeyParameterKeys.EC_Curve].AsInt32()) {
+                        if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Type == CBORType.Number) {
+                            switch ((GeneralValuesInt) _keyToSign[CoseKeyParameterKeys.EC_Curve].AsInt32()) {
                             case GeneralValuesInt.P256:
                                 alg = AlgorithmValues.ECDSA_256;
                                 break;
@@ -324,8 +321,8 @@ namespace Com.AugustCellars.COSE
                                 throw new CoseException("Unknown curve");
                             }
                         }
-                        else if (keyToSign[CoseKeyParameterKeys.EC_Curve].Type == CBORType.TextString) {
-                            switch (keyToSign[CoseKeyParameterKeys.EC_Curve].AsString()) {
+                        else if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Type == CBORType.TextString) {
+                            switch (_keyToSign[CoseKeyParameterKeys.EC_Curve].AsString()) {
                             default:
                                 throw new CoseException("Unknown curve");
                             }
@@ -334,11 +331,11 @@ namespace Com.AugustCellars.COSE
                         break;
 
                     default:
-                        throw new Exception("Unknown or unsupported key type " + keyToSign.AsString("kty"));
+                        throw new Exception("Unknown or unsupported key type " + _keyToSign.AsString("kty"));
                     }
                 }
-                else if (keyToSign[CoseKeyKeys.KeyType].Type == CBORType.TextString) {
-                    throw new CoseException("Unknown or unsupported key type " + keyToSign[CoseKeyKeys.KeyType].AsString());
+                else if (_keyToSign[CoseKeyKeys.KeyType].Type == CBORType.TextString) {
+                    throw new CoseException("Unknown or unsupported key type " + _keyToSign[CoseKeyKeys.KeyType].AsString());
                 }
                 else throw new CoseException("Key type is not correctly encoded");
                 objUnprotected.Add(HeaderKeys.Algorithm, alg);
@@ -390,7 +387,7 @@ namespace Com.AugustCellars.COSE
                     {
                         PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
 
-                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
+                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(_keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
                         ParametersWithRandom param = new ParametersWithRandom(prv, Message.GetPRNG());
 
                         signer.Init(true, param);
@@ -410,7 +407,7 @@ namespace Com.AugustCellars.COSE
                     {
                         PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
 
-                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
+                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(_keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
                         ParametersWithRandom param = new ParametersWithRandom(prv, Message.GetPRNG());
 
                         signer.Init(true, param);
@@ -428,9 +425,9 @@ namespace Com.AugustCellars.COSE
                         byte[] digestedMessage = new byte[digest.GetDigestSize()];
                         digest.DoFinal(digestedMessage, 0);
 
-                        X9ECParameters p = keyToSign.GetCurve();
+                        X9ECParameters p = _keyToSign.GetCurve();
                         ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
-                        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters("ECDSA", ConvertBigNum(keyToSign[CoseKeyParameterKeys.EC_D]), parameters);
+                        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters("ECDSA", ConvertBigNum(_keyToSign[CoseKeyParameterKeys.EC_D]), parameters);
                         ParametersWithRandom param = new ParametersWithRandom(privKey, random);
 
                         ECDsaSigner ecdsa = new ECDsaSigner(new HMacDsaKCalculator(new Sha256Digest()));
@@ -458,7 +455,7 @@ namespace Com.AugustCellars.COSE
 
         public bool Validate(byte[] content, byte[] msgAttributes)
         {
-            CBORObject alg = null; // Get the set algorithm or infer one
+            CBORObject alg; // Get the set algorithm or infer one
 
             byte[] bytesToBeSigned = toBeSigned(content, msgAttributes);
 
@@ -513,12 +510,12 @@ namespace Com.AugustCellars.COSE
                 case "PS384": {
                         PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
 
-                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
+                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(_keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
                         ParametersWithRandom param = new ParametersWithRandom(prv, Message.GetPRNG());
 
                         signer.Init(true, param);
                         signer.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
-                        return signer.VerifySignature(rgbSignature);
+                        return signer.VerifySignature(_rgbSignature);
 
                     }
 
@@ -532,12 +529,12 @@ namespace Com.AugustCellars.COSE
                 case AlgorithmValuesInt.RSA_PSS_512: {
                         PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
 
-                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
+                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(_keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
                         ParametersWithRandom param = new ParametersWithRandom(prv, Message.GetPRNG());
 
                         signer.Init(true, param);
                         signer.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
-                        return signer.VerifySignature(rgbSignature);
+                        return signer.VerifySignature(_rgbSignature);
                     }
 
                 case AlgorithmValuesInt.ECDSA_256:
@@ -547,16 +544,16 @@ namespace Com.AugustCellars.COSE
                         byte[] digestedMessage = new byte[digest.GetDigestSize()];
                         digest.DoFinal(digestedMessage, 0);
 
-                        X9ECParameters p = keyToSign.GetCurve();
+                        X9ECParameters p = _keyToSign.GetCurve();
                         ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
-                        ECPoint point = keyToSign.GetPoint();
+                        ECPoint point = _keyToSign.GetPoint();
                         ECPublicKeyParameters param = new ECPublicKeyParameters(point, parameters);
 
                         ECDsaSigner ecdsa = new ECDsaSigner();
                         ecdsa.Init(false, param);
 
-                        BigInteger r = new BigInteger(1, rgbSignature, 0, rgbSignature.Length/2);
-                        BigInteger s = new BigInteger(1, rgbSignature, rgbSignature.Length/2, rgbSignature.Length/2);
+                        BigInteger r = new BigInteger(1, _rgbSignature, 0, _rgbSignature.Length/2);
+                        BigInteger s = new BigInteger(1, _rgbSignature, _rgbSignature.Length/2, _rgbSignature.Length/2);
                         return ecdsa.VerifySignature(digestedMessage, r, s);
                     }
 
@@ -567,7 +564,7 @@ namespace Com.AugustCellars.COSE
             else throw new CoseException("Algorithm incorrectly encoded");
         }
 
-        private Org.BouncyCastle.Math.BigInteger ConvertBigNum(PeterO.Cbor.CBORObject cbor)
+        private BigInteger ConvertBigNum(CBORObject cbor)
         {
             byte[] rgb = cbor.GetByteString();
             byte[] rgb2 = new byte[rgb.Length + 2];
@@ -575,7 +572,7 @@ namespace Com.AugustCellars.COSE
             rgb2[1] = 0;
             for (int i = 0; i < rgb.Length; i++) rgb2[i + 2] = rgb[i];
 
-            return new Org.BouncyCastle.Math.BigInteger(rgb2);
+            return new BigInteger(rgb2);
         }
 
 #if FOR_EXAMPLES
@@ -586,8 +583,8 @@ namespace Com.AugustCellars.COSE
 
     public class CounterSignature : Signer
     {
-        Message m_msgToSign = null;
-        Signer m_signerToSign = null;
+        private Message m_msgToSign;
+        private Signer m_signerToSign;
 
         public CounterSignature(OneKey key, CBORObject algorithm = null) : base(key, algorithm)
         {

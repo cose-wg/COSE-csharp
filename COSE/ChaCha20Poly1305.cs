@@ -2,21 +2,13 @@
 using System.IO;
 using System.Text;
 
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Modes;
-using Org.BouncyCastle.Crypto.Modes.Gcm;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Utilities;
-using Org.BouncyCastle.Utilities;
-
-using Org.BouncyCastle.Crypto.Engines;
-using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Math;
 
 namespace Org.BouncyCastle.Crypto.Engines
 {
-#if false
+#if CHACHA20
     public class ChaCha20Poly1305 : IAeadBlockCipher
     {
         /// <summary>
@@ -37,21 +29,21 @@ namespace Org.BouncyCastle.Crypto.Engines
         {
             private const int BLOCK_SIZE = 16;
 
-            private readonly byte[] singleByte = new byte[1];
+            private readonly byte[] _singleByte = new byte[1];
 
             // Initialised state
 
-            BigInteger r;
-            BigInteger s;
-            BigInteger a;
+            private BigInteger _r;
+            private BigInteger _s;
+            private BigInteger _a;
             static BigInteger p = new BigInteger(new byte[] { 3, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfb });
 
 
             /** Current block of buffered input */
-            private byte[] currentBlock = new byte[BLOCK_SIZE];
+            private readonly byte[] _currentBlock = new byte[BLOCK_SIZE];
 
             /** Current offset in input buffer */
-            private int currentBlockOffset = 0;
+            private int _currentBlockOffset;
 
 
             /**
@@ -87,9 +79,9 @@ namespace Org.BouncyCastle.Crypto.Engines
                 Array.Copy(key, z, key.Length);
                 Array.Reverse(z);
                 // Extract r portion of key
-                r = new BigInteger(1, z, 16, 16);
-                r = r.And(clamp);
-                s = new BigInteger(1, z, 0, 16);
+                _r = new BigInteger(1, z, 16, 16);
+                _r = _r.And(clamp);
+                _s = new BigInteger(1, z, 0, 16);
             }
 
             public string AlgorithmName
@@ -104,23 +96,23 @@ namespace Org.BouncyCastle.Crypto.Engines
 
             public void Update(byte input)
             {
-                singleByte[0] = input;
-                BlockUpdate(singleByte, 0, 1);
+                _singleByte[0] = input;
+                BlockUpdate(_singleByte, 0, 1);
             }
 
             public void BlockUpdate(byte[] input, int inOff, int len)
             {
                 int copied = 0;
                 while (len > copied) {
-                    if (currentBlockOffset == BLOCK_SIZE) {
+                    if (_currentBlockOffset == BLOCK_SIZE) {
                         processBlock();
-                        currentBlockOffset = 0;
+                        _currentBlockOffset = 0;
                     }
 
-                    int toCopy = System.Math.Min((len - copied), BLOCK_SIZE - currentBlockOffset);
-                    Array.Copy(input, copied + inOff, currentBlock, currentBlockOffset, toCopy);
+                    int toCopy = System.Math.Min((len - copied), BLOCK_SIZE - _currentBlockOffset);
+                    Array.Copy(input, copied + inOff, _currentBlock, _currentBlockOffset, toCopy);
                     copied += toCopy;
-                    currentBlockOffset += toCopy;
+                    _currentBlockOffset += toCopy;
                 }
 
             }
@@ -128,22 +120,22 @@ namespace Org.BouncyCastle.Crypto.Engines
             static BigInteger HighBit = new BigInteger(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
             private void processBlock()
             {
-                if (currentBlockOffset < BLOCK_SIZE) {
-                    currentBlock[currentBlockOffset] = 1;
-                    for (int i = currentBlockOffset + 1; i < BLOCK_SIZE; i++) {
-                        currentBlock[i] = 0;
+                if (_currentBlockOffset < BLOCK_SIZE) {
+                    _currentBlock[_currentBlockOffset] = 1;
+                    for (int i = _currentBlockOffset + 1; i < BLOCK_SIZE; i++) {
+                        _currentBlock[i] = 0;
                     }
                 }
 
-                Array.Reverse(currentBlock);
-                BigInteger n = new BigInteger(1, currentBlock);
-                if (currentBlockOffset == BLOCK_SIZE) {
+                Array.Reverse(_currentBlock);
+                BigInteger n = new BigInteger(1, _currentBlock);
+                if (_currentBlockOffset == BLOCK_SIZE) {
                     n = n.Add(HighBit);
                 }
 
-                a = a.Add(n);
-                a = r.Multiply(a);
-                a = a.Mod(p);
+                _a = _a.Add(n);
+                _a = _r.Multiply(_a);
+                _a = _a.Mod(p);
             }
 
             public int DoFinal(byte[] output, int outOff)
@@ -152,14 +144,14 @@ namespace Org.BouncyCastle.Crypto.Engines
                     throw new DataLengthException("Output buffer is too short.");
                 }
 
-                if (currentBlockOffset > 0) {
+                if (_currentBlockOffset > 0) {
                     // Process padded block
                     processBlock();
                 }
 
-                a = a.Add(s);
+                _a = _a.Add(_s);
 
-                byte[] value = a.ToByteArrayUnsigned();
+                byte[] value = _a.ToByteArrayUnsigned();
                 Array.Reverse(value);
                 Array.Copy(value, 0, output, outOff, BLOCK_SIZE);
                 Reset();
@@ -168,244 +160,35 @@ namespace Org.BouncyCastle.Crypto.Engines
 
             public void Reset()
             {
-                currentBlockOffset = 0;
-                a = new BigInteger(new byte[1] { 0 });
+                _currentBlockOffset = 0;
+                _a = new BigInteger(new byte[] { 0 });
             }
         }
 
-        class ChaChaX : IStreamCipher
+        class ChaChaX : ChaCha7539Engine
         {
-            public override void Init(bool forEncryption, ICipherParameters parameters)
-            {
-                base.Init(forEncryption, parameters);
-            }
-
-            override protected int NonceSize
-            {
-                get { return 12; }
-            }
-            public void AddOne()
-            {
-                AdvanceCounter();
-            }
-
-            protected override void AdvanceCounter()
-            {
-                ++engineState[12];
-            }
-
-            override protected void SetKey(byte[] keyBytes, byte[] ivBytes)
-            {
-                if ((keyBytes.Length != 32)) {
-                    throw new ArgumentException(AlgorithmName + " requires 256 bit key");
-                }
-
-                int offset = 0;
-                byte[] constants;
-
-                // Key
-                engineState[4] = LE_To_UInt32(keyBytes, 0);
-                engineState[5] = LE_To_UInt32(keyBytes, 4);
-                engineState[6] = LE_To_UInt32(keyBytes, 8);
-                engineState[7] = LE_To_UInt32(keyBytes, 12);
-
-                constants = sigma;
-                offset = 16;
-
-                engineState[8] = LE_To_UInt32(keyBytes, offset);
-                engineState[9] = LE_To_UInt32(keyBytes, offset + 4);
-                engineState[10] = LE_To_UInt32(keyBytes, offset + 8);
-                engineState[11] = LE_To_UInt32(keyBytes, offset + 12);
-
-                engineState[0] = LE_To_UInt32(constants, 0);
-                engineState[1] = LE_To_UInt32(constants, 4);
-                engineState[2] = LE_To_UInt32(constants, 8);
-                engineState[3] = LE_To_UInt32(constants, 12);
-
-                // Counter
-                engineState[12] = 0;
-
-                // IV
-                engineState[13] = LE_To_UInt32(ivBytes, 0);
-                engineState[14] = LE_To_UInt32(ivBytes, 4);
-                engineState[15] = LE_To_UInt32(ivBytes, 8);
-                ResetCounter();
-            }
-
-            public virtual byte ReturnByte(
-                 byte input)
-            {
-                if (LimitExceeded()) {
-                    throw new MaxBytesExceededException("2^70 byte limit per IV; Change IV");
-                }
-
-                if (index == 0) {
-                    GenerateKeyStream(keyStream);
-                    AdvanceCounter();
-                }
-
-                byte output = (byte) (keyStream[index] ^ input);
-                index = (index + 1) & 63;
-
-                return output;
-            }
-            protected void AdvanceCounter()
-            {
-                if (++engineState[12] == 0) {
-                    ++engineState[13];
-                }
-            }
-            private bool LimitExceeded()
-            {
-                if (++cW0 == 0) {
-                    if (++cW1 == 0) {
-                        return (++cW2 & 0x20) != 0;          // 2^(32 + 32 + 6)
-                    }
-                }
-
-                return false;
-            }
-            private const int StateSize = 16; // 16, 32 bit ints = 64 bytes
-            protected uint[] engineState = new uint[StateSize]; // state
-            private uint cW0, cW1, cW2;
-            public virtual void ProcessBytes(
-                byte[] inBytes,
-                int inOff,
-                int len,
-                byte[] outBytes,
-                int outOff)
-            {
-                if (!initialised)
-                    throw new InvalidOperationException(AlgorithmName + " not initialised");
-
-                Check.DataLength(inBytes, inOff, len, "input buffer too short");
-                Check.OutputLength(outBytes, outOff, len, "output buffer too short");
-
-                if (LimitExceeded((uint) len))
-                    throw new MaxBytesExceededException("2^70 byte limit per IV would be exceeded; Change IV");
-
-                for (int i = 0; i < len; i++) {
-                    if (index == 0) {
-                        GenerateKeyStream(keyStream);
-                        AdvanceCounter();
-                    }
-                    outBytes[i + outOff] = (byte) (keyStream[index] ^ inBytes[i + inOff]);
-                    index = (index + 1) & 63;
-                }
-            }
-            protected void GenerateKeyStream(byte[] output)
-            {
-                ChachaCore(rounds, engineState, x);
-                Pack.UInt32_To_LE(x, output, 0);
-            }
-            internal static void ChachaCore(int rounds, uint[] input, uint[] x)
-            {
-                if (input.Length != 16) {
-                    throw new ArgumentException();
-                }
-                if (x.Length != 16) {
-                    throw new ArgumentException();
-                }
-                if (rounds % 2 != 0) {
-                    throw new ArgumentException("Number of rounds must be even");
-                }
-
-                uint x00 = input[0];
-                uint x01 = input[1];
-                uint x02 = input[2];
-                uint x03 = input[3];
-                uint x04 = input[4];
-                uint x05 = input[5];
-                uint x06 = input[6];
-                uint x07 = input[7];
-                uint x08 = input[8];
-                uint x09 = input[9];
-                uint x10 = input[10];
-                uint x11 = input[11];
-                uint x12 = input[12];
-                uint x13 = input[13];
-                uint x14 = input[14];
-                uint x15 = input[15];
-
-                for (int i = rounds; i > 0; i -= 2) {
-                    x00 += x04; x12 = R(x12 ^ x00, 16);
-                    x08 += x12; x04 = R(x04 ^ x08, 12);
-                    x00 += x04; x12 = R(x12 ^ x00, 8);
-                    x08 += x12; x04 = R(x04 ^ x08, 7);
-                    x01 += x05; x13 = R(x13 ^ x01, 16);
-                    x09 += x13; x05 = R(x05 ^ x09, 12);
-                    x01 += x05; x13 = R(x13 ^ x01, 8);
-                    x09 += x13; x05 = R(x05 ^ x09, 7);
-                    x02 += x06; x14 = R(x14 ^ x02, 16);
-                    x10 += x14; x06 = R(x06 ^ x10, 12);
-                    x02 += x06; x14 = R(x14 ^ x02, 8);
-                    x10 += x14; x06 = R(x06 ^ x10, 7);
-                    x03 += x07; x15 = R(x15 ^ x03, 16);
-                    x11 += x15; x07 = R(x07 ^ x11, 12);
-                    x03 += x07; x15 = R(x15 ^ x03, 8);
-                    x11 += x15; x07 = R(x07 ^ x11, 7);
-                    x00 += x05; x15 = R(x15 ^ x00, 16);
-                    x10 += x15; x05 = R(x05 ^ x10, 12);
-                    x00 += x05; x15 = R(x15 ^ x00, 8);
-                    x10 += x15; x05 = R(x05 ^ x10, 7);
-                    x01 += x06; x12 = R(x12 ^ x01, 16);
-                    x11 += x12; x06 = R(x06 ^ x11, 12);
-                    x01 += x06; x12 = R(x12 ^ x01, 8);
-                    x11 += x12; x06 = R(x06 ^ x11, 7);
-                    x02 += x07; x13 = R(x13 ^ x02, 16);
-                    x08 += x13; x07 = R(x07 ^ x08, 12);
-                    x02 += x07; x13 = R(x13 ^ x02, 8);
-                    x08 += x13; x07 = R(x07 ^ x08, 7);
-                    x03 += x04; x14 = R(x14 ^ x03, 16);
-                    x09 += x14; x04 = R(x04 ^ x09, 12);
-                    x03 += x04; x14 = R(x14 ^ x03, 8);
-                    x09 += x14; x04 = R(x04 ^ x09, 7);
-                }
-
-                x[0] = x00 + input[0];
-                x[1] = x01 + input[1];
-                x[2] = x02 + input[2];
-                x[3] = x03 + input[3];
-                x[4] = x04 + input[4];
-                x[5] = x05 + input[5];
-                x[6] = x06 + input[6];
-                x[7] = x07 + input[7];
-                x[8] = x08 + input[8];
-                x[9] = x09 + input[9];
-                x[10] = x10 + input[10];
-                x[11] = x11 + input[11];
-                x[12] = x12 + input[12];
-                x[13] = x13 + input[13];
-                x[14] = x14 + input[14];
-                x[15] = x15 + input[15];
-            }
+            public void AddOne() { AdvanceCounter(); }
         }
 
-        private byte[] keyStream = new byte[StateSize * 4]; // expanded state, 64 bytes
-            private bool initialised = false;
-
-        }
 
         private const int BlockSize = 16;
-        private const int macSize = 16;
-
-        private readonly IBlockCipher cipher;
+        private const int MacSize = 16;
 
         //  These fields are set by Init and not modified by processing
-        private bool forEncryption;
-        private byte[] nonce;
-        private byte[] initialAssociatedText;
+        private bool _forEncryption;
+        private byte[] _nonce;
+        private byte[] _initialAssociatedText;
 
-        private Poly1305 poly;
-        private ChaChaX chacha20;
+        private Poly1305 _poly;
+        private ChaChaX _chacha20;
 
         //  These fields are modified during processing
 
-        private byte[] macResult;
-        private int bufOff;
-        private int aadLength;
+        private byte[] _macResult;
+        private int _bufOff;
+        private int _aadLength;
 
-        private readonly MemoryStream data = new MemoryStream();
+        private readonly MemoryStream _data = new MemoryStream();
 
         public ChaCha20Poly1305()
         {
@@ -419,7 +202,7 @@ namespace Org.BouncyCastle.Crypto.Engines
 
         public IBlockCipher GetUnderlyingCipher()
         {
-            return cipher;
+            return null; // THis is a stream cipher - can't do this.
         }
 
         public virtual int GetBlockSize()
@@ -431,48 +214,48 @@ namespace Org.BouncyCastle.Crypto.Engines
             bool forEncryption,
             ICipherParameters parameters)
         {
-            this.forEncryption = forEncryption;
+            _forEncryption = forEncryption;
 
             KeyParameter keyParam;
 
             if (parameters is AeadParameters) {
                 AeadParameters param = (AeadParameters) parameters;
 
-                nonce = param.GetNonce();
-                initialAssociatedText = param.GetAssociatedText();
+                _nonce = param.GetNonce();
+                _initialAssociatedText = param.GetAssociatedText();
 
                 keyParam = param.Key;
             }
             else if (parameters is ParametersWithIV) {
                 ParametersWithIV param = (ParametersWithIV) parameters;
 
-                nonce = param.GetIV();
-                initialAssociatedText = null;
+                _nonce = param.GetIV();
+                _initialAssociatedText = null;
                 keyParam = (KeyParameter) param.Parameters;
             }
             else {
                 throw new ArgumentException("invalid parameters passed to ChaCha20Poly1305");
             }
 
-            if (nonce == null || nonce.Length < 1) {
+            if (_nonce == null || _nonce.Length < 1) {
                 throw new ArgumentException("IV must be at least 1 byte");
             }
 
             //  Geneate the key 
-            ChaChaX tmpCypher = new ChaChaX();
+            ChaCha7539Engine tmpCypher = new ChaCha7539Engine();
             byte[] zero = new byte[32];
             byte[] polyKey = new byte[32];
-            ParametersWithIV tmpKey = new ParametersWithIV(keyParam, nonce);
+            ParametersWithIV tmpKey = new ParametersWithIV(keyParam, _nonce);
             tmpCypher.Init(true, tmpKey);
             tmpCypher.ProcessBytes(zero, 0, zero.Length, polyKey, 0);
 
-            poly = new Poly1305();
+            _poly = new Poly1305();
 
             KeyParameter tmpKey2 = new KeyParameter(polyKey);
-            poly.Init(tmpKey2);
+            _poly.Init(tmpKey2);
 
-            chacha20 = new ChaChaX();
-            chacha20.Init(forEncryption, tmpKey);
+            _chacha20 = new ChaChaX();
+            _chacha20.Init(forEncryption, tmpKey);
 
             InitCipher();
 
@@ -480,64 +263,64 @@ namespace Org.BouncyCastle.Crypto.Engines
 
         private void InitCipher()
         {
-            this.aadLength = 0;
+            _aadLength = 0;
 
-            poly.Reset();
-            chacha20.Reset();
-            chacha20.AddOne();
-            data.SetLength(0);
+            _poly.Reset();
+            _chacha20.Reset();
+            _chacha20.AddOne();
+            _data.SetLength(0);
 
-            if (initialAssociatedText != null) {
-                ProcessAadBytes(initialAssociatedText, 0, initialAssociatedText.Length);
+            if (_initialAssociatedText != null) {
+                ProcessAadBytes(_initialAssociatedText, 0, _initialAssociatedText.Length);
             }
         }
 
         public virtual byte[] GetMac()
         {
-            return macResult;
+            return _macResult;
         }
 
         public virtual int GetOutputSize(int len)
         {
-            int totalData = len + bufOff;
+            int totalData = len + _bufOff;
 
-            if (forEncryption) {
-                return totalData + macSize;
+            if (_forEncryption) {
+                return totalData + MacSize;
             }
-            return totalData < macSize ? 0 : totalData - macSize;
+            return totalData < MacSize ? 0 : totalData - MacSize;
         }
 
         public virtual int GetUpdateOutputSize(int len)
         {
-            int totalData = len + bufOff;
-            if (!forEncryption) {
-                if (totalData < macSize) { return 0; }
-                totalData -= macSize;
+            int totalData = len + _bufOff;
+            if (!_forEncryption) {
+                if (totalData < MacSize) { return 0; }
+                totalData -= MacSize;
             }
             return totalData - totalData % BlockSize;
         }
 
         public virtual void ProcessAadByte(byte input)
         {
-            poly.Update(input);
-            aadLength += 1;
+            _poly.Update(input);
+            _aadLength += 1;
         }
 
         public virtual void ProcessAadBytes(byte[] inBytes, int inOff, int len)
         {
-            poly.BlockUpdate(inBytes, inOff, len);
-            aadLength += len;
+            _poly.BlockUpdate(inBytes, inOff, len);
+            _aadLength += len;
         }
 
         public virtual int ProcessByte(byte input, byte[] output, int outOff)
         {
-            data.WriteByte(input);
+            _data.WriteByte(input);
             return 0;
         }
 
         public virtual int ProcessBytes(byte[] input, int inOff, int len, byte[] output, int outOff)
         {
-            data.Write(input, inOff, len);
+            _data.Write(input, inOff, len);
             return 0;
         }
 
@@ -545,58 +328,58 @@ namespace Org.BouncyCastle.Crypto.Engines
         {
             byte[] zeros;
 
-            if (data.Length + aadLength == 0) {
+            if (_data.Length + _aadLength == 0) {
                 InitCipher();
             }
 
-            int extra = (int) data.Length;
+            int extra = (int) _data.Length;
 
-            if (forEncryption) {
+            if (_forEncryption) {
                 // Check.OutputLength(output, outOff, bufOff, extra + macSize, "Output buffer too short");
             }
             else {
-                if (extra < macSize) throw new InvalidCipherTextException("data too short");
+                if (extra < MacSize) throw new InvalidCipherTextException("data too short");
 
-                extra -= macSize;
+                extra -= MacSize;
 
                 // Check.OutputLength(output, outOff, extra, "Output buffer too short");
             }
 
             //  Pad out the AD
 
-            zeros = new byte[16 - (aadLength % 16)];
-            if (zeros.Length != 16) poly.BlockUpdate(zeros, 0, zeros.Length);
+            zeros = new byte[16 - (_aadLength % 16)];
+            if (zeros.Length != 16) _poly.BlockUpdate(zeros, 0, zeros.Length);
 
-            chacha20.ProcessBytes(data.GetBuffer(), 0, extra, output, outOff);
+            _chacha20.ProcessBytes(_data.GetBuffer(), 0, extra, output, outOff);
 
-            if (forEncryption) {
-                poly.BlockUpdate(output, outOff, extra);
+            if (_forEncryption) {
+                _poly.BlockUpdate(output, outOff, extra);
             }
             else {
-                poly.BlockUpdate(data.GetBuffer(), 0, extra);
+                _poly.BlockUpdate(_data.GetBuffer(), 0, extra);
             }
 
             int resultLen = 0;
 
             zeros = new byte[16 - (extra % 16)];
-            if (zeros.Length != 16) poly.BlockUpdate(zeros, 0, zeros.Length);
+            if (zeros.Length != 16) _poly.BlockUpdate(zeros, 0, zeros.Length);
 
-            byte[] lengths = BitConverter.GetBytes((Int64) aadLength);
-            poly.BlockUpdate(lengths, 0, lengths.Length);
+            byte[] lengths = BitConverter.GetBytes((Int64) _aadLength);
+            _poly.BlockUpdate(lengths, 0, lengths.Length);
             lengths = BitConverter.GetBytes((Int64) extra);
-            poly.BlockUpdate(lengths, 0, lengths.Length);
+            _poly.BlockUpdate(lengths, 0, lengths.Length);
 
-            macResult = new byte[macSize];
-            if (poly.DoFinal(macResult, 0) != macResult.Length) throw new Exception("Internal Error");
+            _macResult = new byte[MacSize];
+            if (_poly.DoFinal(_macResult, 0) != _macResult.Length) throw new Exception("Internal Error");
 
-            if (forEncryption) {
-                resultLen = extra + macSize;
-                Array.Copy(macResult, 0, output, extra + outOff, macSize);
+            if (_forEncryption) {
+                resultLen = extra + MacSize;
+                Array.Copy(_macResult, 0, output, extra + outOff, MacSize);
             }
             else {
                 bool f = true;
-                for (int i = 0; i < macSize; i++) {
-                    f &= (macResult[i] == data.GetBuffer()[extra + i]);
+                for (int i = 0; i < MacSize; i++) {
+                    f &= (_macResult[i] == _data.GetBuffer()[extra + i]);
                 }
                 if (!f) throw new Exception("Authentication Failed");
                 resultLen = extra;
@@ -615,12 +398,12 @@ namespace Org.BouncyCastle.Crypto.Engines
         private void Reset(bool clearMac)
         {
             if (clearMac) {
-                macResult = null;
+                _macResult = null;
             }
-            data.SetLength(0);
-            chacha20.Reset();
-            poly.Reset();
-            aadLength = 0;
+            _data.SetLength(0);
+            _chacha20.Reset();
+            _poly.Reset();
+            _aadLength = 0;
         }
 
         public static uint LE_To_UInt32(byte[] bs, int off)
@@ -694,7 +477,7 @@ namespace Org.BouncyCastle.Crypto.Engines
             KeyParameter paramsX = new KeyParameter(pKey);
             p.Init(paramsX);
 
-            byte[] msg = UTF8Encoding.ASCII.GetBytes("Cryptographic Forum Research Group");
+            byte[] msg = Encoding.ASCII.GetBytes("Cryptographic Forum Research Group");
             p.BlockUpdate(msg, 0, msg.Length);
             byte[] output = new byte[30];
             p.DoFinal(output, 0);
@@ -702,8 +485,8 @@ namespace Org.BouncyCastle.Crypto.Engines
 
             ChaCha20Poly1305 cipher = new ChaCha20Poly1305();
 
-            KeyParameter ContentKey = new KeyParameter(key);
-            AeadParameters parameters = new AeadParameters(ContentKey, 128, nonce, aad);
+            KeyParameter contentKey = new KeyParameter(key);
+            AeadParameters parameters = new AeadParameters(contentKey, 128, nonce, aad);
 
             cipher.Init(true, parameters);
 

@@ -29,35 +29,35 @@ namespace Com.AugustCellars.COSE
 
     public class RecordKeys
     {
-        static public readonly CBORObject MsgType = CBORObject.FromObject(1);
-        static public readonly CBORObject Protected = CBORObject.FromObject(2);
-        static public readonly CBORObject Unprotected = CBORObject.FromObject(3);
-        static public readonly CBORObject Payload = CBORObject.FromObject(4);
-        static public readonly CBORObject Signatures = CBORObject.FromObject(5);
-        static public readonly CBORObject Signature = CBORObject.FromObject(6);
-        static public readonly CBORObject CipherText = CBORObject.FromObject(4);
-        static public readonly CBORObject Recipients = CBORObject.FromObject(9);
-        static public readonly CBORObject Tag = CBORObject.FromObject(10);
+        public static readonly CBORObject MsgType = CBORObject.FromObject(1);
+        public static readonly CBORObject Protected = CBORObject.FromObject(2);
+        public static readonly CBORObject Unprotected = CBORObject.FromObject(3);
+        public static readonly CBORObject Payload = CBORObject.FromObject(4);
+        public static readonly CBORObject Signatures = CBORObject.FromObject(5);
+        public static readonly CBORObject Signature = CBORObject.FromObject(6);
+        public static readonly CBORObject CipherText = CBORObject.FromObject(4);
+        public static readonly CBORObject Recipients = CBORObject.FromObject(9);
+        public static readonly CBORObject Tag = CBORObject.FromObject(10);
     };
 
     public class HeaderKeys
     {
-        static public readonly CBORObject Algorithm = CBORObject.FromObject(1);
-        static public readonly CBORObject Critical = CBORObject.FromObject(2);
-        static public readonly CBORObject ContentType = CBORObject.FromObject(3);
-        static public readonly CBORObject EphemeralKey = CBORObject.FromObject(-1);
-        static public readonly CBORObject ECDH_SPK = CBORObject.FromObject(-2);
-        static public readonly CBORObject StaticKey = CBORObject.FromObject(-2);
-        static public readonly CBORObject ECDH_SKID = CBORObject.FromObject(-3);
-        static public readonly CBORObject StaticKey_ID = CBORObject.FromObject(-3);
-        static public readonly CBORObject KeyId = CBORObject.FromObject(4);
-        static public readonly CBORObject IV = CBORObject.FromObject(5);
-        static public readonly CBORObject PartialIV = CBORObject.FromObject(6);
-        static public readonly CBORObject CounterSignature = CBORObject.FromObject(7);
-        static public readonly CBORObject OperationTime = CBORObject.FromObject(8);
+        public static readonly CBORObject Algorithm = CBORObject.FromObject(1);
+        public static readonly CBORObject Critical = CBORObject.FromObject(2);
+        public static readonly CBORObject ContentType = CBORObject.FromObject(3);
+        public static readonly CBORObject EphemeralKey = CBORObject.FromObject(-1);
+        public static readonly CBORObject ECDH_SPK = CBORObject.FromObject(-2);
+        public static readonly CBORObject StaticKey = CBORObject.FromObject(-2);
+        public static readonly CBORObject ECDH_SKID = CBORObject.FromObject(-3);
+        public static readonly CBORObject StaticKey_ID = CBORObject.FromObject(-3);
+        public static readonly CBORObject KeyId = CBORObject.FromObject(4);
+        public static readonly CBORObject IV = CBORObject.FromObject(5);
+        public static readonly CBORObject PartialIV = CBORObject.FromObject(6);
+        public static readonly CBORObject CounterSignature = CBORObject.FromObject(7);
+        public static readonly CBORObject OperationTime = CBORObject.FromObject(8);
     }
 
-    public enum AlgorithmValuesInt : int
+    public enum AlgorithmValuesInt
     { 
         AES_GCM_128=1, AES_GCM_192=2, AES_GCM_256=3,
         HMAC_SHA_256_64=4, HMAC_SHA_256=5, HMAC_SHA_384=6, HMAC_SHA_512=7,
@@ -88,118 +88,118 @@ namespace Com.AugustCellars.COSE
 
     public class AlgorithmValues
     {
-        static public readonly CBORObject HKDF_HMAC_SHA_256 = CBORObject.FromObject(AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_256);
-        static public readonly CBORObject HKDF_HMAC_SHA_512 = CBORObject.FromObject(AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_512);
-        static public readonly CBORObject HKDF_AES_128 = CBORObject.FromObject(AlgorithmValuesInt.Direct_HKDF_AES_128);
-        static public readonly CBORObject HKDF_AES_256 = CBORObject.FromObject(AlgorithmValuesInt.Direct_HKDF_AES_256);
+        public static readonly CBORObject HKDF_HMAC_SHA_256 = CBORObject.FromObject(AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_256);
+        public static readonly CBORObject HKDF_HMAC_SHA_512 = CBORObject.FromObject(AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_512);
+        public static readonly CBORObject HKDF_AES_128 = CBORObject.FromObject(AlgorithmValuesInt.Direct_HKDF_AES_128);
+        public static readonly CBORObject HKDF_AES_256 = CBORObject.FromObject(AlgorithmValuesInt.Direct_HKDF_AES_256);
 
-        static public readonly CBORObject AES_GCM_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_GCM_128);
-        static public readonly CBORObject AES_GCM_192 = CBORObject.FromObject(AlgorithmValuesInt.AES_GCM_192);
-        static public readonly CBORObject AES_GCM_256 = CBORObject.FromObject(AlgorithmValuesInt.AES_GCM_256);
+        public static readonly CBORObject AES_GCM_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_GCM_128);
+        public static readonly CBORObject AES_GCM_192 = CBORObject.FromObject(AlgorithmValuesInt.AES_GCM_192);
+        public static readonly CBORObject AES_GCM_256 = CBORObject.FromObject(AlgorithmValuesInt.AES_GCM_256);
 
-        static public readonly CBORObject HMAC_SHA_256 = CBORObject.FromObject(AlgorithmValuesInt.HMAC_SHA_256);
-        static public readonly CBORObject HMAC_SHA_384 = CBORObject.FromObject(AlgorithmValuesInt.HMAC_SHA_384);
-        static public readonly CBORObject HMAC_SHA_512 = CBORObject.FromObject(AlgorithmValuesInt.HMAC_SHA_512);
-        static public readonly CBORObject HMAC_SHA_256_64 = CBORObject.FromObject(AlgorithmValuesInt.HMAC_SHA_256_64);
+        public static readonly CBORObject HMAC_SHA_256 = CBORObject.FromObject(AlgorithmValuesInt.HMAC_SHA_256);
+        public static readonly CBORObject HMAC_SHA_384 = CBORObject.FromObject(AlgorithmValuesInt.HMAC_SHA_384);
+        public static readonly CBORObject HMAC_SHA_512 = CBORObject.FromObject(AlgorithmValuesInt.HMAC_SHA_512);
+        public static readonly CBORObject HMAC_SHA_256_64 = CBORObject.FromObject(AlgorithmValuesInt.HMAC_SHA_256_64);
 
-        static public readonly CBORObject AES_CMAC_128_64 = CBORObject.FromObject("AES-CMAC-128/64");
-        static public readonly CBORObject AES_CMAC_256_64 = CBORObject.FromObject("AES-CMAC-256/64");
+        public static readonly CBORObject AES_CMAC_128_64 = CBORObject.FromObject("AES-CMAC-128/64");
+        public static readonly CBORObject AES_CMAC_256_64 = CBORObject.FromObject("AES-CMAC-256/64");
 
-        static public readonly CBORObject AES_CBC_MAC_128_64 = CBORObject.FromObject(AlgorithmValuesInt.AES_CBC_MAC_128_64);
-        static public readonly CBORObject AES_CBC_MAC_256_64 = CBORObject.FromObject(AlgorithmValuesInt.AES_CBC_MAC_256_64);
-        static public readonly CBORObject AES_CBC_MAC_128_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_CBC_MAC_128_128);
-        static public readonly CBORObject AES_CBC_MAC_256_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_CBC_MAC_256_128);
+        public static readonly CBORObject AES_CBC_MAC_128_64 = CBORObject.FromObject(AlgorithmValuesInt.AES_CBC_MAC_128_64);
+        public static readonly CBORObject AES_CBC_MAC_256_64 = CBORObject.FromObject(AlgorithmValuesInt.AES_CBC_MAC_256_64);
+        public static readonly CBORObject AES_CBC_MAC_128_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_CBC_MAC_128_128);
+        public static readonly CBORObject AES_CBC_MAC_256_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_CBC_MAC_256_128);
 
-        static public readonly CBORObject AES_CCM_16_64_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_16_64_128);
-        static public readonly CBORObject AES_CCM_16_128_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_16_128_128);
-        static public readonly CBORObject AES_CCM_16_64_256 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_16_64_256);
-        static public readonly CBORObject AES_CCM_16_128_256 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_16_128_256);
-        static public readonly CBORObject AES_CCM_64_64_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_64_64_128);
-        static public readonly CBORObject AES_CCM_64_128_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_64_128_128);
-        static public readonly CBORObject AES_CCM_64_64_256 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_64_64_256);
-        static public readonly CBORObject AES_CCM_64_128_256 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_64_128_256);
+        public static readonly CBORObject AES_CCM_16_64_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_16_64_128);
+        public static readonly CBORObject AES_CCM_16_128_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_16_128_128);
+        public static readonly CBORObject AES_CCM_16_64_256 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_16_64_256);
+        public static readonly CBORObject AES_CCM_16_128_256 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_16_128_256);
+        public static readonly CBORObject AES_CCM_64_64_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_64_64_128);
+        public static readonly CBORObject AES_CCM_64_128_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_64_128_128);
+        public static readonly CBORObject AES_CCM_64_64_256 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_64_64_256);
+        public static readonly CBORObject AES_CCM_64_128_256 = CBORObject.FromObject(AlgorithmValuesInt.AES_CCM_64_128_256);
 
-        static public readonly CBORObject ChaCha20_Poly1305 = CBORObject.FromObject(AlgorithmValuesInt.ChaCha20_Poly1305);
+        public static readonly CBORObject ChaCha20_Poly1305 = CBORObject.FromObject(AlgorithmValuesInt.ChaCha20_Poly1305);
 
-        static public readonly CBORObject RSA_OAEP = CBORObject.FromObject(AlgorithmValuesInt.RSA_OAEP);
-        static public readonly CBORObject RSA_OAEP_256 = CBORObject.FromObject(AlgorithmValuesInt.RSA_OAEP_256);
+        public static readonly CBORObject RSA_OAEP = CBORObject.FromObject(AlgorithmValuesInt.RSA_OAEP);
+        public static readonly CBORObject RSA_OAEP_256 = CBORObject.FromObject(AlgorithmValuesInt.RSA_OAEP_256);
 
-        static public readonly CBORObject AES_KW_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_KW_128);
-        static public readonly CBORObject AES_KW_192 = CBORObject.FromObject(AlgorithmValuesInt.AES_KW_192);
-        static public readonly CBORObject AES_KW_256 = CBORObject.FromObject(AlgorithmValuesInt.AES_KW_256);
+        public static readonly CBORObject AES_KW_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_KW_128);
+        public static readonly CBORObject AES_KW_192 = CBORObject.FromObject(AlgorithmValuesInt.AES_KW_192);
+        public static readonly CBORObject AES_KW_256 = CBORObject.FromObject(AlgorithmValuesInt.AES_KW_256);
 
-        static public readonly CBORObject Direct = CBORObject.FromObject(AlgorithmValuesInt.DIRECT);
-        static public readonly CBORObject dir_kdf = CBORObject.FromObject("dir+kdf");
+        public static readonly CBORObject Direct = CBORObject.FromObject(AlgorithmValuesInt.DIRECT);
+        public static readonly CBORObject dir_kdf = CBORObject.FromObject("dir+kdf");
 
-        static public readonly CBORObject ECDSA_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDSA_256);
-        static public readonly CBORObject ECDSA_384 = CBORObject.FromObject(AlgorithmValuesInt.ECDSA_384);
-        static public readonly CBORObject ECDSA_512 = CBORObject.FromObject(AlgorithmValuesInt.ECDSA_512);
+        public static readonly CBORObject ECDSA_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDSA_256);
+        public static readonly CBORObject ECDSA_384 = CBORObject.FromObject(AlgorithmValuesInt.ECDSA_384);
+        public static readonly CBORObject ECDSA_512 = CBORObject.FromObject(AlgorithmValuesInt.ECDSA_512);
 
-        static public readonly CBORObject EdDSA = CBORObject.FromObject(AlgorithmValuesInt.EdDSA);
+        public static readonly CBORObject EdDSA = CBORObject.FromObject(AlgorithmValuesInt.EdDSA);
 
-        static public readonly CBORObject RSA_PSS_256 = CBORObject.FromObject(AlgorithmValuesInt.RSA_PSS_256);
-        static public readonly CBORObject RSA_PSS_512 = CBORObject.FromObject(AlgorithmValuesInt.RSA_PSS_512);
+        public static readonly CBORObject RSA_PSS_256 = CBORObject.FromObject(AlgorithmValuesInt.RSA_PSS_256);
+        public static readonly CBORObject RSA_PSS_512 = CBORObject.FromObject(AlgorithmValuesInt.RSA_PSS_512);
 
-        static public readonly CBORObject ECDH_ES_HKDF_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_ES_HKDF_256);
-        static public readonly CBORObject ECDH_SS_HKDF_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256);
-        static public readonly CBORObject ECDH_ES_HKDF_512 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_ES_HKDF_512);
-        static public readonly CBORObject ECDH_SS_HKDF_512 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_512);
+        public static readonly CBORObject ECDH_ES_HKDF_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_ES_HKDF_256);
+        public static readonly CBORObject ECDH_SS_HKDF_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256);
+        public static readonly CBORObject ECDH_ES_HKDF_512 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_ES_HKDF_512);
+        public static readonly CBORObject ECDH_SS_HKDF_512 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_512);
 
-        static public readonly CBORObject ECDH_ES_HKDF_256_AES_KW_128 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_ES_HKDF_256_AES_KW_128);
-        static public readonly CBORObject ECDH_ES_HKDF_256_AES_KW_192 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_ES_HKDF_256_AES_KW_192);
-        static public readonly CBORObject ECDH_ES_HKDF_256_AES_KW_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_ES_HKDF_256_AES_KW_256);
-        static public readonly CBORObject ECDH_SS_HKDF_256_AES_KW_128 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_128);
-        static public readonly CBORObject ECDH_SS_HKDF_256_AES_KW_192 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_192);
-        static public readonly CBORObject ECDH_SS_HKDF_256_AES_KW_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_256);
+        public static readonly CBORObject ECDH_ES_HKDF_256_AES_KW_128 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_ES_HKDF_256_AES_KW_128);
+        public static readonly CBORObject ECDH_ES_HKDF_256_AES_KW_192 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_ES_HKDF_256_AES_KW_192);
+        public static readonly CBORObject ECDH_ES_HKDF_256_AES_KW_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_ES_HKDF_256_AES_KW_256);
+        public static readonly CBORObject ECDH_SS_HKDF_256_AES_KW_128 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_128);
+        public static readonly CBORObject ECDH_SS_HKDF_256_AES_KW_192 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_192);
+        public static readonly CBORObject ECDH_SS_HKDF_256_AES_KW_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_256);
     }
 
     public class CoseKeyKeys
     {
-        static public readonly CBORObject KeyType = CBORObject.FromObject(1);
-        static public readonly CBORObject KeyIdentifier = CBORObject.FromObject(2);
-        static public readonly CBORObject Algorithm = CBORObject.FromObject(3);
-        static public readonly CBORObject Key_Operations = CBORObject.FromObject(4);
-        static public readonly CBORObject x5u = CBORObject.FromObject("x5u");
-        static public readonly CBORObject x5c = CBORObject.FromObject("x5c");
-        static public readonly CBORObject x5t = CBORObject.FromObject("x5t");
-        static public readonly CBORObject x5t_sha_256 = CBORObject.FromObject("x5t#S256");
+        public static readonly CBORObject KeyType = CBORObject.FromObject(1);
+        public static readonly CBORObject KeyIdentifier = CBORObject.FromObject(2);
+        public static readonly CBORObject Algorithm = CBORObject.FromObject(3);
+        public static readonly CBORObject Key_Operations = CBORObject.FromObject(4);
+        public static readonly CBORObject x5u = CBORObject.FromObject("x5u");
+        public static readonly CBORObject x5c = CBORObject.FromObject("x5c");
+        public static readonly CBORObject x5t = CBORObject.FromObject("x5t");
+        public static readonly CBORObject x5t_sha_256 = CBORObject.FromObject("x5t#S256");
     }
 
     public class CoseKeyParameterKeys
     {
-        static public readonly CBORObject EC_Curve = CBORObject.FromObject(-1);
-        static public readonly CBORObject EC_X = CBORObject.FromObject(-2);
-        static public readonly CBORObject EC_Y = CBORObject.FromObject(-3);
-        static public readonly CBORObject EC_D = CBORObject.FromObject(-4);
+        public static readonly CBORObject EC_Curve = CBORObject.FromObject(-1);
+        public static readonly CBORObject EC_X = CBORObject.FromObject(-2);
+        public static readonly CBORObject EC_Y = CBORObject.FromObject(-3);
+        public static readonly CBORObject EC_D = CBORObject.FromObject(-4);
 
-        static public readonly CBORObject OKP_Curve = CBORObject.FromObject(-1);
-        static public readonly CBORObject OKP_X = CBORObject.FromObject(-2);
-        static public readonly CBORObject OKP_D = CBORObject.FromObject(-4);
+        public static readonly CBORObject OKP_Curve = CBORObject.FromObject(-1);
+        public static readonly CBORObject OKP_X = CBORObject.FromObject(-2);
+        public static readonly CBORObject OKP_D = CBORObject.FromObject(-4);
 
-        static public readonly CBORObject RSA_e = CBORObject.FromObject(-1);
-        static public readonly CBORObject RSA_n = CBORObject.FromObject(-2);
-        static public readonly CBORObject RSA_d = CBORObject.FromObject(-3);
-        static public readonly CBORObject RSA_p = CBORObject.FromObject(-4);
-        static public readonly CBORObject RSA_q = CBORObject.FromObject(-5);
-        static public readonly CBORObject RSA_dP = CBORObject.FromObject(-6);
-        static public readonly CBORObject RSA_dQ = CBORObject.FromObject(-7);
-        static public readonly CBORObject RSA_qInv = CBORObject.FromObject(-8);
+        public static readonly CBORObject RSA_e = CBORObject.FromObject(-1);
+        public static readonly CBORObject RSA_n = CBORObject.FromObject(-2);
+        public static readonly CBORObject RSA_d = CBORObject.FromObject(-3);
+        public static readonly CBORObject RSA_p = CBORObject.FromObject(-4);
+        public static readonly CBORObject RSA_q = CBORObject.FromObject(-5);
+        public static readonly CBORObject RSA_dP = CBORObject.FromObject(-6);
+        public static readonly CBORObject RSA_dQ = CBORObject.FromObject(-7);
+        public static readonly CBORObject RSA_qInv = CBORObject.FromObject(-8);
 
-        static public readonly CBORObject Octet_k = CBORObject.FromObject(-1);
+        public static readonly CBORObject Octet_k = CBORObject.FromObject(-1);
 
-        static public readonly CBORObject ECDH_EPK = CBORObject.FromObject(-1);
-        static public readonly CBORObject ECDH_StaticKey = CBORObject.FromObject(-2);
-        static public readonly CBORObject ECDH_StaticKey_kid = CBORObject.FromObject(-3);
+        public static readonly CBORObject ECDH_EPK = CBORObject.FromObject(-1);
+        public static readonly CBORObject ECDH_StaticKey = CBORObject.FromObject(-2);
+        public static readonly CBORObject ECDH_StaticKey_kid = CBORObject.FromObject(-3);
 
-        static public readonly CBORObject HKDF_Salt = CBORObject.FromObject(-20);
-        static public readonly CBORObject HKDF_Context_PartyU_ID = CBORObject.FromObject(-21);
-        static public readonly CBORObject HKDF_Context_PartyU_nonce = CBORObject.FromObject(-22);
-        static public readonly CBORObject HKDF_Context_PartyU_Other = CBORObject.FromObject(-23);
-        static public readonly CBORObject HKDF_Context_PartyV_ID = CBORObject.FromObject(-24);
-        static public readonly CBORObject HKDF_Context_PartyV_nonce = CBORObject.FromObject(-25);
-        static public readonly CBORObject HKDF_Context_PartyV_Other = CBORObject.FromObject(-26);
-        static public readonly CBORObject HKDF_SuppPub_Other = CBORObject.FromObject("HKDF Supp Public");
-        static public readonly CBORObject HKDF_SuppPriv_Other = CBORObject.FromObject("HKDF Supp Private");
+        public static readonly CBORObject HKDF_Salt = CBORObject.FromObject(-20);
+        public static readonly CBORObject HKDF_Context_PartyU_ID = CBORObject.FromObject(-21);
+        public static readonly CBORObject HKDF_Context_PartyU_nonce = CBORObject.FromObject(-22);
+        public static readonly CBORObject HKDF_Context_PartyU_Other = CBORObject.FromObject(-23);
+        public static readonly CBORObject HKDF_Context_PartyV_ID = CBORObject.FromObject(-24);
+        public static readonly CBORObject HKDF_Context_PartyV_nonce = CBORObject.FromObject(-25);
+        public static readonly CBORObject HKDF_Context_PartyV_Other = CBORObject.FromObject(-26);
+        public static readonly CBORObject HKDF_SuppPub_Other = CBORObject.FromObject("HKDF Supp Public");
+        public static readonly CBORObject HKDF_SuppPriv_Other = CBORObject.FromObject("HKDF Supp Private");
 
     }
 
@@ -211,23 +211,23 @@ namespace Com.AugustCellars.COSE
 
     public class GeneralValues
     {
-        static public readonly CBORObject KeyType_OKP = CBORObject.FromObject(GeneralValuesInt.KeyType_OKP);
-        static public readonly CBORObject KeyType_EC = CBORObject.FromObject(GeneralValuesInt.KeyType_EC2);
-        static public readonly CBORObject KeyType_RSA = CBORObject.FromObject(GeneralValuesInt.KeyType_RSA);
-        static public readonly CBORObject KeyType_Octet = CBORObject.FromObject(GeneralValuesInt.KeyType_Octet);
-        static public readonly CBORObject P256 = CBORObject.FromObject(GeneralValuesInt.P256);
-        static public readonly CBORObject P384 = CBORObject.FromObject(GeneralValuesInt.P384);
-        static public readonly CBORObject P521 = CBORObject.FromObject(GeneralValuesInt.P521);
-        static public readonly CBORObject X25519 = CBORObject.FromObject(GeneralValuesInt.X25519);
-        static public readonly CBORObject X448 = CBORObject.FromObject(GeneralValuesInt.X448);
-        static public readonly CBORObject Ed25519 = CBORObject.FromObject(GeneralValuesInt.Ed25519);
-        static public readonly CBORObject Ed448 = CBORObject.FromObject(GeneralValuesInt.Ed448);
+        public static readonly CBORObject KeyType_OKP = CBORObject.FromObject(GeneralValuesInt.KeyType_OKP);
+        public static readonly CBORObject KeyType_EC = CBORObject.FromObject(GeneralValuesInt.KeyType_EC2);
+        public static readonly CBORObject KeyType_RSA = CBORObject.FromObject(GeneralValuesInt.KeyType_RSA);
+        public static readonly CBORObject KeyType_Octet = CBORObject.FromObject(GeneralValuesInt.KeyType_Octet);
+        public static readonly CBORObject P256 = CBORObject.FromObject(GeneralValuesInt.P256);
+        public static readonly CBORObject P384 = CBORObject.FromObject(GeneralValuesInt.P384);
+        public static readonly CBORObject P521 = CBORObject.FromObject(GeneralValuesInt.P521);
+        public static readonly CBORObject X25519 = CBORObject.FromObject(GeneralValuesInt.X25519);
+        public static readonly CBORObject X448 = CBORObject.FromObject(GeneralValuesInt.X448);
+        public static readonly CBORObject Ed25519 = CBORObject.FromObject(GeneralValuesInt.Ed25519);
+        public static readonly CBORObject Ed448 = CBORObject.FromObject(GeneralValuesInt.Ed448);
     }
 
     public abstract class Message : Attributes
     {
         protected bool m_forceArray = true;
-        protected List<COSE.Signer> m_counterSignerList = new List<Signer>();
+        protected List<CounterSignature> m_counterSignerList = new List<CounterSignature>();
         protected static SecureRandom s_PRNG = new SecureRandom();
         protected bool m_emitTag = true;
         protected bool m_emitContent;
@@ -282,9 +282,9 @@ namespace Com.AugustCellars.COSE
                 if (messageObject.GetTags().Count() != 1) throw new CoseException("Malformed message - too many tags");
 
                 if (defaultTag == Tags.Unknown) {
-                    defaultTag = (COSE.Tags) messageObject.OutermostTag.intValue();
+                    defaultTag = (Tags) messageObject.OutermostTag.intValue();
                 }
-                else if (defaultTag != (COSE.Tags) messageObject.OutermostTag.intValue()) {
+                else if (defaultTag != (Tags) messageObject.OutermostTag.intValue()) {
                     throw new CoseException("Passed in tag does not match actual tag");
                 }
             }
@@ -351,12 +351,12 @@ namespace Com.AugustCellars.COSE
             set { m_emitTag = value; }
         }
 
-        public void AddCounterSignature(COSE.Signer signer)
+        public void AddCounterSignature(Signer signer)
         {
-            m_counterSignerList.Add(signer);
+            m_counterSignerList.Add((CounterSignature)signer);
         }
 
-        public List<Signer> CounterSignerList {  get { return m_counterSignerList; } }
+        public List<CounterSignature> CounterSignerList {  get { return m_counterSignerList; } }
 
         /// <summary>
         /// Generate a new CBOR Object based on the message.
@@ -365,12 +365,8 @@ namespace Com.AugustCellars.COSE
         /// <returns></returns>
         public CBORObject EncodeToCBORObject()
         {
-            CBORObject obj;
-            CBORObject obj3;
-
-            obj = CBORObject.NewArray();
-
-            obj3 = Encode();
+            CBORObject obj = CBORObject.NewArray();
+            CBORObject obj3 = Encode();
 
             for (int i = 0; i < obj3.Count; i++) obj.Add(obj3[i]);
 
@@ -388,13 +384,13 @@ namespace Com.AugustCellars.COSE
         public byte[] GetContent() { return rgbContent; }
         public string GetContentAsString()
         {
-            return UTF8Encoding.ASCII.GetString(rgbContent);
+            return Encoding.ASCII.GetString(rgbContent);
         }
 
         public void SetContent(byte[] contentIn) { rgbContent = contentIn; }
         public void SetContent(String contentString)
         {
-            rgbContent = UTF8Encoding.ASCII.GetBytes(contentString);
+            rgbContent = Encoding.ASCII.GetBytes(contentString);
         }
     }
 

@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 using PeterO.Cbor;
 
@@ -11,12 +6,10 @@ using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.X9;
 
 using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Agreement;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 
 using Org.BouncyCastle.Crypto.EC;
-using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Math.EC;
 
 namespace Com.AugustCellars.COSE
@@ -212,6 +205,7 @@ namespace Com.AugustCellars.COSE
                 }
             }
             catch (Exception) {
+                // ignored
             }
 
             return false;
@@ -225,7 +219,7 @@ namespace Com.AugustCellars.COSE
     public class Key
     {
         protected CBORObject m_map;
- 
+
         public Key()
         {
             m_map = CBORObject.NewMap();
@@ -236,7 +230,7 @@ namespace Com.AugustCellars.COSE
             m_map = objKey;
         }
 
-        public void Add(CBORObject key,CBORObject value)
+        public void Add(CBORObject key, CBORObject value)
         {
             m_map.Add(key, value);
         }
@@ -265,34 +259,34 @@ namespace Com.AugustCellars.COSE
 
         public bool Compare(Key key2)
         {
-            if (key2[CoseKeyKeys.KeyType] != m_map[CoseKeyKeys.KeyType]) return false;
+            if (!key2[CoseKeyKeys.KeyType].Equals(m_map[CoseKeyKeys.KeyType])) return false;
             if (!CompareField(key2, CoseKeyKeys.KeyIdentifier)) return false;
             if (!CompareField(key2, CoseKeyKeys.Algorithm)) return false;
 
             switch ((GeneralValuesInt) m_map[CoseKeyKeys.KeyType].AsInt32()) {
-            case GeneralValuesInt.KeyType_RSA:
-                if (!CompareField(key2, CoseKeyParameterKeys.RSA_e) ||
-                    !CompareField(key2, CoseKeyParameterKeys.RSA_n)) {
-                    return false;
-                }
-                break;
+                case GeneralValuesInt.KeyType_RSA:
+                    if (!CompareField(key2, CoseKeyParameterKeys.RSA_e) ||
+                        !CompareField(key2, CoseKeyParameterKeys.RSA_n)) {
+                        return false;
+                    }
+                    break;
 
-            case GeneralValuesInt.KeyType_EC2:
-                if (!CompareField(key2, CoseKeyParameterKeys.EC_Curve) ||
-                    !CompareField(key2, CoseKeyParameterKeys.EC_X) ||
-                    !CompareField(key2, CoseKeyParameterKeys.EC_Y)) {
-                    return false;
-                }
-                break;
+                case GeneralValuesInt.KeyType_EC2:
+                    if (!CompareField(key2, CoseKeyParameterKeys.EC_Curve) ||
+                        !CompareField(key2, CoseKeyParameterKeys.EC_X) ||
+                        !CompareField(key2, CoseKeyParameterKeys.EC_Y)) {
+                        return false;
+                    }
+                    break;
 
-            case GeneralValuesInt.KeyType_Octet:
-                if (!CompareField(key2, CoseKeyParameterKeys.Octet_k)) return false;
-                break;
+                case GeneralValuesInt.KeyType_Octet:
+                    if (!CompareField(key2, CoseKeyParameterKeys.Octet_k)) return false;
+                    break;
 
-            default:
-                return true;
+                default:
+                    return true;
             }
-                        return true;
+            return true;
         }
 
         public Org.BouncyCastle.Math.BigInteger AsBigInteger(CBORObject keyName)
@@ -364,24 +358,24 @@ namespace Com.AugustCellars.COSE
             CBORObject cborKeyType = m_map[CoseKeyKeys.KeyType];
 
             if (cborKeyType == null) throw new CoseException("Malformed key struture");
-            if ((cborKeyType.Type != CBORType.Number) && 
-                !((cborKeyType == GeneralValues.KeyType_EC) || (cborKeyType == GeneralValues.KeyType_OKP))) throw new CoseException("Not an EC key");
+            if ((cborKeyType.Type != CBORType.Number) &&
+                !((cborKeyType.Equals(GeneralValues.KeyType_EC)) || (cborKeyType.Equals(GeneralValues.KeyType_OKP)))) throw new CoseException("Not an EC key");
 
             CBORObject cborCurve = m_map[CoseKeyParameterKeys.EC_Curve];
             if (cborCurve.Type == CBORType.Number) {
                 switch ((GeneralValuesInt) cborCurve.AsInt32()) {
-                case GeneralValuesInt.P256: return NistNamedCurves.GetByName("P-256");
-                case GeneralValuesInt.P384: return NistNamedCurves.GetByName("P-384");
-                case GeneralValuesInt.P521: return NistNamedCurves.GetByName("P-521");
-                case GeneralValuesInt.X25519: return CustomNamedCurves.GetByName("CURVE25519");
-                default:
-                    throw new CoseException("Unsupported key type: " + cborKeyType.AsInt32());
+                    case GeneralValuesInt.P256: return NistNamedCurves.GetByName("P-256");
+                    case GeneralValuesInt.P384: return NistNamedCurves.GetByName("P-384");
+                    case GeneralValuesInt.P521: return NistNamedCurves.GetByName("P-521");
+                    case GeneralValuesInt.X25519: return CustomNamedCurves.GetByName("CURVE25519");
+                    default:
+                        throw new CoseException("Unsupported key type: " + cborKeyType.AsInt32());
                 }
             }
             else if (cborCurve.Type == CBORType.TextString) {
                 switch (cborCurve.AsString()) {
-                default:
-                throw new CoseException("Unsupported key type: " + cborKeyType.AsString());
+                    default:
+                        throw new CoseException("Unsupported key type: " + cborKeyType.AsString());
                 }
             }
             else throw new CoseException("Incorrectly encoded key type");
@@ -389,31 +383,31 @@ namespace Com.AugustCellars.COSE
 
         public ECPoint GetPoint()
         {
-            X9ECParameters p = this.GetCurve();
-            Org.BouncyCastle.Math.EC.ECPoint pubPoint;
+            X9ECParameters p = GetCurve();
+            ECPoint pubPoint;
 
             switch ((GeneralValuesInt) this[CoseKeyKeys.KeyType].AsInt32()) {
-            case GeneralValuesInt.KeyType_EC2:
-                CBORObject y = this.AsCBOR()[CoseKeyParameterKeys.EC_Y];
+                case GeneralValuesInt.KeyType_EC2:
+                    CBORObject y = m_map[CoseKeyParameterKeys.EC_Y];
 
-                if (y.Type == CBORType.Boolean) {
-                    byte[] X = this.AsBytes(CoseKeyParameterKeys.EC_X);
-                    byte[] rgb = new byte[X.Length + 1];
-                    Array.Copy(X, 0, rgb, 1, X.Length);
-                    rgb[0] = (byte) (2 + (y.AsBoolean() ? 1 : 0));
-                    pubPoint = p.Curve.DecodePoint(rgb);
-                }
-                else {
-                    pubPoint = p.Curve.CreatePoint(this.AsBigInteger(CoseKeyParameterKeys.EC_X), this.AsBigInteger(CoseKeyParameterKeys.EC_Y));
-                }
-                break;
+                    if (y.Type == CBORType.Boolean) {
+                        byte[] X = m_map[CoseKeyParameterKeys.EC_X].GetByteString();
+                        byte[] rgb = new byte[X.Length + 1];
+                        Array.Copy(X, 0, rgb, 1, X.Length);
+                        rgb[0] = (byte) (2 + (y.AsBoolean() ? 1 : 0));
+                        pubPoint = p.Curve.DecodePoint(rgb);
+                    }
+                    else {
+                        pubPoint = p.Curve.CreatePoint(AsBigInteger(CoseKeyParameterKeys.EC_X), AsBigInteger(CoseKeyParameterKeys.EC_Y));
+                    }
+                    break;
 
-            case GeneralValuesInt.KeyType_OKP:
-                pubPoint = p.Curve.CreatePoint(this.AsBigInteger(CoseKeyParameterKeys.EC_X), new Org.BouncyCastle.Math.BigInteger("0"));
-                break;
+                case GeneralValuesInt.KeyType_OKP:
+                    pubPoint = p.Curve.CreatePoint(AsBigInteger(CoseKeyParameterKeys.EC_X), new Org.BouncyCastle.Math.BigInteger("0"));
+                    break;
 
-            default:
-                throw new Exception("Unknown key type");
+                default:
+                    throw new Exception("Unknown key type");
             }
             return pubPoint;
         }
@@ -422,46 +416,47 @@ namespace Com.AugustCellars.COSE
         {
             Key newKey = new Key();
             switch ((GeneralValuesInt) m_map[CoseKeyKeys.KeyType].AsInt16()) {
-            case GeneralValuesInt.KeyType_Octet:
-                return null;
+                case GeneralValuesInt.KeyType_Octet:
+                    return null;
 
-            case GeneralValuesInt.KeyType_RSA:
-                newKey.Add(CoseKeyParameterKeys.RSA_n, m_map[CoseKeyParameterKeys.RSA_n]);
-                newKey.Add(CoseKeyParameterKeys.RSA_e, m_map[CoseKeyParameterKeys.RSA_e]);
-                break;
+                case GeneralValuesInt.KeyType_RSA:
+                    newKey.Add(CoseKeyParameterKeys.RSA_n, m_map[CoseKeyParameterKeys.RSA_n]);
+                    newKey.Add(CoseKeyParameterKeys.RSA_e, m_map[CoseKeyParameterKeys.RSA_e]);
+                    break;
 
-            case GeneralValuesInt.KeyType_EC2:
-                newKey.Add(CoseKeyParameterKeys.EC_Curve, m_map[CoseKeyParameterKeys.EC_Curve]);
-                newKey.Add(CoseKeyParameterKeys.EC_X, m_map[CoseKeyParameterKeys.EC_X]);
-                newKey.Add(CoseKeyParameterKeys.EC_Y, m_map[CoseKeyParameterKeys.EC_Y]);
-                break;
+                case GeneralValuesInt.KeyType_EC2:
+                    newKey.Add(CoseKeyParameterKeys.EC_Curve, m_map[CoseKeyParameterKeys.EC_Curve]);
+                    newKey.Add(CoseKeyParameterKeys.EC_X, m_map[CoseKeyParameterKeys.EC_X]);
+                    newKey.Add(CoseKeyParameterKeys.EC_Y, m_map[CoseKeyParameterKeys.EC_Y]);
+                    break;
 
-            case GeneralValuesInt.KeyType_OKP:
-                newKey.Add(CoseKeyParameterKeys.OKP_Curve, m_map[CoseKeyParameterKeys.OKP_Curve]);
-                newKey.Add(CoseKeyParameterKeys.OKP_X, m_map[CoseKeyParameterKeys.OKP_X]);
-                break;
+                case GeneralValuesInt.KeyType_OKP:
+                    newKey.Add(CoseKeyParameterKeys.OKP_Curve, m_map[CoseKeyParameterKeys.OKP_Curve]);
+                    newKey.Add(CoseKeyParameterKeys.OKP_X, m_map[CoseKeyParameterKeys.OKP_X]);
+                    break;
 
-            default:
-                return null;
+                default:
+                    return null;
             }
 
             foreach (CBORObject obj in m_map.Keys) {
                 switch (obj.Type) {
-                case CBORType.Number:
-                    if (obj.AsInt32() > 0) {
-                        newKey.Add(obj, m_map[obj]);
-                    }
-                    break;
+                    case CBORType.Number:
+                        if (obj.AsInt32() > 0) {
+                            newKey.Add(obj, m_map[obj]);
+                        }
+                        break;
 
-                case CBORType.TextString:
-                    newKey.Add(obj, m_map[obj]);
-                    break;
+                    case CBORType.TextString:
+                        newKey.Add(obj, m_map[obj]);
+                        break;
 
                 }
             }
-                return newKey;
+            return newKey;
         }
 
+#if false
         public static Key NewKey()
         {
             if (false) {
@@ -510,7 +505,6 @@ namespace Com.AugustCellars.COSE
                 return new COSE.Key(epk);
             }
         }
-
+#endif
     }
-
 }
