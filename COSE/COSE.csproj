@@ -21,6 +21,7 @@
     <DefineConstants>TRACE;DEBUG;FOR_EXAMPLES</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\COSE.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,6 +30,7 @@
     <DefineConstants>TRACE;FOR_EXAMPLES</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\COSE.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
@@ -57,6 +59,7 @@
     <Compile Include="Encrypt0Mesage.cs" />
     <Compile Include="EncryptMessage.cs" />
     <Compile Include="Key.cs" />
+    <Compile Include="KeySet.cs" />
     <Compile Include="MACMessage.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="PrettyPrint.cs" />

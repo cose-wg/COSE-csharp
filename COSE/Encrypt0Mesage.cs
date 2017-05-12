@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 
 using PeterO.Cbor;
 
@@ -11,17 +8,17 @@ namespace Com.AugustCellars.COSE
     {
         public Encrypt0Message() : base(true, true)
         {
-            context = "Encrypt0";
+            _context = "Encrypt0";
             m_tag = Tags.Encrypt0;
         }
 
         public Encrypt0Message(bool fEmitTag, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
-            context = "Encrypt0";
+            _context = "Encrypt0";
             m_tag = Tags.Encrypt0;
         }
 
-        virtual public void DecodeFromCBORObject(CBORObject obj)
+        public virtual void DecodeFromCBORObject(CBORObject obj)
         {
             if (obj.Count != 3) throw new CoseException("Invalid Encrypt0 structure");
 
@@ -42,7 +39,7 @@ namespace Com.AugustCellars.COSE
             else throw new CoseException("Invalid Encrypt0 structure");
 
             // Cipher Text
-            if (obj[2].Type == CBORType.ByteString) rgbEncrypted = obj[2].GetByteString();
+            if (obj[2].Type == CBORType.ByteString) _rgbEncrypted = obj[2].GetByteString();
             else if (!obj[2].IsNull)
             {               // Detached content - will need to get externally
                 throw new CoseException("Invalid Encrypt0 structure");
@@ -53,15 +50,15 @@ namespace Com.AugustCellars.COSE
         {
             CBORObject obj;
 
-            if (rgbEncrypted == null) throw new CoseException("Must call Encrypt first");
+            if (_rgbEncrypted == null) throw new CoseException("Must call Encrypt first");
 
             if (m_counterSignerList.Count() != 0) {
                 if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbEncrypted), Attributes.UNPROTECTED);
+                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(_rgbProtected, _rgbEncrypted), UNPROTECTED);
                 }
                 else {
                     foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(rgbProtected, rgbEncrypted);
+                        sig.EncodeToCBORObject(_rgbProtected, _rgbEncrypted);
                     }
                 }
             }
@@ -74,7 +71,7 @@ namespace Com.AugustCellars.COSE
 
             obj.Add(objUnprotected); // Add unprotected attributes
 
-            if (m_emitContent) obj.Add(rgbEncrypted);      // Add ciphertext
+            if (m_emitContent) obj.Add(_rgbEncrypted);      // Add ciphertext
             else obj.Add(CBORObject.Null);
 
             return obj;

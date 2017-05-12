@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+﻿
 using PeterO.Cbor;
 
 namespace Com.AugustCellars.COSE
@@ -13,7 +9,7 @@ namespace Com.AugustCellars.COSE
         protected CBORObject objUnprotected = CBORObject.NewMap();
         protected CBORObject objDontSend = CBORObject.NewMap();
         protected byte[] externalData = new byte[0];
-        protected byte[] rgbProtected;
+        protected byte[] _rgbProtected;
 
         static public int PROTECTED = 1;
         static public int UNPROTECTED = 2;
@@ -37,7 +33,7 @@ namespace Com.AugustCellars.COSE
             }
             switch (bucket) {
                 case 1:
-                    if (rgbProtected != null) throw new CoseException("Operation would modify integrity protected attributes");
+                    if (_rgbProtected != null) throw new CoseException("Operation would modify integrity protected attributes");
                     RemoveAttribute(label);
                     objProtected.Add(label, value);
                     break;

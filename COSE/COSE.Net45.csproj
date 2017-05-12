@@ -30,6 +30,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release45\COSE.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
@@ -58,6 +59,7 @@
     <Compile Include="Encrypt0Mesage.cs" />
     <Compile Include="EncryptMessage.cs" />
     <Compile Include="Key.cs" />
+    <Compile Include="KeySet.cs" />
     <Compile Include="MACMessage.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="PrettyPrint.cs" />

@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using PeterO.Cbor;
 
@@ -21,7 +18,7 @@ namespace Com.AugustCellars.COSE
     {
         public MAC0Message(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
-            strContext = "MAC0";
+            _strContext = "MAC0";
             m_tag = Tags.MAC0;
         }
 
@@ -45,7 +42,7 @@ namespace Com.AugustCellars.COSE
             }
 
             //  Unprotected attributes
-            if (obj[1].Type == PeterO.Cbor.CBORType.Map) objUnprotected = obj[1];
+            if (obj[1].Type == CBORType.Map) objUnprotected = obj[1];
             else throw new CoseException("Invalid MAC0 structure");
 
             // Plain Text
@@ -55,7 +52,7 @@ namespace Com.AugustCellars.COSE
             }
 
             // Authentication tag
-            if (obj[3].Type == CBORType.ByteString) rgbTag = obj[3].GetByteString();
+            if (obj[3].Type == CBORType.ByteString) _rgbTag = obj[3].GetByteString();
             else throw new CoseException("Invalid MAC0 structure");
         }
 
@@ -63,7 +60,7 @@ namespace Com.AugustCellars.COSE
         {
             CBORObject obj;
 
-            if (rgbTag == null) throw new CoseException("Must call Compute before encoding");
+            if (_rgbTag == null) throw new CoseException("Must call Compute before encoding");
 
             obj = CBORObject.NewArray();
 
@@ -74,7 +71,7 @@ namespace Com.AugustCellars.COSE
             else obj.Add(CBORObject.NewMap());
 
             obj.Add(rgbContent);      // Add ciphertext
-            obj.Add(rgbTag);
+            obj.Add(_rgbTag);
 
             return obj;
         }
@@ -97,7 +94,7 @@ namespace Com.AugustCellars.COSE
                 switch (alg.AsString()) {
                 case "AES-CMAC-128/64":
                 case "AES-CMAC-256/64":
-                    rgbTag = AES_CMAC(alg, ContentKey);
+                    _rgbTag = AES_CMAC(alg, ContentKey);
                     break;
 
                 default:
@@ -110,14 +107,14 @@ namespace Com.AugustCellars.COSE
                 case AlgorithmValuesInt.HMAC_SHA_384:
                 case AlgorithmValuesInt.HMAC_SHA_512:
                 case AlgorithmValuesInt.HMAC_SHA_256_64:
-                    rgbTag = HMAC(alg, ContentKey);
+                    _rgbTag = HMAC(alg, ContentKey);
                     break;
 
                 case AlgorithmValuesInt.AES_CBC_MAC_128_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_128_128:
                 case AlgorithmValuesInt.AES_CBC_MAC_256_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_256_128:
-                    rgbTag = AES_CBC_MAC(alg, ContentKey);
+                    _rgbTag = AES_CBC_MAC(alg, ContentKey);
                     break;
 
                 default:
@@ -127,9 +124,9 @@ namespace Com.AugustCellars.COSE
             else throw new CoseException("Algorithm incorrectly encoded");
         }
 
-        public bool Validate(Key recipientReceiver)
+        public bool Validate(OneKey recipientReceiver)
         {
-            byte[] rgbKey = null;
+            byte[] rgbKey;
 
             if (recipientReceiver[CoseKeyKeys.KeyType].AsInt32() != (int)GeneralValuesInt.KeyType_Octet) {
                 throw new CoseException("Key type not octet");
@@ -143,7 +140,7 @@ namespace Com.AugustCellars.COSE
         { 
             int cbitKey;
 
-            CBORObject alg = FindAttribute(COSE.HeaderKeys.Algorithm);
+            CBORObject alg = FindAttribute(HeaderKeys.Algorithm);
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
                 case "AES-CMAC-128/64":
@@ -225,7 +222,7 @@ namespace Com.AugustCellars.COSE
 
             bool fReturn = true;
             for (int i = 0; i < rgbCheck.Length; i++) {
-                fReturn &= (rgbTag[i] == rgbCheck[i]);
+                fReturn &= (_rgbTag[i] == rgbCheck[i]);
             }
             return fReturn;
         }
@@ -237,17 +234,17 @@ namespace Com.AugustCellars.COSE
         public MACMessage(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
         {
             m_tag = Tags.MAC;
-            strContext = "MAC";
+            _strContext = "MAC";
         }
 
-        protected List<Recipient> recipientList = new List<Recipient>();
-        public List<Recipient> RecipientList { get { return recipientList; } }
+        protected List<Recipient> _recipientList = new List<Recipient>();
+        public List<Recipient> RecipientList { get { return _recipientList; } }
 
         public virtual void AddRecipient(Recipient recipient)
         {
             if (recipient == null) throw new CoseException("Recipient is null");
             recipient.SetContext("Mac_Recipient");
-            recipientList.Add(recipient);
+            _recipientList.Add(recipient);
         }
 
         public void DecodeFromCBORObject(CBORObject obj)
@@ -269,7 +266,7 @@ namespace Com.AugustCellars.COSE
             }
 
             //  Unprotected attributes
-            if (obj[1].Type == PeterO.Cbor.CBORType.Map) objUnprotected = obj[1];
+            if (obj[1].Type == CBORType.Map) objUnprotected = obj[1];
             else throw new CoseException("Invalid MAC structure");
 
             // Plain Text
@@ -279,7 +276,7 @@ namespace Com.AugustCellars.COSE
             }
 
             // Authentication tag
-            if (obj[3].Type == CBORType.ByteString) rgbTag = obj[3].GetByteString();
+            if (obj[3].Type == CBORType.ByteString) _rgbTag = obj[3].GetByteString();
             else throw new CoseException("Invalid MAC structure");
 
 
@@ -289,7 +286,7 @@ namespace Com.AugustCellars.COSE
                 for (int i = 0; i < obj[4].Count; i++) {
                     Recipient recip = new Recipient();
                     recip.DecodeFromCBORObject(obj[4][i]);
-                    recipientList.Add(recip);
+                    _recipientList.Add(recip);
                 }
             }
             else throw new CoseException("Invalid MAC structure");
@@ -299,7 +296,7 @@ namespace Com.AugustCellars.COSE
         {
             CBORObject obj;
 
-            if (rgbTag == null) MAC();
+            if (_rgbTag == null) MAC();
 
             obj = CBORObject.NewArray();
 
@@ -310,19 +307,19 @@ namespace Com.AugustCellars.COSE
             else obj.Add(CBORObject.NewMap());
 
             obj.Add(rgbContent);      // Add ciphertext
-            obj.Add(rgbTag);
+            obj.Add(_rgbTag);
 
-            if ((!m_forceArray) && (recipientList.Count == 1)) {
-                CBORObject recipient = recipientList[0].Encode();
+            if ((!m_forceArray) && (_recipientList.Count == 1)) {
+                CBORObject recipient = _recipientList[0].Encode();
 
                 for (int i = 0; i < recipient.Count; i++) {
                     obj.Add(recipient[i]);
                 }
             }
-            else if (recipientList.Count > 0) {
+            else if (_recipientList.Count > 0) {
                 CBORObject recipients = CBORObject.NewArray();
 
-                foreach (Recipient key in recipientList) {
+                foreach (Recipient key in _recipientList) {
                     recipients.Add(key.Encode());
                 }
                 obj.Add(recipients);
@@ -401,7 +398,7 @@ public virtual void Compute()
             //  Determine if we are doing a direct encryption
             int recipientTypes = 0;
 
-            foreach (Recipient key in recipientList) {
+            foreach (Recipient key in _recipientList) {
                 switch (key.recipientType) {
                 case RecipientType.direct:
                 case RecipientType.keyAgreeDirect:
@@ -428,7 +425,7 @@ public virtual void Compute()
                 switch (alg.AsString()) {
                 case "AES-CMAC-128/64":
                 case "AES-CMAC-256/64":
-                    rgbTag = AES_CMAC(alg, ContentKey);
+                    _rgbTag = AES_CMAC(alg, ContentKey);
                     break;
 
                 default:
@@ -441,14 +438,14 @@ public virtual void Compute()
                 case AlgorithmValuesInt.HMAC_SHA_384:
                 case AlgorithmValuesInt.HMAC_SHA_512:
                 case AlgorithmValuesInt.HMAC_SHA_256_64:
-                    rgbTag = HMAC(alg, ContentKey);
+                    _rgbTag = HMAC(alg, ContentKey);
                     break;
 
                 case AlgorithmValuesInt.AES_CBC_MAC_128_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_128_128:
                 case AlgorithmValuesInt.AES_CBC_MAC_256_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_256_128:
-                    rgbTag = AES_CBC_MAC(alg, ContentKey);
+                    _rgbTag = AES_CBC_MAC(alg, ContentKey);
                     break;
 
                 default:
@@ -458,7 +455,7 @@ public virtual void Compute()
             else throw new CoseException("Algorithm incorrectly encoded");
 
 
-            foreach (Recipient key in recipientList) {
+            foreach (Recipient key in _recipientList) {
                 key.SetContent(ContentKey);
                 key.Encrypt();
             }
@@ -466,8 +463,6 @@ public virtual void Compute()
 #if FOR_EXAMPLES
             m_cek = ContentKey;
 #endif
-
-            return;
         }
 
         public bool Validate(Recipient recipientReceiver)
@@ -475,7 +470,7 @@ public virtual void Compute()
             byte[] rgbKey = null;
             int cbitKey;
 
-            CBORObject alg = FindAttribute(COSE.HeaderKeys.Algorithm);
+            CBORObject alg = FindAttribute(HeaderKeys.Algorithm);
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
                 case "AES-CMAC-128/64":
@@ -517,7 +512,7 @@ public virtual void Compute()
             else throw new CoseException("Algorithm incorrectly encoded");
 
 
-            foreach (Recipient msgRecpient in recipientList) {
+            foreach (Recipient msgRecpient in _recipientList) {
                 if (recipientReceiver == msgRecpient) {
                     try {
                         rgbKey = msgRecpient.Decrypt(cbitKey, alg);
@@ -569,7 +564,7 @@ public virtual void Compute()
 
             bool fReturn = true;
             for (int i = 0; i < rgbCheck.Length; i++) {
-                fReturn &= (rgbTag[i] == rgbCheck[i]);
+                fReturn &= (_rgbTag[i] == rgbCheck[i]);
             }
             return fReturn;
         }
@@ -583,8 +578,8 @@ public virtual void Compute()
 
     public abstract class MacMessageCommon : Message
     {
-        protected byte[] rgbTag;
-        protected string strContext = "";
+        protected byte[] _rgbTag;
+        protected string _strContext = "";
 
         protected MacMessageCommon(bool fEmitTag, bool fEmitContent) : base(fEmitTag, fEmitContent) { }
 
@@ -596,12 +591,12 @@ public virtual void Compute()
         {
             CBORObject obj = CBORObject.NewArray();
 
-            obj.Add(strContext);
-            if (rgbProtected == null) {
-                if (objProtected.Count > 0) rgbProtected = objProtected.EncodeToBytes();
-                else rgbProtected = new byte[0];
+            obj.Add(_strContext);
+            if (_rgbProtected == null) {
+                if (objProtected.Count > 0) _rgbProtected = objProtected.EncodeToBytes();
+                else _rgbProtected = new byte[0];
             }
-            obj.Add(rgbProtected);
+            obj.Add(_rgbProtected);
             if (externalData != null) obj.Add(CBORObject.FromObject(externalData));
             else obj.Add(CBORObject.FromObject(new byte[0]));
             obj.Add(rgbContent);
@@ -724,7 +719,6 @@ public virtual void Compute()
 
         protected byte[] HMAC(CBORObject alg, byte[] K)
         {
-            int cbitKey;
             int cbResult;
             IDigest digest;
 
@@ -737,27 +731,23 @@ public virtual void Compute()
             else if (alg.Type == CBORType.Number) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.HMAC_SHA_256:
-                    cbitKey = 256;
                     cbResult = 256 / 8;
                     digest = new Sha256Digest();
                     break;
 
                 case AlgorithmValuesInt.HMAC_SHA_256_64:
-                    cbitKey = 256;
                     digest = new Sha256Digest();
                     cbResult = 64 / 8;
                     break;
 
                 case AlgorithmValuesInt.HMAC_SHA_384:
-                    cbitKey = 384;
                     digest = new Sha384Digest();
-                    cbResult = cbitKey / 8;
+                    cbResult = 384 / 8;
                     break;
 
                 case AlgorithmValuesInt.HMAC_SHA_512:
-                    cbitKey = 512;
                     digest = new Sha512Digest();
-                    cbResult = cbitKey / 8;
+                    cbResult = 512 / 8;
                     break;
 
                 default:

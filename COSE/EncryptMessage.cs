@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using PeterO.Cbor;
 
-using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Agreement;
@@ -20,8 +17,6 @@ using Org.BouncyCastle.Crypto.Modes.Gcm;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Utilities.Encoders;
 
 using System.Diagnostics;
 
@@ -29,17 +24,18 @@ namespace Com.AugustCellars.COSE
 {
     public abstract class EncryptCommon : Message
     {
-        protected CBORObject obj;
-        protected string context;
+        protected string _context;
 
-        protected byte[] rgbEncrypted;
-        byte[] m_cek;
+        protected byte[] _rgbEncrypted;
+#if FOR_EXAMPLES
+        private byte[] _cek;
+#endif
 
-        public EncryptCommon(Boolean fEmitTag, Boolean fEmitContent) : base(fEmitTag, fEmitContent) { }
+        protected EncryptCommon(Boolean fEmitTag, Boolean fEmitContent) : base(fEmitTag, fEmitContent) { }
 
         protected void DecryptWithKey(byte[] CEK)
         {
-            if (rgbEncrypted == null) throw new CoseException("No Encrypted Content Specified.");
+            if (_rgbEncrypted == null) throw new CoseException("No Encrypted Content Specified.");
             if (CEK == null) throw new CoseException("Null Key Supplied");
 
             CBORObject alg = FindAttribute(HeaderKeys.Algorithm);
@@ -67,7 +63,7 @@ namespace Com.AugustCellars.COSE
                     AES_CCM_Decrypt(alg, CEK);
                     break;
 
-#if false
+#if CHACHA20
                 case AlgorithmValuesInt.ChaCha20_Poly1305:
                     ChaCha20_Poly1305_Decrypt(alg, CEK);
                     break;
@@ -123,7 +119,7 @@ namespace Com.AugustCellars.COSE
                     ContentKey = AES_CCM(alg, ContentKey);
                     break;
 
-#if false
+#if CHACHA20
                 case AlgorithmValuesInt.ChaCha20_Poly1305:
                     ContentKey = ChaCha20_Poly1305(alg, ContentKey);
                     break;
@@ -135,16 +131,14 @@ namespace Com.AugustCellars.COSE
             }
 
 #if FOR_EXAMPLES
-            m_cek = ContentKey;
+            _cek = ContentKey;
 #endif // FOR_EXAMPLES
-
-            return;
         }
 
 #if FOR_EXAMPLES
         public byte[] getCEK()
         {
-            return this.m_cek;
+            return _cek;
         }
 #endif
 
@@ -152,17 +146,17 @@ namespace Com.AugustCellars.COSE
 
         public byte[] GetEncryptedContent()
         {
-            return rgbEncrypted;
+            return _rgbEncrypted;
         }
 
         public void SetEncryptedContent(byte[] rgb)
         {
-            rgbEncrypted = rgb;
+            _rgbEncrypted = rgb;
         }
 
         public void SetContext(string newContext)
         {
-            context = newContext;
+            _context = newContext;
         }
 
         public int GetKeySize(CBORObject alg)
@@ -219,7 +213,7 @@ namespace Com.AugustCellars.COSE
             }
             else {
                 s_PRNG.NextBytes(IV);
-                AddAttribute(HeaderKeys.IV, CBORObject.FromObject(IV), Attributes.UNPROTECTED);
+                AddAttribute(HeaderKeys.IV, CBORObject.FromObject(IV), UNPROTECTED);
             }
 
             if (K == null) {
@@ -254,7 +248,7 @@ namespace Com.AugustCellars.COSE
             int len = cipher.ProcessBytes(rgbContent, 0, rgbContent.Length, C, 0);
             len += cipher.DoFinal(C, len);
 
-            rgbEncrypted = C;
+            _rgbEncrypted = C;
 
             return K;
         }
@@ -282,8 +276,8 @@ namespace Com.AugustCellars.COSE
             AeadParameters parameters = new AeadParameters(ContentKey, 128, IV, getAADBytes());
 
             cipher.Init(false, parameters);
-            byte[] C = new byte[cipher.GetOutputSize(rgbEncrypted.Length)];
-            int len = cipher.ProcessBytes(rgbEncrypted, 0, rgbEncrypted.Length, C, 0);
+            byte[] C = new byte[cipher.GetOutputSize(_rgbEncrypted.Length)];
+            int len = cipher.ProcessBytes(_rgbEncrypted, 0, _rgbEncrypted.Length, C, 0);
             len += cipher.DoFinal(C, len);
 
             rgbContent = C;
@@ -362,7 +356,7 @@ namespace Com.AugustCellars.COSE
             }
             else {
                 s_PRNG.NextBytes(IV);
-                AddAttribute(HeaderKeys.IV, CBORObject.FromObject(IV), Attributes.UNPROTECTED);
+                AddAttribute(HeaderKeys.IV, CBORObject.FromObject(IV), UNPROTECTED);
             }
 
             if (K == null) {
@@ -382,7 +376,7 @@ namespace Com.AugustCellars.COSE
             int len = cipher.ProcessBytes(rgbContent, 0, rgbContent.Length, C, 0);
             len += cipher.DoFinal(C, len);
 
-            rgbEncrypted = C;
+            _rgbEncrypted = C;
 
             return K;
         }
@@ -391,7 +385,7 @@ namespace Com.AugustCellars.COSE
         {
             CcmBlockCipher cipher = new CcmBlockCipher(new AesFastEngine());
             KeyParameter ContentKey;
-            int cbitTag = 64;
+            int cbitTag;
             int cbIV;
             int cbitKey;
 
@@ -457,7 +451,7 @@ namespace Com.AugustCellars.COSE
             }
             else {
                 s_PRNG.NextBytes(IV);
-                AddAttribute(HeaderKeys.IV, CBORObject.FromObject(IV), Attributes.UNPROTECTED);
+                AddAttribute(HeaderKeys.IV, CBORObject.FromObject(IV), UNPROTECTED);
             }
 
             if (K == null) throw new CoseException("Internal error");
@@ -470,14 +464,14 @@ namespace Com.AugustCellars.COSE
             AeadParameters parameters = new AeadParameters(ContentKey, cbitTag, IV, getAADBytes());
 
             cipher.Init(false, parameters);
-            byte[] C = new byte[cipher.GetOutputSize(rgbEncrypted.Length)];
-            int len = cipher.ProcessBytes(rgbEncrypted, 0, rgbEncrypted.Length, C, 0);
+            byte[] C = new byte[cipher.GetOutputSize(_rgbEncrypted.Length)];
+            int len = cipher.ProcessBytes(_rgbEncrypted, 0, _rgbEncrypted.Length, C, 0);
             len += cipher.DoFinal(C, len);
 
             rgbContent = C;
         }
 
-#if false
+#if CHACHA20
         private byte[] ChaCha20_Poly1305(CBORObject alg, byte[] K)
         {
             ChaCha20Poly1305 cipher = new ChaCha20Poly1305();
@@ -499,7 +493,7 @@ namespace Com.AugustCellars.COSE
             }
             else {
                 s_PRNG.NextBytes(IV);
-                AddUnprotected(HeaderKeys.IV, CBORObject.FromObject(IV));
+                AddAttribute(HeaderKeys.IV, CBORObject.FromObject(IV), UNPROTECTED);
             }
 
             if (K == null) {
@@ -523,7 +517,7 @@ namespace Com.AugustCellars.COSE
             //  Build the object to be hashed
 
             byte[] aad = getAADBytes();
-            AeadParameters parameters = new AeadParameters(ContentKey, 128, IV, aad);
+            AeadParameters parameters = new AeadParameters(ContentKey, cbitTag, IV, aad);
 
             cipher.Init(true, parameters);
 
@@ -531,7 +525,7 @@ namespace Com.AugustCellars.COSE
             int len = cipher.ProcessBytes(rgbContent, 0, rgbContent.Length, C, 0);
             len += cipher.DoFinal(C, len);
 
-            rgbEncrypted = C;
+            _rgbEncrypted = C;
 
             return K;
 
@@ -560,8 +554,8 @@ namespace Com.AugustCellars.COSE
             AeadParameters parameters = new AeadParameters(ContentKey, 128, IV, getAADBytes());
 
             cipher.Init(false, parameters);
-            byte[] C = new byte[cipher.GetOutputSize(rgbEncrypted.Length)];
-            int len = cipher.ProcessBytes(rgbEncrypted, 0, rgbEncrypted.Length, C, 0);
+            byte[] C = new byte[cipher.GetOutputSize(_rgbEncrypted.Length)];
+            int len = cipher.ProcessBytes(_rgbEncrypted, 0, _rgbEncrypted.Length, C, 0);
             len += cipher.DoFinal(C, len);
 
             rgbContent = C;
@@ -573,10 +567,12 @@ namespace Com.AugustCellars.COSE
         {
             CBORObject obj = CBORObject.NewArray();
 
-            obj.Add(context);
+            obj.Add(_context);
             if (objProtected.Count == 0) obj.Add(CBORObject.FromObject(new byte[0]));
             else obj.Add( objProtected.EncodeToBytes());
             obj.Add(CBORObject.FromObject(externalData));
+
+            // Console.WriteLine("COSE AAD = " + BitConverter.ToString(obj.EncodeToBytes()));
 
             return obj.EncodeToBytes();
         }
@@ -589,11 +585,11 @@ namespace Com.AugustCellars.COSE
 
     public class Recipient : EncryptCommon
     {
-        Key m_key;
-        Key m_senderKey;
-        List<Recipient> recipientList = new List<Recipient>();
+        private OneKey m_key;
+        private OneKey m_senderKey;
+        private readonly List<Recipient> _recipientList = new List<Recipient>();
 
-        public Recipient(Key key, CBORObject algorithm = null) : base(true, true)
+        public Recipient(OneKey key, CBORObject algorithm = null) : base(true, true)
         {
             if (algorithm != null) {
                 if (algorithm.Type == CBORType.TextString) {
@@ -665,7 +661,7 @@ namespace Com.AugustCellars.COSE
                 else throw new CoseException("Algorithm incorrectly encoded");
 
                 m_key = key;
-                AddAttribute(HeaderKeys.Algorithm, algorithm, Attributes.UNPROTECTED);
+                AddAttribute(HeaderKeys.Algorithm, algorithm, UNPROTECTED);
             }
             else {
                 if (key[CoseKeyKeys.KeyType].Type == CBORType.Number) {
@@ -697,7 +693,7 @@ namespace Com.AugustCellars.COSE
                         algorithm =  AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_128;
                         break;
                     }
-                    AddAttribute(HeaderKeys.Algorithm, algorithm, Attributes.UNPROTECTED);
+                    AddAttribute(HeaderKeys.Algorithm, algorithm, UNPROTECTED);
                     m_key = key;
                 }
                 else if (key[CoseKeyKeys.KeyType].Type == CBORType.TextString) {
@@ -728,7 +724,7 @@ namespace Com.AugustCellars.COSE
                     if (!validUsage) throw new CoseException("Key cannot be used for encryption");
                 }
 
-                if (key[CoseKeyKeys.KeyIdentifier] != null) AddAttribute(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier], Attributes.UNPROTECTED);
+                if (key[CoseKeyKeys.KeyIdentifier] != null) AddAttribute(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier], UNPROTECTED);
 
                 SetContext("Rec_Recipient");
             }
@@ -740,7 +736,7 @@ namespace Com.AugustCellars.COSE
 
         public List<Recipient> RecipientList
         {
-            get { return recipientList; }
+            get { return _recipientList; }
         }
 
         public RecipientType recipientType {
@@ -780,7 +776,7 @@ namespace Com.AugustCellars.COSE
         public void AddRecipient(Recipient recipient)
         {
             recipient.SetContext("Enc_Recipient");
-            recipientList.Add(recipient);
+            _recipientList.Add(recipient);
         }
 
         public void DecodeFromCBORObject(CBORObject obj)
@@ -802,7 +798,7 @@ namespace Com.AugustCellars.COSE
             else throw new CoseException("Invalid Encrypt structure");
 
             // Cipher Text
-            if (obj[2].Type == CBORType.ByteString) rgbEncrypted = obj[2].GetByteString();
+            if (obj[2].Type == CBORType.ByteString) _rgbEncrypted = obj[2].GetByteString();
             else if (!obj[2].IsNull) {               // Detached content - will need to get externally
                 throw new CoseException("Invalid Encrypt structure");
             }
@@ -814,7 +810,7 @@ namespace Com.AugustCellars.COSE
                     for (int i = 0; i < obj[3].Count; i++) {
                         Recipient recip = new Recipient();
                         recip.DecodeFromCBORObject(obj[3][i]);
-                        recipientList.Add(recip);
+                        _recipientList.Add(recip);
                     }
                 }
                 else throw new CoseException("Invalid Encrypt structure");
@@ -827,13 +823,13 @@ namespace Com.AugustCellars.COSE
             CBORObject algKEK = FindAttribute(HeaderKeys.Algorithm);
             int cbitKEK = GetKeySize(algKEK);
 
-            foreach (Recipient r in recipientList) {
+            foreach (Recipient r in _recipientList) {
                 if (r == recipientIn) {
                     CEK = r.Decrypt(cbitKEK, algKEK, recipientIn);
                     if (CEK == null) throw new CoseException("Internal Error");
                     return CEK;
                 }
-                else if (r.recipientList.Count > 0) {
+                else if (r._recipientList.Count > 0) {
                     CEK = r.Decrypt(cbitKEK, algKEK, recipientIn);
                     if (CEK != null) return CEK;        
                 }
@@ -848,7 +844,7 @@ namespace Com.AugustCellars.COSE
             return Decrypt(m_key, cbitCEK, algCEK);
         }
 
-        public byte[] Decrypt(Key key, int cbitCEK, CBORObject algCEK)
+        public byte[] Decrypt(OneKey key, int cbitCEK, CBORObject algCEK)
         {
             CBORObject alg = null;
             byte[] rgbSecret;
@@ -947,18 +943,18 @@ namespace Com.AugustCellars.COSE
         {
             CBORObject obj;
 
-            if (rgbEncrypted == null) Encrypt();
+            if (_rgbEncrypted == null) Encrypt();
 
             if (m_counterSignerList.Count() != 0) {
                 byte[] rgbProtected;
                 if (objProtected.Count > 0) rgbProtected = objProtected.EncodeToBytes();
                 else rgbProtected = new byte[0];
                 if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, rgbEncrypted), Attributes.UNPROTECTED);
+                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, _rgbEncrypted), UNPROTECTED);
                 }
                 else {
                     foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(rgbProtected, rgbEncrypted);
+                        sig.EncodeToCBORObject(rgbProtected, _rgbEncrypted);
                     }
                 }
             }
@@ -972,20 +968,20 @@ namespace Com.AugustCellars.COSE
 
             obj.Add(objUnprotected); // Add unprotected attributes
 
-            if (rgbEncrypted == null) obj.Add(new byte[0]);
-            else obj.Add(rgbEncrypted);      // Add ciphertext
+            if (_rgbEncrypted == null) obj.Add(new byte[0]);
+            else obj.Add(_rgbEncrypted);      // Add ciphertext
 
-            if ((recipientList.Count == 1) && !m_forceArray) {
-                CBORObject recipient = recipientList[0].Encode();
+            if ((_recipientList.Count == 1) && !m_forceArray) {
+                CBORObject recipient = _recipientList[0].Encode();
 
                 for (int i = 0; i < recipient.Count; i++) {
                     obj.Add(recipient[i]);
                 }
             }
-            else if (recipientList.Count > 0) {
+            else if (_recipientList.Count > 0) {
                 CBORObject recipients = CBORObject.NewArray();
 
-                foreach (Recipient key in recipientList) {
+                foreach (Recipient key in _recipientList) {
                     recipients.Add(key.Encode());
                 }
                 obj.Add(recipients);
@@ -1006,13 +1002,13 @@ namespace Com.AugustCellars.COSE
 
             alg = FindAttribute(HeaderKeys.Algorithm);
 
-            if (recipientList.Count> 0) {
+            if (_recipientList.Count> 0) {
                 if (m_key != null) throw new CoseException("Can't mix nested recipients and fixed keys.");
 
                 //  Determine if we are doing a direct encryption
                 int recipientTypes = 0;
 
-                foreach (Recipient key in recipientList) {
+                foreach (Recipient key in _recipientList) {
                     switch (key.recipientType) {
                     case RecipientType.direct:
                     case RecipientType.keyAgreeDirect:
@@ -1052,12 +1048,12 @@ namespace Com.AugustCellars.COSE
                         byte[] salt = new byte[10];
                         s_PRNG.NextBytes(salt);
                         objSalt = CBORObject.FromObject(salt);
-                        AddAttribute("p2s", objSalt, Attributes.UNPROTECTED);
+                        AddAttribute("p2s", objSalt, UNPROTECTED);
                     }
                     objIterCount = FindAttribute("p2c");
                     if (objIterCount == null) {
                         objIterCount = CBORObject.FromObject(8000);
-                        AddAttribute("p2c", objIterCount, Attributes.UNPROTECTED);
+                        AddAttribute("p2c", objIterCount, UNPROTECTED);
                     }
                     rgbKey = PBKF2(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), objSalt.GetByteString(), objIterCount.AsInt32(), 128 / 8, new Sha256Digest());
                     AES_KeyWrap(128, rgbKey);
@@ -1070,12 +1066,12 @@ namespace Com.AugustCellars.COSE
                         byte[] salt = new byte[10];
                         s_PRNG.NextBytes(salt);
                         objSalt = CBORObject.FromObject(salt);
-                        AddAttribute("p2s", objSalt, Attributes.UNPROTECTED);
+                        AddAttribute("p2s", objSalt, UNPROTECTED);
                     }
                     objIterCount = FindAttribute("p2c");
                     if (objIterCount == null) {
                         objIterCount = CBORObject.FromObject(8000);
-                        AddAttribute("p2c", objIterCount, Attributes.UNPROTECTED);
+                        AddAttribute("p2c", objIterCount, UNPROTECTED);
                     }
                     rgbKey = PBKF2(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), objSalt.GetByteString(), objIterCount.AsInt32(), 192 / 8, new Sha256Digest());
                     AES_KeyWrap(192, rgbKey);
@@ -1088,12 +1084,12 @@ namespace Com.AugustCellars.COSE
                         byte[] salt = new byte[10];
                         s_PRNG.NextBytes(salt);
                         objSalt = CBORObject.FromObject(salt);
-                        AddAttribute("p2s", objSalt, Attributes.UNPROTECTED);
+                        AddAttribute("p2s", objSalt, UNPROTECTED);
                     }
                     objIterCount = FindAttribute("p2c");
                     if (objIterCount == null) {
                         objIterCount = CBORObject.FromObject(8000);
-                        AddAttribute("p2c", objIterCount, Attributes.UNPROTECTED);
+                        AddAttribute("p2c", objIterCount, UNPROTECTED);
                     }
                     rgbKey = PBKF2(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), objSalt.GetByteString(), objIterCount.AsInt32(), 256 / 8, new Sha256Digest());
                     AES_KeyWrap(256, rgbKey);
@@ -1199,7 +1195,7 @@ namespace Com.AugustCellars.COSE
             }
             else throw new CoseException("Algorithm incorrectly encoded");
 
-            foreach (Recipient key in recipientList) {
+            foreach (Recipient key in _recipientList) {
                 key.SetContent(rgbKey);
                 key.Encrypt();
             }
@@ -1281,7 +1277,7 @@ namespace Com.AugustCellars.COSE
             if (keyManagement.Type == CBORType.Number) {
                 switch ((AlgorithmValuesInt) keyManagement.AsInt32()) {
                 case AlgorithmValuesInt.DIRECT:
-                    if (m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Key and key managment algorithm don't match");
+                    if (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Key and key managment algorithm don't match");
                     byte[] rgb = m_key.AsBytes(CoseKeyParameterKeys.Octet_k);
                     if (rgb.Length * 8 != cbitKey) throw new CoseException("Incorrect key size");
                     return rgb;
@@ -1289,20 +1285,20 @@ namespace Com.AugustCellars.COSE
 
                 case AlgorithmValuesInt.Direct_HKDF_AES_128:
                 case AlgorithmValuesInt.Direct_HKDF_AES_256:
-                    if (m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Needs to be an octet key");
+                    if (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
                     return HKDF_AES(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), cbitKey, alg);
 
                 case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_256:
-                    if (m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Needs to be an octet key");
+                    if (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
                     return HKDF(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), cbitKey, alg, new Sha256Digest());
 
                 case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_512:
-                    if (m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Needs to be an octet key");
+                    if (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
                     return HKDF(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), cbitKey, alg, new Sha512Digest());
 
                 case AlgorithmValuesInt.ECDH_ES_HKDF_256:
                     {
-                        if ((m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_EC) && (m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_OKP)) throw new CoseException("Key and key management algorithm don't match");
+                        if ((!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) && (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) throw new CoseException("Key and key management algorithm don't match");
 
                         ECDH_GenerateEphemeral();
 
@@ -1312,7 +1308,7 @@ namespace Com.AugustCellars.COSE
                     }
 
                 case AlgorithmValuesInt.ECDH_ES_HKDF_512: {
-                        if (m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_EC) throw new CoseException("Key and key management algorithm don't match");
+                        if (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) throw new CoseException("Key and key management algorithm don't match");
 
                         ECDH_GenerateEphemeral();
 
@@ -1323,23 +1319,23 @@ namespace Com.AugustCellars.COSE
 
                 case AlgorithmValuesInt.ECDH_SS_HKDF_256:
                     {
-                        if ((m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_EC) &&
-                            (m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_OKP)) throw new CoseException("Key and key managment algorithm don't match");
+                        if ((!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) &&
+                            (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) throw new CoseException("Key and key managment algorithm don't match");
                         if (FindAttribute(CoseKeyParameterKeys.HKDF_Context_PartyU_nonce) == null) {
                             byte[] rgbAPU = new byte[512 / 8];
                             s_PRNG.NextBytes(rgbAPU);
-                            AddAttribute(CoseKeyParameterKeys.HKDF_Context_PartyU_nonce, CBORObject.FromObject(rgbAPU), Attributes.UNPROTECTED);
+                            AddAttribute(CoseKeyParameterKeys.HKDF_Context_PartyU_nonce, CBORObject.FromObject(rgbAPU), UNPROTECTED);
                         }
                         byte[] rgbSecret = ECDH_GenerateSecret(m_key);
                         return HKDF(rgbSecret, cbitKey, alg, new Sha256Digest());
                     }
 
                 case AlgorithmValuesInt.ECDH_SS_HKDF_512: {
-                        if (m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_EC) throw new CoseException("Key and key managment algorithm don't match");
+                        if (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) throw new CoseException("Key and key managment algorithm don't match");
                         if (FindAttribute(CoseKeyParameterKeys.HKDF_Context_PartyU_nonce) == null) {
                             byte[] rgbAPU = new byte[512 / 8];
                             s_PRNG.NextBytes(rgbAPU);
-                            AddAttribute(CoseKeyParameterKeys.HKDF_Context_PartyU_nonce, CBORObject.FromObject(rgbAPU), Attributes.UNPROTECTED);
+                            AddAttribute(CoseKeyParameterKeys.HKDF_Context_PartyU_nonce, CBORObject.FromObject(rgbAPU), UNPROTECTED);
                         }
                         byte[] rgbSecret = ECDH_GenerateSecret(m_key);
                         return HKDF(rgbSecret, cbitKey, alg, new Sha512Digest());
@@ -1352,7 +1348,7 @@ namespace Com.AugustCellars.COSE
             else if (keyManagement.Type == CBORType.TextString) {
                 switch (keyManagement.AsString()) {
                 case "dir+kdf": 
-                    if (m_key[CoseKeyKeys.KeyType] != GeneralValues.KeyType_Octet) throw new CoseException("Needs to be an octet key");
+                    if (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Needs to be an octet key");
                     return HKDF(m_key.AsBytes(CoseKeyParameterKeys.Octet_k), cbitKey, alg, new Sha256Digest());
                     
                 default:
@@ -1364,12 +1360,12 @@ namespace Com.AugustCellars.COSE
             throw new CoseException("NYI");
         }
 
-        public void SetKey(COSE.Key recipientKey)
+        public void SetKey(OneKey recipientKey)
         {
             m_key = recipientKey;
         }
 
-        public void SetSenderKey(COSE.Key senderKey)
+        public void SetSenderKey(OneKey senderKey)
         {
             m_senderKey = senderKey;
         }
@@ -1388,10 +1384,10 @@ namespace Com.AugustCellars.COSE
             AesWrapEngine foo = new AesWrapEngine();
             KeyParameter parameters = new KeyParameter(rgbKey);
             foo.Init(true, parameters);
-            rgbEncrypted = foo.Wrap(rgbContent, 0, rgbContent.Length);
+            _rgbEncrypted = foo.Wrap(rgbContent, 0, rgbContent.Length);
         }
 
-        private byte[] AES_KeyUnwrap(Key keyObject, int keySize, byte[] rgbKey=null)
+        private byte[] AES_KeyUnwrap(OneKey keyObject, int keySize, byte[] rgbKey=null)
         {
             if (keyObject != null) {
                 CBORObject cborKeyType = m_key[CoseKeyKeys.KeyType];
@@ -1405,7 +1401,7 @@ namespace Com.AugustCellars.COSE
             AesWrapEngine foo = new AesWrapEngine();
             KeyParameter parameters = new KeyParameter(rgbKey);
             foo.Init(false, parameters);
-            rgbContent = foo.Unwrap(rgbEncrypted, 0, rgbEncrypted.Length);
+            rgbContent = foo.Unwrap(_rgbEncrypted, 0, _rgbEncrypted.Length);
             return rgbContent;
         }
 
@@ -1418,10 +1414,10 @@ namespace Com.AugustCellars.COSE
 
             byte[] outBytes = cipher.ProcessBlock(rgbContent, 0, rgbContent.Length);
 
-            rgbEncrypted = outBytes;
+            _rgbEncrypted = outBytes;
         }
 
-        private byte[] RSA_OAEP_KeyUnwrap(Key key, IDigest digest)
+        private byte[] RSA_OAEP_KeyUnwrap(OneKey key, IDigest digest)
         {
             IAsymmetricBlockCipher cipher = new OaepEncoding(new RsaEngine(), digest);
             RsaKeyParameters pubParameters = new RsaKeyParameters(false, key.AsBigInteger(CoseKeyParameterKeys.RSA_n), key.AsBigInteger(CoseKeyParameterKeys.RSA_e));
@@ -1464,18 +1460,16 @@ namespace Com.AugustCellars.COSE
             AeadParameters parameters = new AeadParameters(ContentKey, 128, IV, A);
 
             cipher.Init(false, parameters);
-            byte[] C = new byte[cipher.GetOutputSize(rgbEncrypted.Length + tag.Length)];
-            int len = cipher.ProcessBytes(rgbEncrypted, 0, rgbEncrypted.Length, C, 0);
+            byte[] C = new byte[cipher.GetOutputSize(_rgbEncrypted.Length + tag.Length)];
+            int len = cipher.ProcessBytes(_rgbEncrypted, 0, _rgbEncrypted.Length, C, 0);
             len += cipher.ProcessBytes(tag, 0, tag.Length, C, len);
             len += cipher.DoFinal(C, len);
 
             if (len != C.Length) throw new CoseException("NYI");
-            rgbEncrypted = C;
-            return;
-
+            _rgbEncrypted = C;
         }
 
-        private byte[] AES_GCM_KeyUnwrap(Key key, int keySize)
+        private byte[] AES_GCM_KeyUnwrap(OneKey key, int keySize)
         {
             if (key.AsString("kty") != "oct") return null;
             byte[] keyBytes = key.AsBytes(CoseKeyParameterKeys.Octet_k);
@@ -1498,8 +1492,8 @@ namespace Com.AugustCellars.COSE
             AeadParameters parameters = new AeadParameters(ContentKey, 128, IV, A);
 
             cipher.Init(false, parameters);
-            byte[] C = new byte[cipher.GetOutputSize(rgbEncrypted.Length + tag.Length)];
-            int len = cipher.ProcessBytes(rgbEncrypted, 0, rgbEncrypted.Length, C, 0);
+            byte[] C = new byte[cipher.GetOutputSize(_rgbEncrypted.Length + tag.Length)];
+            int len = cipher.ProcessBytes(_rgbEncrypted, 0, _rgbEncrypted.Length, C, 0);
             len += cipher.ProcessBytes(tag, 0, tag.Length, C, len);
             len += cipher.DoFinal(C, len);
 
@@ -1514,7 +1508,7 @@ namespace Com.AugustCellars.COSE
             CBORObject epk = CBORObject.NewMap();
             epk.Add(CoseKeyKeys.KeyType, m_key[CoseKeyKeys.KeyType]);
 
-            Key secretKey = new Key();
+            OneKey secretKey = new OneKey();
 
             switch (m_key.GetKeyType()) {
             case GeneralValuesInt.KeyType_OKP:
@@ -1567,7 +1561,7 @@ namespace Com.AugustCellars.COSE
                 break;
             }
 
-            AddAttribute(HeaderKeys.EphemeralKey, epk, Attributes.UNPROTECTED);
+            AddAttribute(HeaderKeys.EphemeralKey, epk, UNPROTECTED);
         }
 
         private byte[] PadBytes(byte[] rgbIn, int outSize)
@@ -1579,9 +1573,9 @@ namespace Com.AugustCellars.COSE
             return x;
         }
 
-        private byte[] ECDH_GenerateSecret(Key key)
+        private byte[] ECDH_GenerateSecret(OneKey key)
         {
-            Key epk;
+            OneKey epk;
 
             if (key[CoseKeyKeys.KeyType].Type != CBORType.Number) throw new CoseException("Not an EC Key");
 
@@ -1592,12 +1586,12 @@ namespace Com.AugustCellars.COSE
             else {
                 CBORObject spkT = FindAttribute(HeaderKeys.StaticKey);
                 if (spkT != null) {
-                    epk = new Key(spkT);
+                    epk = new OneKey(spkT);
                 }
                 else {
                     CBORObject epkT = FindAttribute(HeaderKeys.EphemeralKey);
                     if (epkT == null) throw new CoseException("No Ephemeral key");
-                    epk = new Key(epkT);
+                    epk = new OneKey(epkT);
                 }
             }
 
@@ -1709,6 +1703,8 @@ namespace Com.AugustCellars.COSE
 
         private byte[] HKDF(byte[] secret, int cbitKey, CBORObject algorithmID, IDigest digest)
         {
+            CBORObject obj;
+
             byte[] rgbContext = GetKDFInput(cbitKey, algorithmID);
 
             //  See if we have salt
@@ -1976,23 +1972,23 @@ namespace Com.AugustCellars.COSE
 
     public class EncryptMessage : EncryptCommon
     {
-        protected List<Recipient> recipientList = new List<Recipient>();
+        protected List<Recipient> _recipientList = new List<Recipient>();
 
         public EncryptMessage() : base(true, true)
         {
-            context = "Encrypt";
+            _context = "Encrypt";
             m_tag = Tags.Encrypt;
         }
 
         public EncryptMessage(Boolean emitTag, Boolean emitContent) : base(emitTag, emitContent)
         {
-            context = "Enveloped";
+            _context = "Enveloped";
             m_tag = Tags.Encrypt;
         }
 
         public List<Recipient> RecipientList
         {
-            get { return recipientList; }
+            get { return _recipientList; }
         }
 
         virtual public void DecodeFromCBORObject(CBORObject obj)
@@ -2014,7 +2010,7 @@ namespace Com.AugustCellars.COSE
             else throw new CoseException("Invalid Encrypt structure");
 
             // Cipher Text
-            if (obj[2].Type == CBORType.ByteString) rgbEncrypted = obj[2].GetByteString();
+            if (obj[2].Type == CBORType.ByteString) _rgbEncrypted = obj[2].GetByteString();
             else if (!obj[2].IsNull) {               // Detached content - will need to get externally
                 throw new CoseException("Invalid Encrypt structure");
             }
@@ -2025,7 +2021,7 @@ namespace Com.AugustCellars.COSE
                 for (int i = 0; i < obj[3].Count; i++) {
                     Recipient recip = new Recipient();
                     recip.DecodeFromCBORObject(obj[3][i]);
-                    recipientList.Add(recip);
+                    _recipientList.Add(recip);
                 }
             }
             else throw new CoseException("Invalid Encrypt structure");
@@ -2036,7 +2032,7 @@ namespace Com.AugustCellars.COSE
             CBORObject obj;
             byte[] rgbProtect;
 
-            if (rgbEncrypted == null) Encrypt();
+            if (_rgbEncrypted == null) Encrypt();
 
             obj = CBORObject.NewArray();
 
@@ -2050,11 +2046,11 @@ namespace Com.AugustCellars.COSE
 
             if (m_counterSignerList.Count() != 0) {
                 if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtect, rgbEncrypted), Attributes.UNPROTECTED);
+                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtect, _rgbEncrypted), UNPROTECTED);
                 }
                 else {
                     foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(rgbProtect, rgbEncrypted);
+                        sig.EncodeToCBORObject(rgbProtect, _rgbEncrypted);
                     }
                 }
             }
@@ -2063,19 +2059,19 @@ namespace Com.AugustCellars.COSE
             obj.Add(objUnprotected); // Add unprotected attributes
 
             if (!m_emitContent) obj.Add(CBORObject.Null);
-            else obj.Add(rgbEncrypted);      // Add ciphertext
+            else obj.Add(_rgbEncrypted);      // Add ciphertext
 
-            if ((recipientList.Count == 1) && !m_forceArray) {
-                CBORObject recipient = recipientList[0].Encode();
+            if ((_recipientList.Count == 1) && !m_forceArray) {
+                CBORObject recipient = _recipientList[0].Encode();
 
                 for (int i = 0; i < recipient.Count; i++) {
                     obj.Add(recipient[i]);
                 }
             }
-            else if (recipientList.Count > 0) {
+            else if (_recipientList.Count > 0) {
                 CBORObject recipients = CBORObject.NewArray();
 
-                foreach (Recipient key in recipientList) {
+                foreach (Recipient key in _recipientList) {
                     recipients.Add(key.Encode());
                 }
                 obj.Add(recipients);
@@ -2089,7 +2085,7 @@ namespace Com.AugustCellars.COSE
         public void AddRecipient(Recipient recipient)
         {
             recipient.SetContext("Env_Recipient");
-            recipientList.Add(recipient);
+            _recipientList.Add(recipient);
         }
 
         public virtual byte[] Decrypt(Recipient recipientIn)
@@ -2103,7 +2099,7 @@ namespace Com.AugustCellars.COSE
 
             cbitCEK = GetKeySize(alg);
 
-            foreach (Recipient recipient in recipientList) {
+            foreach (Recipient recipient in _recipientList) {
                 try {
                     if (recipient == recipientIn) {
                         CEK = recipient.Decrypt(cbitCEK, alg);
@@ -2149,7 +2145,7 @@ namespace Com.AugustCellars.COSE
             //  Determine if we are doing a direct encryption
             int recipientTypes = 0;
 
-            foreach (Recipient key in recipientList) {
+            foreach (Recipient key in _recipientList) {
                 switch (key.recipientType) {
                 case RecipientType.direct:
                 case RecipientType.keyAgreeDirect:
@@ -2173,7 +2169,7 @@ namespace Com.AugustCellars.COSE
             }
             EncryptWithKey(ContentKey);
 
-            foreach (Recipient key in recipientList) {
+            foreach (Recipient key in _recipientList) {
                 key.SetContent(ContentKey);
                 key.Encrypt();
             }
