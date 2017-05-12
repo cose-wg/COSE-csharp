@@ -1,25 +1,20 @@
 language: csharp
 mono:
   - latest
-solution: examples/examples.sln
+
+env:
+  - SLN=COSE.Net40.sln
+    TARGET=NET40
+    VERSION=Release
+  - SLN=COSE.Net45.sln
+    TARGET=NET45
+    VERSION=Release
+
 install:
    - nuget restore examples/examples.sln
-   - nuget restore COSE/COSE.Net40.sln
-   - nuget restore COSE/COSE.Net45.sln
    - nuget install NUnit.Runners -Version 3.5.0 -OutputDirectory testrunner
+   - git clone --depth 1 https://github.com/cose-wg/Examples Regressions
+   - git clone --depth 1 https://github.com/ietf-jose/cookbook cookbook
+
 script:
-  - git clone --depth 1 https://github.com/cose-wg/Examples Regressions
-  - git clone --depth 1 https://github.com/ietf-jose/cookbook cookbook
-  - cd COSE
-  - msbuild /v:q /p:Configuration=Release COSE.Net40.sln 
-  - msbuild /v:q /p:Configuration=Release COSE.Net45.sln
-  - cd ..
-  - cd examples
-  - msbuild /v:q /p:Configuration=Release examples.sln
-  - cd ..
-  - cd COSE
-  - mono ../testrunner/NUnit.ConsoleRunner.3.5.0/tools/nunit3-console.exe ./COSE.Tests/bin/Release40/COSE.Tests.dll
-  - mono ../testrunner/NUnit.ConsoleRunner.3.5.0/tools/nunit3-console.exe ./COSE.Tests/bin/Release45/COSE.Tests.dll
-  - cd ..
-  - mono examples/examples/bin/Release/examples.exe --cose Regressions
-  - mono examples/examples/bin/Release/examples.exe --jose cookbook
+  - ./build.sh
