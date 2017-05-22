@@ -952,7 +952,7 @@ namespace Com.AugustCellars.COSE.Tests
                 for (iSigner = 0; iSigner < cnSigners.Count; iSigner++) {
 
                     try {
-                        Message msg = Message.DecodeFromBytes(pbEncoded, Tags.Signed);
+                        Message msg = Message.DecodeFromBytes(pbEncoded, Tags.Sign);
                         hSig = (SignMessage)msg;
                     }
                     catch (Exception) {
