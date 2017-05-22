@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+﻿
 using PeterO.Cbor;
 
 namespace Com.AugustCellars.COSE
@@ -13,22 +9,43 @@ namespace Com.AugustCellars.COSE
         protected CBORObject objUnprotected = CBORObject.NewMap();
         protected CBORObject objDontSend = CBORObject.NewMap();
         protected byte[] externalData = new byte[0];
-        protected byte[] rgbProtected;
+        protected byte[] _rgbProtected;
 
         static public int PROTECTED = 1;
         static public int UNPROTECTED = 2;
         static public int DO_NOT_SEND = 4;
 
-        public void AddAttribute(string name, string value, int bucket)
+        /// <summary>
+        /// Set an attribute value on a COSE object.  The attribute will be removed from any other buckets
+        /// where it is currently placed.
+        /// </summary>
+        /// <param name="label">Label to be used for the attribute</param>
+        /// <param name="value">Value to be used for the attribute</param>
+        /// <param name="bucket">Which bucket is the attribute placed in?</param>
+        public void AddAttribute(string label, string value, int bucket)
         {
-            AddAttribute(CBORObject.FromObject(name), CBORObject.FromObject(value), bucket);
+            AddAttribute(CBORObject.FromObject(label), CBORObject.FromObject(value), bucket);
         }
 
-        public void AddAttribute(string name, CBORObject value, int bucket)
+        /// <summary>
+        /// Set an attribute value on a COSE object.  The attribute will be removed from any other buckets
+        /// where it is currently placed.
+        /// </summary>
+        /// <param name="label">Label to be used for the attribute</param>
+        /// <param name="value">Value to be used for the attribute</param>
+        /// <param name="bucket">Which bucket is the attribute placed in?</param>
+        public void AddAttribute(string label, CBORObject value, int bucket)
         {
-            AddAttribute(CBORObject.FromObject(name), value, bucket);
+            AddAttribute(CBORObject.FromObject(label), value, bucket);
         }
 
+        /// <summary>
+        /// Set an attribute value on a COSE object.  The attribute will be removed from any other buckets
+        /// where it is currently placed.
+        /// </summary>
+        /// <param name="label">Label to be used for the attribute</param>
+        /// <param name="value">Value to be used for the attribute</param>
+        /// <param name="bucket">Which bucket is the attribute placed in?</param>
         public void AddAttribute(CBORObject label, CBORObject value, int bucket)
         { 
             if ((label.Type != CBORType.Number) && (label.Type != CBORType.TextString))
@@ -37,7 +54,7 @@ namespace Com.AugustCellars.COSE
             }
             switch (bucket) {
                 case 1:
-                    if (rgbProtected != null) throw new CoseException("Operation would modify integrity protected attributes");
+                    if (_rgbProtected != null) throw new CoseException("Operation would modify integrity protected attributes");
                     RemoveAttribute(label);
                     objProtected.Add(label, value);
                     break;
@@ -121,6 +138,12 @@ namespace Com.AugustCellars.COSE
             objDontSend.Add(label, value);
         }
 
+        /// <summary>
+        /// Locate an attribute.  All of the buckets in the message are searched.
+        /// They are searched in the order - Protected, Unprotected, Don't Send.
+        /// </summary>
+        /// <param name="label">label of attribute to search for </param>
+        /// <returns></returns>
         public CBORObject FindAttribute(CBORObject label)
         {
             if (objProtected.ContainsKey(label)) return objProtected[label];
@@ -129,16 +152,36 @@ namespace Com.AugustCellars.COSE
             return null;
         }
 
+        /// <summary>
+        /// Locate an attribute.  All of the buckets in the message are searched.
+        /// They are searched in the order - Protected, Unprotected, Don't Send.
+        /// </summary>
+        /// <param name="label">label of attribute to search for </param>
+        /// <returns></returns>
         public CBORObject FindAttribute(int label)
         {
             return FindAttribute(CBORObject.FromObject(label));
         }
 
+        /// <summary>
+        /// Locate an attribute.  All of the buckets in the message are searched.
+        /// They are searched in the order - Protected, Unprotected, Don't Send.
+        /// </summary>
+        /// <param name="label">label of attribute to search for </param>
+        /// <returns></returns>
         public CBORObject FindAttribute(string label)
         {
             return FindAttribute(CBORObject.FromObject(label));
         }
 
+        /// <summary>
+        /// Locate an attribute.  All of the buckets in the message are searched.
+        /// Multiple buckets can be searched by or-ing together the bucket identifiers.
+        /// They are searched in the order - Protected, Unprotected, Don't Send.
+        /// </summary>
+        /// <param name="label">label of attribute to search for </param>
+        /// <param name="where">location(s) to be searched</param>
+        /// <returns></returns>
         public CBORObject FindAttribute(CBORObject label, int where)
         {
             if (((where & PROTECTED) != 0) && objProtected.ContainsKey(label)) return objProtected[label];
@@ -147,6 +190,10 @@ namespace Com.AugustCellars.COSE
             return null;
         }
 
+        /// <summary>
+        /// Remove a label from all buckets in the COSE object.
+        /// </summary>
+        /// <param name="label">attribute to remove</param>
         public void RemoveAttribute(CBORObject label)
         {
             if (objProtected.ContainsKey(label)) objProtected.Remove(label);
@@ -154,6 +201,10 @@ namespace Com.AugustCellars.COSE
             if (objDontSend.ContainsKey(label)) objDontSend.Remove(label);
         }
 
+        /// <summary>
+        /// Set the external data to be included in the cryptographic computation for the COSE object.
+        /// </summary>
+        /// <param name="newData">external data to be used</param>
         public void SetExternalData(byte[] newData)
         {
             externalData = newData;

@@ -25,18 +25,18 @@ namespace examples
         static void Main(string[] args)
         {
             if (args.Count() == 0) {
-                // RunCoseExamples();
-                JoseExamples.RunTestsInDirectory(@"c:\Projects\JOSE\cookbook");
+                RunCoseExamples();
+                // JoseExamples.RunTestsInDirectory(@"c:\Projects\JOSE\cookbook");
                 return;
             }
 
             for (int i = 0; i < args.Count(); i++) {
                 switch (args[i]) {
                 case "--cose":
-                    RootDir = "";
                     i++;
                     if (i > args.Count()) PrintCommandLine();
-                    RunTestsInDirectory(args[i]);
+                    RootDir = args[i];
+                    RunTestsInDirectory("");
                     break;
 
                 case "--jose":
@@ -61,13 +61,11 @@ namespace examples
 
         static void RunCoseExamples()
         { 
-            Key.NewKey();
-
             EdDSA25517.SelfTest();
             EdDSA448.SelfTest();
 
             Recipient.FUseCompressed = true;
-            RunTestsInDirectory("X25519-tests");
+            RunTestsInDirectory("CWT");
 
             RunTestsInDirectory("spec-examples");
             {
@@ -143,7 +141,9 @@ namespace examples
             try {
 #if FOR_EXAMPLES
                 if (ProcessJSON(control, RootDir + "\\new\\" + dir + "\\" + fileName.Replace(".json", ".bin"))) {
-                    fileText = control.ToJSONStringPretty(1);
+                    fileText = control.ToJSONString();
+                    JOSE.JSON j = JOSE.JSON.Parse(fileText);
+                    fileText = j.Serialize(0);
                     StreamWriter file2 = File.CreateText(RootDir + "\\new\\" + dir + "\\" + fileName);
                     file2.Write(fileText);
                     file2.Write("\r\n");
@@ -261,8 +261,6 @@ namespace examples
 
             SignMessage msg = new SignMessage();
 
-            msg.ForceArray(true);
-
             if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
             msg.SetContent(input["plaintext"].AsString());
 
@@ -323,16 +321,22 @@ namespace examples
             CBORObject input = control["input"];
             CBORObject sign = input["sign0"];
 
-            Sign0Message msg = new Sign0Message();
+            Sign1Message msg = new Sign1Message();
 
-            msg.ForceArray(true);
-
-            if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
-            msg.SetContent(input["plaintext"].AsString());
+            if (input.ContainsKey("plaintext")) {
+                msg.SetContent(input["plaintext"].AsString());
+            }
+            else if (input.ContainsKey("plaintext_hex")) {
+                msg.SetContent(FromHex(input["plaintext_hex"].AsString()));
+            }
+            else {
+                throw new Exception("missing plaintext field");
+            }
+        
 
             if (!sign.ContainsKey("alg")) throw new Exception("Signer missing alg field");
 
-            Key key = GetKey(sign["key"]);
+            OneKey key = GetKey(sign["key"]);
 
             msg.AddSigner(key, AlgorithmMap(sign["alg"]));
 
@@ -372,7 +376,7 @@ namespace examples
                 cnSign = cnInput["sign0"];
 
             try {
-                Message msg = Message.DecodeFromBytes(rgb, Tags.Signed0);
+                Message msg = Message.DecodeFromBytes(rgb, Tags.Sign1);
                 hSig = (Sign1Message) msg;
             }
             catch (CoseException) {
@@ -382,7 +386,7 @@ namespace examples
 
             SetRecievingAttributes(hSig, cnSign);
 
-            Key cnkey = GetKey(cnSign["key"], true);
+            OneKey cnkey = GetKey(cnSign["key"], true);
 
             bool fFailInput = HasFailMarker(cnInput);
 
@@ -406,12 +410,17 @@ namespace examples
             CBORObject input = control["input"];
             CBORObject encrypt = input["encrypted"];
 
-            EncryptMessage msg = new EncryptMessage();
+            Encrypt0Message msg = new Encrypt0Message();
 
-            msg.ForceArray(true);
-
-            if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
-            msg.SetContent(input["plaintext"].AsString());
+            if (input.ContainsKey("plaintext")) {
+                msg.SetContent(input["plaintext"].AsString());
+            }
+            else if (input.ContainsKey("plaintext_hex")) {
+                msg.SetContent(FromHex(input["plaintext_hex"].AsString()));
+            }
+            else {
+                throw new Exception("missing plaintext field");
+            }
 
             if (encrypt.ContainsKey("protected")) AddAttributes(msg, encrypt["protected"], 0);
             if (encrypt.ContainsKey("unprotected")) AddAttributes(msg, encrypt["unprotected"], 1);
@@ -427,13 +436,13 @@ namespace examples
 
             byte[] rgbKey;
 
-            Key key;
+            OneKey key;
             key = GetKey(encrypt["recipients"][0]["key"]);
 
             rgbKey = key[CoseKeyParameterKeys.Octet_k].GetByteString();
 
             {
-                msg.Encrypt(rgbKey);
+                msg.EncryptWithKey(rgbKey);
 
                 CBORObject intermediates = GetSection(control, "intermediates");
 
@@ -466,7 +475,7 @@ namespace examples
             byte[] rgbData = FromHex(control["output"]["cbor"].AsString());
 
             try {
-                Message msg = Message.DecodeFromBytes(rgbData, Tags.Encrypted);
+                Message msg = Message.DecodeFromBytes(rgbData, Tags.Encrypt0);
                 Encrypt0Message enc0 = (Encrypt0Message) msg;
 
                 CBORObject cnEncrypt = cnInput["encrypted"];
@@ -475,7 +484,7 @@ namespace examples
                 CBORObject cnRecipients = cnEncrypt["recipients"];
                 cnRecipients = cnRecipients[0];
 
-                Key cnKey = GetKey(cnRecipients["key"], true);
+                OneKey cnKey = GetKey(cnRecipients["key"], true);
 
                 CBORObject kk = cnKey[CBORObject.FromObject(-1)];
 
@@ -502,9 +511,7 @@ namespace examples
             CBORObject input = control["input"];
             CBORObject encrypt = input["enveloped"];
 
-            EnvelopedMessage msg = new EnvelopedMessage();
-
-            msg.ForceArray(true);
+            EncryptMessage msg = new EncryptMessage();
 
             if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
             msg.SetContent(input["plaintext"].AsString());
@@ -589,8 +596,6 @@ namespace examples
                 control.Remove(CBORObject.FromObject("alg"));
             }
 
-            msg.ForceArray(true);
-
             if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
             msg.SetContent(input["plaintext"].AsString());
 
@@ -657,10 +662,14 @@ namespace examples
                 control.Remove(CBORObject.FromObject("alg"));
             }
 
-            msg.ForceArray(true);
-
-            if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
-            msg.SetContent(input["plaintext"].AsString());
+            if (input.ContainsKey("plaintext")) {
+                if (input.ContainsKey("plaintext_hex")) throw new Exception("Can't have both plaintext and plaintext_hex");
+                msg.SetContent(input["plaintext"].AsString());
+            }
+            else if (input.ContainsKey("plaintext_hex")) {
+                msg.SetContent(FromHex(input["plaintext_hex"].AsString()));
+            }
+            else throw new Exception("missing plaintext field");
 
             if (mac.ContainsKey("protected")) AddAttributes(msg, mac["protected"], 0);
             if (mac.ContainsKey("unprotected")) AddAttributes(msg, mac["unprotected"], 1);
@@ -669,7 +678,7 @@ namespace examples
 
             if ((!mac.ContainsKey("recipients")) || (mac["recipients"].Type != CBORType.Array)) throw new Exception("Missing or malformed recipients");
 
-            Key key;
+            OneKey key;
 
             key = GetKey(mac["recipients"][0]["key"]);
 
@@ -713,7 +722,7 @@ namespace examples
                 CBORObject cnRecipients = cnMac["recipients"];
                 cnRecipients = cnRecipients[0];
 
-                Key cnKey = GetKey(cnRecipients["key"], true);
+                OneKey cnKey = GetKey(cnRecipients["key"], true);
 
                 CBORObject kk = cnKey[CBORObject.FromObject(-1)];
 
@@ -935,9 +944,9 @@ namespace examples
         {
             CBORObject alg = GetAttribute(control, "alg");
 
-            Key key = null;
+            OneKey key = null;
 
-            if (control["key"] != null) key = GetKey(control["key"]);
+            if (control["key"] != null) key = GetKey(control["key"], true);
 
             alg = AlgorithmMap(CBORObject.FromObject(alg.AsString()));
             Recipient recipient = new Recipient(key, alg);
@@ -962,7 +971,7 @@ namespace examples
             }
 
             if (control.ContainsKey("sender_key")) {
-                Key myKey = GetKey(control["sender_key"]);
+                OneKey myKey = GetKey(control["sender_key"]);
                 recipient.SetSenderKey(myKey);
                 if (myKey.ContainsName(CoseKeyKeys.KeyIdentifier)) {
                     recipient.AddAttribute(HeaderKeys.StaticKey_ID, CBORObject.FromObject(myKey.AsBytes(CoseKeyKeys.KeyIdentifier)), Attributes.UNPROTECTED);
@@ -1014,7 +1023,7 @@ namespace examples
                 control.Remove(CBORObject.FromObject("alg"));
             }
 
-            Key key = GetKey(control["key"]);
+            OneKey key = GetKey(control["key"]);
 
             Signer signer;
 
@@ -1043,9 +1052,9 @@ namespace examples
             return signer;
         }
 
-        static Key GetKey(CBORObject control, bool fPublicKey = false)
+        static OneKey GetKey(CBORObject control, bool fPublicKey = false)
         {
-            Key key = new Key();
+            OneKey key = new OneKey();
             CBORObject newKey;
             CBORObject newValue;
             string type = control["kty"].AsString();
@@ -1075,7 +1084,7 @@ namespace examples
                     newValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(control[item].AsString()));
                     goto NewValue;
 
-                case "kid_hex":
+                case "kid_b64":
                     newKey = CoseKeyKeys.KeyIdentifier;
                     BinaryValue:
                     if (oFix != 0) {
@@ -1091,6 +1100,13 @@ namespace examples
                     else {
                         key.Add(newKey, CBORObject.FromObject(base64urldecode(control[item].AsString())));
                     }
+                    break;
+
+                case "kid_hex":
+                    newKey = CoseKeyKeys.KeyIdentifier;
+                    HexValue:
+                    byte[] v2 = FromHex(control[item].AsString());
+                    key.Add(newKey, CBORObject.FromObject(v2));
                     break;
 
                 case "alg":
@@ -1137,10 +1153,15 @@ namespace examples
                     if (type == "OKP") newKey = CoseKeyParameterKeys.OKP_X;
                     else newKey = CoseKeyParameterKeys.EC_X;
                     goto BinaryValue;
+                case "x_hex":
+                    if (type == "OKP") newKey = CoseKeyParameterKeys.OKP_X;
+                    else newKey = CoseKeyParameterKeys.EC_X;
+                    goto HexValue;
 
                 case "y": newKey = CoseKeyParameterKeys.EC_Y; goto BinaryValue;
+                case "y_hex": newKey = CoseKeyParameterKeys.EC_Y; goto HexValue;
 
-                case "e": newKey = CoseKeyParameterKeys.RSA_e; goto BinaryValue;
+                    case "e": newKey = CoseKeyParameterKeys.RSA_e; goto BinaryValue;
                 case "n": newKey = CoseKeyParameterKeys.RSA_n; goto BinaryValue;
 
                 case "d":
@@ -1150,7 +1171,15 @@ namespace examples
                     else newKey = CoseKeyParameterKeys.EC_D;
                     goto BinaryValue;
 
+                case "d_hex":
+                    // if (!fPublicKey) continue;
+                    if (type == "RSA") newKey = CoseKeyParameterKeys.RSA_d;
+                    else if (type == "OKP") newKey = CoseKeyParameterKeys.OKP_D;
+                    else newKey = CoseKeyParameterKeys.EC_D;
+                    goto HexValue;
+
                 case "k": newKey = CoseKeyParameterKeys.Octet_k; goto BinaryValue;
+                case "k_hex": newKey = CoseKeyParameterKeys.Octet_k; goto HexValue;
                 case "p": newKey = CoseKeyParameterKeys.RSA_p; goto BinaryValue;
                 case "q": newKey = CoseKeyParameterKeys.RSA_q; goto BinaryValue;
                 case "dp": newKey = CoseKeyParameterKeys.RSA_dP; goto BinaryValue;
@@ -1164,10 +1193,11 @@ namespace examples
 
             allkeys.AddKey(key);
 
-            Key pubKey = key.PublicKey();
+            OneKey pubKey = key.PublicKey();
             if (pubKey != null) {
                 allPubKeys.AddKey(key.PublicKey());
             }
+            if (fPublicKey && (type!= "oct")) return pubKey;
             return key;
         }
 
@@ -1449,7 +1479,7 @@ namespace examples
 
                 try {
 
-                    Message msgX = Message.DecodeFromBytes(rgb, Tags.Enveloped);
+                    Message msgX = Message.DecodeFromBytes(rgb, Tags.Encrypt);
                     msg = (EncryptMessage) msgX;
                 }
                 catch(Exception) {
@@ -1516,7 +1546,7 @@ namespace examples
                 SetRecievingAttributes(msg, mac);
 
                 Recipient recipX = msg.RecipientList[iRecipient];
-                Key key = GetKey(recip["key"], false);
+                OneKey key = GetKey(recip["key"], false);
                 recipX.SetKey(key);
 
                 recipX = SetRecievingAttributes(recipX, recip);
@@ -1570,7 +1600,7 @@ namespace examples
 
                     SetRecievingAttributes(signMsg, cnMessage);
 
-                    Key cnKey = GetKey(cnSigner["key"]);
+                    OneKey cnKey = GetKey(cnSigner["key"]);
                     Signer hSigner = signMsg.SignerList[i];
 
                     SetRecievingAttributes(hSigner, cnSigner);
@@ -1618,7 +1648,7 @@ namespace examples
 
         static Recipient SetRecievingAttributes(Recipient recip, CBORObject control)
         {
-            Key key = null;
+            OneKey key = null;
 
             if (control.ContainsKey("unsent")) AddAttributes(recip, control["unsent"], 2);
 
