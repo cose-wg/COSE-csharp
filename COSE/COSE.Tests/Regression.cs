@@ -195,7 +195,7 @@ namespace Com.AugustCellars.COSE.Tests
         public void VerifyEncryptTest(CBORObject control)
         {
             String strExample = control[ "output"][ "cbor"].AsString();
-            byte[] rgb = hexStringToByteArray(strExample);
+            byte[] rgb = HexStringToByteArray(strExample);
             _VerifyEncrypt(control, rgb);
         }
 
@@ -313,7 +313,7 @@ namespace Com.AugustCellars.COSE.Tests
         public void VerifyMac0Test(CBORObject control)
         {
             String strExample = control[ "output"][ "cbor"].AsString();
-            byte[] rgb = hexStringToByteArray(strExample);
+            byte[] rgb = HexStringToByteArray(strExample);
             _VerifyMac0(control, rgb);
         }
         public void _VerifyMac0(CBORObject control, byte[] rgbData)
@@ -362,7 +362,7 @@ namespace Com.AugustCellars.COSE.Tests
         public void VerifyMacTest(CBORObject control)
         {
             String strExample = control[ "output"][ "cbor"].AsString();
-            byte[] rgb = hexStringToByteArray(strExample);
+            byte[] rgb = HexStringToByteArray(strExample);
             _VerifyMac(control, rgb);
         }
 
@@ -536,7 +536,7 @@ namespace Com.AugustCellars.COSE.Tests
         int VerifyEnvelopedTest(CBORObject cnControl)
         {
             String strExample = cnControl[ "output"][ "cbor"].AsString();
-            byte[] rgb = hexStringToByteArray(strExample);
+            byte[] rgb = HexStringToByteArray(strExample);
 
             return _ValidateEnveloped(cnControl, rgb);
         }
@@ -622,7 +622,7 @@ namespace Com.AugustCellars.COSE.Tests
 
             CBORObject cnExternal = cnIn[ "external"];
             if (cnExternal != null) {
-                msg.SetExternalData(hexStringToByteArray(cnExternal.AsString()));
+                msg.SetExternalData(HexStringToByteArray(cnExternal.AsString()));
             }
         }
         void SetSendingAttributes(Attributes msg, CBORObject cnIn, Boolean fPublicKey)
@@ -633,7 +633,7 @@ namespace Com.AugustCellars.COSE.Tests
 
             CBORObject cnExternal = cnIn[ "external"];
             if (cnExternal != null) {
-                msg.SetExternalData(hexStringToByteArray(cnExternal.AsString()));
+                msg.SetExternalData(HexStringToByteArray(cnExternal.AsString()));
             }
         }
 
@@ -663,12 +663,12 @@ namespace Com.AugustCellars.COSE.Tests
 
                     case "IV_hex":
                     cnKey = HeaderKeys.IV;
-                    cnValue = CBORObject.FromObject(hexStringToByteArray(cnAttributes[ attr].AsString()));
+                    cnValue = CBORObject.FromObject(HexStringToByteArray(cnAttributes[ attr].AsString()));
                     break;
 
                     case "partialIV_hex":
                     cnKey = HeaderKeys.PartialIV;
-                    cnValue = CBORObject.FromObject(hexStringToByteArray(cnAttributes[ attr].AsString()));
+                    cnValue = CBORObject.FromObject(HexStringToByteArray(cnAttributes[ attr].AsString()));
                     break;
 
                     case "salt":
@@ -801,39 +801,39 @@ namespace Com.AugustCellars.COSE.Tests
                     break;
 
                     case "x":
-                    cnKeyOut[CoseKeyParameterKeys.EC_X] = CBORObject.FromObject(base64urldecode(cnValue.AsString()));
+                    cnKeyOut[CoseKeyParameterKeys.EC_X] = CBORObject.FromObject(Base64urldecode(cnValue.AsString()));
                     break;
 
                 case "x_hex":
-                        cnKeyOut[CoseKeyParameterKeys.EC_X] = CBORObject.FromObject(hexStringToByteArray(cnValue.AsString()));
+                        cnKeyOut[CoseKeyParameterKeys.EC_X] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
                         break;
 
                     case "y":
-                    cnKeyOut[CoseKeyParameterKeys.EC_Y] = CBORObject.FromObject(base64urldecode(cnValue.AsString()));
+                    cnKeyOut[CoseKeyParameterKeys.EC_Y] = CBORObject.FromObject(Base64urldecode(cnValue.AsString()));
                     break;
 
                 case "y_hex":
-                    cnKeyOut[CoseKeyParameterKeys.EC_Y] = CBORObject.FromObject(hexStringToByteArray(cnValue.AsString()));
+                    cnKeyOut[CoseKeyParameterKeys.EC_Y] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
                     break;
 
                 case "d":
                     if (!fPublicKey) {
-                        cnKeyOut[CoseKeyParameterKeys.EC_D] = CBORObject.FromObject(base64urldecode(cnValue.AsString()));
+                        cnKeyOut[CoseKeyParameterKeys.EC_D] = CBORObject.FromObject(Base64urldecode(cnValue.AsString()));
                     }
                     break;
 
                     case "d_hex":
                         if (!fPublicKey) {
-                            cnKeyOut[CoseKeyParameterKeys.EC_D] = CBORObject.FromObject(hexStringToByteArray(cnValue.AsString()));
+                            cnKeyOut[CoseKeyParameterKeys.EC_D] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
                         }
                         break;
 
                 case "k":
-                    cnKeyOut[CBORObject.FromObject(-1)] = CBORObject.FromObject(base64urldecode(cnValue.AsString()));
+                    cnKeyOut[CBORObject.FromObject(-1)] = CBORObject.FromObject(Base64urldecode(cnValue.AsString()));
                     break;
 
                     case "k_hex":
-                        cnKeyOut[CBORObject.FromObject(-1)] = CBORObject.FromObject(hexStringToByteArray(cnValue.AsString()));
+                        cnKeyOut[CBORObject.FromObject(-1)] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
                         break;
 
                 case "kid":
@@ -848,7 +848,7 @@ namespace Com.AugustCellars.COSE.Tests
             return new OneKey(cnKeyOut);
         }
 
-        public byte[] hexStringToByteArray(String hex)
+        public byte[] HexStringToByteArray(String hex)
         {
             int NumberChars = hex.Length;
             byte[] bytes = new byte[NumberChars / 2];
@@ -952,7 +952,7 @@ namespace Com.AugustCellars.COSE.Tests
                 for (iSigner = 0; iSigner < cnSigners.Count; iSigner++) {
 
                     try {
-                        Message msg = Message.DecodeFromBytes(pbEncoded, Tags.Signed);
+                        Message msg = Message.DecodeFromBytes(pbEncoded, Tags.Sign);
                         hSig = (SignMessage)msg;
                     }
                     catch (Exception) {
@@ -998,7 +998,7 @@ namespace Com.AugustCellars.COSE.Tests
         int ValidateSigned(CBORObject cnControl)
         {
             String strExample = cnControl[ "output"][ "cbor"].AsString();
-            byte[] rgb = hexStringToByteArray(strExample);
+            byte[] rgb = HexStringToByteArray(strExample);
 
             return _ValidateSigned(cnControl, rgb);
         }
@@ -1106,7 +1106,7 @@ namespace Com.AugustCellars.COSE.Tests
         int ValidateSign0(CBORObject cnControl)
         {
             String strExample = cnControl[ "output"][ "cbor"].AsString();
-            byte[] rgb = hexStringToByteArray(strExample);
+            byte[] rgb = HexStringToByteArray(strExample);
 
             return _ValidateSign0(cnControl, rgb);
         }
@@ -1230,11 +1230,11 @@ namespace Com.AugustCellars.COSE.Tests
         byte[] GetContent(CBORObject cnInputs)
         {
             if (cnInputs.ContainsKey("plaintext")) return Encoding.UTF8.GetBytes(  cnInputs["plaintext"].AsString());
-            if (cnInputs.ContainsKey("plaintext_hex")) return hexStringToByteArray(cnInputs["plaintext_hex"].AsString());
+            if (cnInputs.ContainsKey("plaintext_hex")) return HexStringToByteArray(cnInputs["plaintext_hex"].AsString());
             throw new Exception("Missing content");
         }
 
-        static byte[] base64urldecode(string arg)
+        static byte[] Base64urldecode(string arg)
         {
             string s = arg;
             s = s.Replace('-', '+'); // 62nd char of encoding
@@ -1245,8 +1245,7 @@ namespace Com.AugustCellars.COSE.Tests
                 case 2: s += "=="; break; // Two pad chars
                 case 3: s += "="; break; // One pad char
                 default:
-                throw new System.Exception(
-         "Illegal base64url string!");
+                throw new Exception("Illegal base64url string!");
             }
             return Convert.FromBase64String(s); // Standard base64 decoder
         }
