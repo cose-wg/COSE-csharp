@@ -8,14 +8,16 @@
     <licenseUrl>https://github.com/cose-wg/COSE-csharp/license.md</licenseUrl>
     <projectUrl>https://github.com/cose-wg/COSE-csharp</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <releaseNotes>This version is at best an alpha version.  It can and will change in radical ways between now and a real release.
+    <releaseNotes>
     * Name space has been changed from COSE to Com.AugustCellars.COSE
     1.0.1
     - path for the 4.0 version has changed
     - Add new filter functions to OneKey for use with KeySet.Where()
+    1.0.2
+    - Added functions 
     </releaseNotes>
     <description>An implementation of the CBOR Object Signing and Encryption standards.</description>
-    <copyright>Copyright @2016 Jim Schaad</copyright>
+    <copyright>Copyright @2016-7 Jim Schaad</copyright>
     <tags>COSE CBOR</tags>
     <dependencies>
       <dependency id="PeterO.CBOR" version="2.4.2"/>
