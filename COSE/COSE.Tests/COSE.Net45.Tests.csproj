@@ -70,6 +70,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Regression.cs" />
     <Compile Include="Sign1MessageTest.cs" />
+    <Compile Include="SignerTest.cs" />
     <Compile Include="SignMessageTest.cs" />
   </ItemGroup>
   <ItemGroup>
