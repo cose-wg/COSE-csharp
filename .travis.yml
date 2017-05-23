@@ -14,12 +14,12 @@ script:
   - msbuild /v:q /p:Configuration=Release COSE.Net40.sln 
   - msbuild /v:q /p:Configuration=Release COSE.Net45.sln
   - cd ..
-  - cd examples
-  - msbuild /v:q /p:Configuration=Release examples.sln
-  - cd ..
+#  - cd examples
+#  - msbuild /v:q /p:Configuration=Release examples.sln
+#  - cd ..
   - cd COSE
   - mono ../testrunner/NUnit.ConsoleRunner.3.5.0/tools/nunit3-console.exe ./COSE.Tests/bin/Release40/COSE.Tests.dll
   - mono ../testrunner/NUnit.ConsoleRunner.3.5.0/tools/nunit3-console.exe ./COSE.Tests/bin/Release45/COSE.Tests.dll
   - cd ..
-  - mono examples/examples/bin/Release/examples.exe --cose Regressions
-  - mono examples/examples/bin/Release/examples.exe --jose cookbook
+#  - mono examples/examples/bin/Release/examples.exe --cose Regressions
+#  - mono examples/examples/bin/Release/examples.exe --jose cookbook
