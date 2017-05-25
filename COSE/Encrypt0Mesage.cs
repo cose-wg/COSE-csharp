@@ -10,9 +10,8 @@ namespace Com.AugustCellars.COSE
         /// Implement the COSE_Encrypt0 protocol element from RFC 8215.
         /// This will emit the tag and the content
         /// </summary>
-        public Encrypt0Message() : base(true, true)
+        public Encrypt0Message() : base(true, true, "Encrypt0")
         {
-            _context = "Encrypt0";
             m_tag = Tags.Encrypt0;
         }
 
@@ -21,9 +20,8 @@ namespace Com.AugustCellars.COSE
         /// </summary>
         /// <param name="fEmitTag">emit leading tag</param>
         /// <param name="fEmitContent">emit message content</param>
-        public Encrypt0Message(bool fEmitTag, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
+        public Encrypt0Message(bool fEmitTag, bool fEmitContent = true) : base(fEmitTag, fEmitContent, "Encrypt0")
         {
-            _context = "Encrypt0";
             m_tag = Tags.Encrypt0;
         }
 
@@ -38,9 +36,9 @@ namespace Com.AugustCellars.COSE
             //  Protected values.
             if (cbor[0].Type == CBORType.ByteString)
             {
-                if (cbor[0].GetByteString().Length == 0) objProtected = CBORObject.NewMap();
-                else objProtected = CBORObject.DecodeFromBytes(cbor[0].GetByteString());
-                if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid Encrypt0 structure");
+                if (cbor[0].GetByteString().Length == 0) ProtectedMap = CBORObject.NewMap();
+                else ProtectedMap = CBORObject.DecodeFromBytes(cbor[0].GetByteString());
+                if (ProtectedMap.Type != CBORType.Map) throw new CoseException("Invalid Encrypt0 structure");
             }
             else
             {
@@ -48,11 +46,11 @@ namespace Com.AugustCellars.COSE
             }
 
             //  Unprotected attributes
-            if (cbor[1].Type == CBORType.Map) objUnprotected = cbor[1];
+            if (cbor[1].Type == CBORType.Map) UnprotectedMap = cbor[1];
             else throw new CoseException("Invalid Encrypt0 structure");
 
             // Cipher Text
-            if (cbor[2].Type == CBORType.ByteString) _rgbEncrypted = cbor[2].GetByteString();
+            if (cbor[2].Type == CBORType.ByteString) RgbEncrypted = cbor[2].GetByteString();
             else if (!cbor[2].IsNull)
             {               // Detached content - will need to get externally
                 throw new CoseException("Invalid Encrypt0 structure");
@@ -68,28 +66,28 @@ namespace Com.AugustCellars.COSE
         {
             CBORObject cbor;
 
-            if (_rgbEncrypted == null) throw new CoseException("Must call Encrypt first");
+            if (RgbEncrypted == null) throw new CoseException("Must call Encrypt first");
 
             if (m_counterSignerList.Count() != 0) {
                 if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(_rgbProtected, _rgbEncrypted), UNPROTECTED);
+                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(ProtectedBytes, RgbEncrypted), UNPROTECTED);
                 }
                 else {
                     foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(_rgbProtected, _rgbEncrypted);
+                        sig.EncodeToCBORObject(ProtectedBytes, RgbEncrypted);
                     }
                 }
             }
             cbor = CBORObject.NewArray();
 
-            if (objProtected.Count > 0) {
-                cbor.Add(objProtected.EncodeToBytes());
+            if (ProtectedMap.Count > 0) {
+                cbor.Add(ProtectedMap.EncodeToBytes());
             }
             else cbor.Add(CBORObject.FromObject(new byte[0]));
 
-            cbor.Add(objUnprotected); // Add unprotected attributes
+            cbor.Add(UnprotectedMap); // Add unprotected attributes
 
-            if (m_emitContent) cbor.Add(_rgbEncrypted);      // Add ciphertext
+            if (m_emitContent) cbor.Add(RgbEncrypted);      // Add ciphertext
             else cbor.Add(CBORObject.Null);
 
             return cbor;

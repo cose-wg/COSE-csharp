@@ -5,15 +5,46 @@ namespace Com.AugustCellars.COSE
 {
     public class Attributes
     {
-        protected CBORObject objProtected = CBORObject.NewMap();
-        protected CBORObject objUnprotected = CBORObject.NewMap();
-        protected CBORObject objDontSend = CBORObject.NewMap();
-        protected byte[] externalData = new byte[0];
-        protected byte[] _rgbProtected;
+        private CBORObject _objProtected = CBORObject.NewMap();
+        private CBORObject _objUnprotected = CBORObject.NewMap();
+        private readonly CBORObject _objDontSend = CBORObject.NewMap();
+        private byte[] _rgbProtected;
 
-        static public int PROTECTED = 1;
-        static public int UNPROTECTED = 2;
-        static public int DO_NOT_SEND = 4;
+        public static int PROTECTED = 1;
+        public static int UNPROTECTED = 2;
+        public static int DO_NOT_SEND = 4;
+
+        public Attributes()
+        {
+            ExternalData = new byte[0];
+        }
+
+        /// <summary>
+        /// Get/Set the external data to be included in the cryptographic computation for the COSE object.
+        /// </summary>
+        public byte[] ExternalData { get; set; }
+
+        protected CBORObject ProtectedMap {
+            get => _objProtected;
+            set => _objProtected = value;
+        }
+
+        protected byte[] ProtectedBytes
+        {
+            get => _rgbProtected;
+            set => _rgbProtected = value;
+        }
+
+        protected CBORObject UnprotectedMap
+        {
+            get => _objUnprotected;
+            set => _objUnprotected = value;
+        }
+
+        protected CBORObject DontSendMap
+        {
+            get => _objDontSend; 
+        }
 
         /// <summary>
         /// Set an attribute value on a COSE object.  The attribute will be removed from any other buckets
@@ -56,17 +87,17 @@ namespace Com.AugustCellars.COSE
                 case 1:
                     if (_rgbProtected != null) throw new CoseException("Operation would modify integrity protected attributes");
                     RemoveAttribute(label);
-                    objProtected.Add(label, value);
+                    _objProtected.Add(label, value);
                     break;
 
                 case 2:
                     RemoveAttribute(label);
-                    objUnprotected.Add(label, value);
+                    _objUnprotected.Add(label, value);
                     break;
 
                 case 4:
                     RemoveAttribute(label);
-                    objDontSend.Add(label, value);
+                    _objDontSend.Add(label, value);
                     break;
 
                 default:
@@ -121,21 +152,21 @@ namespace Com.AugustCellars.COSE
         public void AddProtected(CBORObject label, CBORObject value)
         {
             RemoveAttribute(label);
-            objProtected.Add(label, value);
+            _objProtected.Add(label, value);
         }
 
         [System.Obsolete("Use AddAttribue(label, value, Attributes.Unprotected)")]
         public void AddUnprotected(CBORObject label, CBORObject value)
         {
             RemoveAttribute(label);
-            objUnprotected.Add(label, value);
+            _objUnprotected.Add(label, value);
         }
 
         [System.Obsolete("Use AddAttribue(label, value, Attributes.DoNotSend)")]
         public void AddDontSend(CBORObject label, CBORObject value)
         {
             RemoveAttribute(label);
-            objDontSend.Add(label, value);
+            _objDontSend.Add(label, value);
         }
 
         /// <summary>
@@ -146,9 +177,9 @@ namespace Com.AugustCellars.COSE
         /// <returns></returns>
         public CBORObject FindAttribute(CBORObject label)
         {
-            if (objProtected.ContainsKey(label)) return objProtected[label];
-            if (objUnprotected.ContainsKey(label)) return objUnprotected[label];
-            if (objDontSend.ContainsKey(label)) return objDontSend[label];
+            if (_objProtected.ContainsKey(label)) return _objProtected[label];
+            if (_objUnprotected.ContainsKey(label)) return _objUnprotected[label];
+            if (_objDontSend.ContainsKey(label)) return _objDontSend[label];
             return null;
         }
 
@@ -184,9 +215,9 @@ namespace Com.AugustCellars.COSE
         /// <returns></returns>
         public CBORObject FindAttribute(CBORObject label, int where)
         {
-            if (((where & PROTECTED) != 0) && objProtected.ContainsKey(label)) return objProtected[label];
-            if (((where & UNPROTECTED) != 0) && objUnprotected.ContainsKey(label)) return objUnprotected[label];
-            if (((where & DO_NOT_SEND) != 0) && objDontSend.ContainsKey(label)) return objDontSend[label];
+            if (((where & PROTECTED) != 0) && _objProtected.ContainsKey(label)) return _objProtected[label];
+            if (((where & UNPROTECTED) != 0) && _objUnprotected.ContainsKey(label)) return _objUnprotected[label];
+            if (((where & DO_NOT_SEND) != 0) && _objDontSend.ContainsKey(label)) return _objDontSend[label];
             return null;
         }
 
@@ -196,9 +227,9 @@ namespace Com.AugustCellars.COSE
         /// <param name="label">attribute to remove</param>
         public void RemoveAttribute(CBORObject label)
         {
-            if (objProtected.ContainsKey(label)) objProtected.Remove(label);
-            if (objUnprotected.ContainsKey(label)) objUnprotected.Remove(label);
-            if (objDontSend.ContainsKey(label)) objDontSend.Remove(label);
+            if (_objProtected.ContainsKey(label)) _objProtected.Remove(label);
+            if (_objUnprotected.ContainsKey(label)) _objUnprotected.Remove(label);
+            if (_objDontSend.ContainsKey(label)) _objDontSend.Remove(label);
         }
 
         /// <summary>
@@ -207,7 +238,7 @@ namespace Com.AugustCellars.COSE
         /// <param name="newData">external data to be used</param>
         public void SetExternalData(byte[] newData)
         {
-            externalData = newData;
+            ExternalData = newData;
         }
     }
 }

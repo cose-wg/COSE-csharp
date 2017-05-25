@@ -34,7 +34,7 @@ namespace Com.AugustCellars.COSE
         private OneKey m_senderKey;
         private readonly List<Recipient> _recipientList = new List<Recipient>();
 
-        public Recipient(OneKey key, CBORObject algorithm = null) : base(true, true)
+        public Recipient(OneKey key, CBORObject algorithm = null) : base(true, true, "Rec_Recipient")
         {
             if (algorithm != null) {
                 if (algorithm.Type == CBORType.TextString) {
@@ -170,12 +170,10 @@ namespace Com.AugustCellars.COSE
                 }
 
                 if (key[CoseKeyKeys.KeyIdentifier] != null) AddAttribute(HeaderKeys.KeyId, key[CoseKeyKeys.KeyIdentifier], UNPROTECTED);
-
-                SetContext("Rec_Recipient");
             }
         }
 
-        public Recipient() : base(true, true)
+        public Recipient() : base(true, true, "Rec_Recipient")
         {
         }
 
@@ -230,20 +228,20 @@ namespace Com.AugustCellars.COSE
 
             //  Protected values.
             if (obj[0].Type == CBORType.ByteString) {
-                if (obj[0].GetByteString().Length == 0) objProtected = CBORObject.NewMap();
-                else objProtected = CBORObject.DecodeFromBytes(obj[0].GetByteString());
-                if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid Encrypt structure");
+                if (obj[0].GetByteString().Length == 0) ProtectedMap = CBORObject.NewMap();
+                else ProtectedMap = CBORObject.DecodeFromBytes(obj[0].GetByteString());
+                if (ProtectedMap.Type != CBORType.Map) throw new CoseException("Invalid Encrypt structure");
             }
             else {
                 throw new CoseException("Invalid Encrypt structure");
             }
 
             //  Unprotected attributes
-            if (obj[1].Type == CBORType.Map) objUnprotected = obj[1];
+            if (obj[1].Type == CBORType.Map) UnprotectedMap = obj[1];
             else throw new CoseException("Invalid Encrypt structure");
 
             // Cipher Text
-            if (obj[2].Type == CBORType.ByteString) _rgbEncrypted = obj[2].GetByteString();
+            if (obj[2].Type == CBORType.ByteString) RgbEncrypted = obj[2].GetByteString();
             else if (!obj[2].IsNull) {               // Detached content - will need to get externally
                 throw new CoseException("Invalid Encrypt structure");
             }
@@ -388,33 +386,33 @@ namespace Com.AugustCellars.COSE
         {
             CBORObject obj;
 
-            if (_rgbEncrypted == null) Encrypt();
+            if (RgbEncrypted == null) Encrypt();
 
             if (m_counterSignerList.Count() != 0) {
                 byte[] rgbProtected;
-                if (objProtected.Count > 0) rgbProtected = objProtected.EncodeToBytes();
+                if (ProtectedMap.Count > 0) rgbProtected = ProtectedMap.EncodeToBytes();
                 else rgbProtected = new byte[0];
                 if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, _rgbEncrypted), UNPROTECTED);
+                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, RgbEncrypted), UNPROTECTED);
                 }
                 else {
                     foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(rgbProtected, _rgbEncrypted);
+                        sig.EncodeToCBORObject(rgbProtected, RgbEncrypted);
                     }
                 }
             }
 
             obj = CBORObject.NewArray();
 
-            if (objProtected.Count > 0) {
-                obj.Add(objProtected.EncodeToBytes());
+            if (ProtectedMap.Count > 0) {
+                obj.Add(ProtectedMap.EncodeToBytes());
             }
             else obj.Add(CBORObject.FromObject(new byte[0]));
 
-            obj.Add(objUnprotected); // Add unprotected attributes
+            obj.Add(UnprotectedMap); // Add unprotected attributes
 
-            if (_rgbEncrypted == null) obj.Add(new byte[0]);
-            else obj.Add(_rgbEncrypted);      // Add ciphertext
+            if (RgbEncrypted == null) obj.Add(new byte[0]);
+            else obj.Add(RgbEncrypted);      // Add ciphertext
 
             if ((_recipientList.Count == 1) && !m_forceArray) {
                 CBORObject recipient = _recipientList[0].Encode();
@@ -829,7 +827,7 @@ namespace Com.AugustCellars.COSE
             AesWrapEngine foo = new AesWrapEngine();
             KeyParameter parameters = new KeyParameter(rgbKey);
             foo.Init(true, parameters);
-            _rgbEncrypted = foo.Wrap(rgbContent, 0, rgbContent.Length);
+            RgbEncrypted = foo.Wrap(rgbContent, 0, rgbContent.Length);
         }
 
         private byte[] AES_KeyUnwrap(OneKey keyObject, int keySize, byte[] rgbKey=null)
@@ -846,7 +844,7 @@ namespace Com.AugustCellars.COSE
             AesWrapEngine foo = new AesWrapEngine();
             KeyParameter parameters = new KeyParameter(rgbKey);
             foo.Init(false, parameters);
-            rgbContent = foo.Unwrap(_rgbEncrypted, 0, _rgbEncrypted.Length);
+            rgbContent = foo.Unwrap(RgbEncrypted, 0, RgbEncrypted.Length);
             return rgbContent;
         }
 
@@ -859,7 +857,7 @@ namespace Com.AugustCellars.COSE
 
             byte[] outBytes = cipher.ProcessBlock(rgbContent, 0, rgbContent.Length);
 
-            _rgbEncrypted = outBytes;
+            RgbEncrypted = outBytes;
         }
 
         private byte[] RSA_OAEP_KeyUnwrap(OneKey key, IDigest digest)
@@ -905,13 +903,13 @@ namespace Com.AugustCellars.COSE
             AeadParameters parameters = new AeadParameters(ContentKey, 128, IV, A);
 
             cipher.Init(false, parameters);
-            byte[] C = new byte[cipher.GetOutputSize(_rgbEncrypted.Length + tag.Length)];
-            int len = cipher.ProcessBytes(_rgbEncrypted, 0, _rgbEncrypted.Length, C, 0);
+            byte[] C = new byte[cipher.GetOutputSize(RgbEncrypted.Length + tag.Length)];
+            int len = cipher.ProcessBytes(RgbEncrypted, 0, RgbEncrypted.Length, C, 0);
             len += cipher.ProcessBytes(tag, 0, tag.Length, C, len);
             len += cipher.DoFinal(C, len);
 
             if (len != C.Length) throw new CoseException("NYI");
-            _rgbEncrypted = C;
+            RgbEncrypted = C;
         }
 
         private byte[] AES_GCM_KeyUnwrap(OneKey key, int keySize)
@@ -937,8 +935,8 @@ namespace Com.AugustCellars.COSE
             AeadParameters parameters = new AeadParameters(ContentKey, 128, IV, A);
 
             cipher.Init(false, parameters);
-            byte[] C = new byte[cipher.GetOutputSize(_rgbEncrypted.Length + tag.Length)];
-            int len = cipher.ProcessBytes(_rgbEncrypted, 0, _rgbEncrypted.Length, C, 0);
+            byte[] C = new byte[cipher.GetOutputSize(RgbEncrypted.Length + tag.Length)];
+            int len = cipher.ProcessBytes(RgbEncrypted, 0, RgbEncrypted.Length, C, 0);
             len += cipher.ProcessBytes(tag, 0, tag.Length, C, len);
             len += cipher.DoFinal(C, len);
 
@@ -1130,8 +1128,8 @@ namespace Com.AugustCellars.COSE
             info = CBORObject.NewArray();
             contextArray.Add(info);
             info.Add(CBORObject.FromObject(cbitKey));
-            if (objProtected.Count == 0) info.Add(new byte[0]);
-            else info.Add(objProtected.EncodeToBytes());
+            if (ProtectedMap.Count == 0) info.Add(new byte[0]);
+            else info.Add(ProtectedMap.EncodeToBytes());
             obj = FindAttribute(CoseKeyParameterKeys.HKDF_SuppPub_Other);
             if (obj != null) info.Add(obj);
 
@@ -1315,11 +1313,11 @@ namespace Com.AugustCellars.COSE
             dataArray.Add(algorithmID);
 
             string PartyUInfo = null;
-            if (objUnprotected.ContainsKey("PartyUInfo")) PartyUInfo = objUnprotected["PartyUInfo"].AsString();
+            if (UnprotectedMap.ContainsKey("PartyUInfo")) PartyUInfo = UnprotectedMap["PartyUInfo"].AsString();
             dataArray.Add(PartyUInfo);
 
             string PartyVInfo = null;
-            if (objUnprotected.ContainsKey("PartyVInfo")) PartyVInfo = objUnprotected["PartyVInfo"].AsString();
+            if (UnprotectedMap.ContainsKey("PartyVInfo")) PartyVInfo = UnprotectedMap["PartyVInfo"].AsString();
             dataArray.Add(PartyVInfo);
 
             byte[] SubPubInfo = new byte[4];
@@ -1417,45 +1415,43 @@ namespace Com.AugustCellars.COSE
 
     public class EncryptMessage : EncryptCommon
     {
-        protected List<Recipient> _recipientList = new List<Recipient>();
+        private readonly List<Recipient> _recipientList = new List<Recipient>();
 
-        public EncryptMessage() : base(true, true)
+        public EncryptMessage() : base(true, true, "Encrypt")
         {
-            _context = "Encrypt";
             m_tag = Tags.Encrypt;
         }
 
-        public EncryptMessage(Boolean emitTag, Boolean emitContent) : base(emitTag, emitContent)
+        public EncryptMessage(Boolean emitTag, Boolean emitContent) : base(emitTag, emitContent, "Encrypt")
         {
-            _context = "Enveloped";
             m_tag = Tags.Encrypt;
         }
 
         public List<Recipient> RecipientList
         {
-            get { return _recipientList; }
+            get => _recipientList;
         }
 
-        virtual public void DecodeFromCBORObject(CBORObject obj)
+        public virtual void DecodeFromCBORObject(CBORObject obj)
         {
             if (obj.Count != 4) throw new CoseException("Invalid Encrypt structure");
 
             //  Protected values.
             if (obj[0].Type == CBORType.ByteString) {
-                if (obj[0].GetByteString().Length == 0) objProtected = CBORObject.NewMap();
-                else objProtected = CBORObject.DecodeFromBytes(obj[0].GetByteString());
-                if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid Encrypt structure");
+                if (obj[0].GetByteString().Length == 0) ProtectedMap = CBORObject.NewMap();
+                else ProtectedMap = CBORObject.DecodeFromBytes(obj[0].GetByteString());
+                if (ProtectedMap.Type != CBORType.Map) throw new CoseException("Invalid Encrypt structure");
             }
             else {
                 throw new CoseException("Invalid Encrypt structure");
             }
 
             //  Unprotected attributes
-            if (obj[1].Type == CBORType.Map) objUnprotected = obj[1];
+            if (obj[1].Type == CBORType.Map) UnprotectedMap = obj[1];
             else throw new CoseException("Invalid Encrypt structure");
 
             // Cipher Text
-            if (obj[2].Type == CBORType.ByteString) _rgbEncrypted = obj[2].GetByteString();
+            if (obj[2].Type == CBORType.ByteString) RgbEncrypted = obj[2].GetByteString();
             else if (!obj[2].IsNull) {               // Detached content - will need to get externally
                 throw new CoseException("Invalid Encrypt structure");
             }
@@ -1477,12 +1473,12 @@ namespace Com.AugustCellars.COSE
             CBORObject obj;
             byte[] rgbProtect;
 
-            if (_rgbEncrypted == null) Encrypt();
+            if (RgbEncrypted == null) Encrypt();
 
             obj = CBORObject.NewArray();
 
-            if (objProtected.Count > 0) {
-                rgbProtect = objProtected.EncodeToBytes();
+            if (ProtectedMap.Count > 0) {
+                rgbProtect = ProtectedMap.EncodeToBytes();
             }
             else {
                 rgbProtect = new byte[0];
@@ -1491,20 +1487,20 @@ namespace Com.AugustCellars.COSE
 
             if (m_counterSignerList.Count() != 0) {
                 if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtect, _rgbEncrypted), UNPROTECTED);
+                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtect, RgbEncrypted), UNPROTECTED);
                 }
                 else {
                     foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(rgbProtect, _rgbEncrypted);
+                        sig.EncodeToCBORObject(rgbProtect, RgbEncrypted);
                     }
                 }
             }
 
 
-            obj.Add(objUnprotected); // Add unprotected attributes
+            obj.Add(UnprotectedMap); // Add unprotected attributes
 
             if (!m_emitContent) obj.Add(CBORObject.Null);
-            else obj.Add(_rgbEncrypted);      // Add ciphertext
+            else obj.Add(RgbEncrypted);      // Add ciphertext
 
             if ((_recipientList.Count == 1) && !m_forceArray) {
                 CBORObject recipient = _recipientList[0].Encode();
