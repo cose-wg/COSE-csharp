@@ -67,12 +67,12 @@ namespace Com.AugustCellars.COSE
 
             //  Protected values.
             if (obj[0].Type == CBORType.ByteString) {
-                _rgbProtected = obj[0].GetByteString();
-                if (_rgbProtected.Length == 0) objProtected = CBORObject.NewMap();
+                ProtectedBytes = obj[0].GetByteString();
+                if (ProtectedBytes.Length == 0) ProtectedMap = CBORObject.NewMap();
                 else {
-                    objProtected = CBORObject.DecodeFromBytes(_rgbProtected);
-                    if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid SignMessage structure");
-                    if (objProtected.Count == 0) _rgbProtected = new byte[0];
+                    ProtectedMap = CBORObject.DecodeFromBytes(ProtectedBytes);
+                    if (ProtectedMap.Type != CBORType.Map) throw new CoseException("Invalid SignMessage structure");
+                    if (ProtectedMap.Count == 0) ProtectedBytes = new byte[0];
                 }
             }
             else {
@@ -80,7 +80,7 @@ namespace Com.AugustCellars.COSE
             }
 
             //  Unprotected attributes
-            if (obj[1].Type == CBORType.Map) objUnprotected = obj[1];
+            if (obj[1].Type == CBORType.Map) UnprotectedMap = obj[1];
             else throw new CoseException("Invalid SignMessage structure");
 
             // Plain Text
@@ -107,8 +107,8 @@ namespace Com.AugustCellars.COSE
 
             obj = CBORObject.NewArray();
 
-            if ((objProtected != null) && (objProtected.Count > 0)) {
-                rgbProtected = objProtected.EncodeToBytes();
+            if ((ProtectedMap != null) && (ProtectedMap.Count > 0)) {
+                rgbProtected = ProtectedMap.EncodeToBytes();
                 obj.Add(rgbProtected);
             }
             else {
@@ -127,8 +127,8 @@ namespace Com.AugustCellars.COSE
                 }
             }
 
-            if ((objUnprotected == null) || (objUnprotected.Count == 0)) obj.Add(CBORObject.NewMap());
-            else obj.Add(objUnprotected); // Add unprotected attributes
+            if ((UnprotectedMap == null) || (UnprotectedMap.Count == 0)) obj.Add(CBORObject.NewMap());
+            else obj.Add(UnprotectedMap); // Add unprotected attributes
 
             obj.Add(rgbContent);
 
@@ -157,7 +157,7 @@ namespace Com.AugustCellars.COSE
         {
             foreach (Signer x in signerList) {
                 if (x == signer) {
-                    return signer.Validate(rgbContent, _rgbProtected);
+                    return signer.Validate(rgbContent, ProtectedBytes);
                 }
             }
 
@@ -219,19 +219,19 @@ namespace Com.AugustCellars.COSE
 
             if (obj[0].Type == CBORType.ByteString) {
                 if (obj[0].GetByteString().Length == 0) {
-                    objProtected = CBORObject.NewMap();
-                    _rgbProtected = new byte[0];
+                    ProtectedMap = CBORObject.NewMap();
+                    ProtectedBytes = new byte[0];
                 }
                 else {
-                    _rgbProtected = obj[0].GetByteString();
-                    objProtected = CBORObject.DecodeFromBytes(_rgbProtected);
-                    if (objProtected.Count == 0) _rgbProtected = new byte[0];
+                    ProtectedBytes = obj[0].GetByteString();
+                    ProtectedMap = CBORObject.DecodeFromBytes(ProtectedBytes);
+                    if (ProtectedMap.Count == 0) ProtectedBytes = new byte[0];
                 }
             }
             else throw new CoseException("Invalid Signer structure");
 
             if (obj[1].Type == CBORType.Map) {
-                objUnprotected = obj[1];
+                UnprotectedMap = obj[1];
             }
             else throw new CoseException("Invalid Signer structure");
 
@@ -252,14 +252,14 @@ namespace Com.AugustCellars.COSE
             CBORObject obj = CBORObject.NewArray();
 
             CBORObject cborProtected = CBORObject.FromObject(new byte[0]);
-            if ((objProtected != null) && (objProtected.Count > 0)) {
-                byte[] rgb = objProtected.EncodeToBytes();
+            if ((ProtectedMap != null) && (ProtectedMap.Count > 0)) {
+                byte[] rgb = ProtectedMap.EncodeToBytes();
                 cborProtected = CBORObject.FromObject(rgb);
             }
             obj.Add(cborProtected);
 
-            if ((objUnprotected == null)) obj.Add(CBORObject.NewMap());
-            else obj.Add(objUnprotected); // Add unprotected attributes
+            if ((UnprotectedMap == null)) obj.Add(CBORObject.NewMap());
+            else obj.Add(UnprotectedMap); // Add unprotected attributes
 
             if (_rgbSignature == null) {
                 _rgbSignature = Sign(toBeSigned(body, bodyAttributes));
@@ -271,8 +271,8 @@ namespace Com.AugustCellars.COSE
         private byte[] toBeSigned(byte[] rgbContent, byte[] bodyAttributes)
         {
             CBORObject cborProtected = CBORObject.FromObject(new byte[0]);
-            if ((objProtected != null) && (objProtected.Count > 0)) {
-                byte[] rgb = objProtected.EncodeToBytes();
+            if ((ProtectedMap != null) && (ProtectedMap.Count > 0)) {
+                byte[] rgb = ProtectedMap.EncodeToBytes();
                 cborProtected = CBORObject.FromObject(rgb);
             }
 
@@ -280,7 +280,7 @@ namespace Com.AugustCellars.COSE
             signObj.Add(context);
             signObj.Add(bodyAttributes);
             signObj.Add(cborProtected);
-            signObj.Add(externalData);
+            signObj.Add(ExternalData);
             signObj.Add(rgbContent);
 
 #if FOR_EXAMPLES
@@ -338,7 +338,7 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Unknown or unsupported key type " + _keyToSign[CoseKeyKeys.KeyType].AsString());
                 }
                 else throw new CoseException("Key type is not correctly encoded");
-                objUnprotected.Add(HeaderKeys.Algorithm, alg);
+                UnprotectedMap.Add(HeaderKeys.Algorithm, alg);
             }
 
             IDigest digest;

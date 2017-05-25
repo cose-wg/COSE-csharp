@@ -2,19 +2,21 @@
 <package>
   <metadata>
     <id>Com.AugustCellars.COSE</id>
-    <version>1.0.1.0</version>
+    <version>1.0.2.0</version>
     <authors>Jim Schaad</authors>
     <owners>jimsch</owners>
     <licenseUrl>https://github.com/cose-wg/COSE-csharp/license.md</licenseUrl>
     <projectUrl>https://github.com/cose-wg/COSE-csharp</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <releaseNotes>
-    * Name space has been changed from COSE to Com.AugustCellars.COSE
+    1.0.2
+    - Previous release had the prior net4 library.
     1.0.1
     - path for the 4.0 version has changed
     - Add new filter functions to OneKey for use with KeySet.Where()
-    1.0.2
-    - Added functions 
+    - Added functions
+    1.0.0
+    * Name space has been changed from COSE to Com.AugustCellars.COSE
     </releaseNotes>
     <description>An implementation of the CBOR Object Signing and Encryption standards.</description>
     <copyright>Copyright @2016-7 Jim Schaad</copyright>
@@ -30,7 +32,7 @@
     <file src="bin/Release40/COSE.pdb" target="lib\portable-net40+sl5+win+wpa81+wp8"/>
     <file src="bin/Release40/COSE.xml" target="lib\portable-net40+sl5+win+wpa81+wp8"/>
     <file src="bin/Release45/COSE.dll" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8"/>
-    <file src="bin/Release45/COSE.pdb" target="lib\portable-net40+sl5+win+wpa81+wp8"/>
-    <file src="bin/Release45/COSE.xml" target="lib\portable-net40+sl5+win+wpa81+wp8"/>
+    <file src="bin/Release45/COSE.pdb" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8"/>
+    <file src="bin/Release45/COSE.xml" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8"/>
   </files>
 </package>

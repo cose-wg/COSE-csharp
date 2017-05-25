@@ -26,18 +26,22 @@ namespace Com.AugustCellars.COSE
 {
     public abstract class EncryptCommon : Message
     {
-        protected string _context;
+        private string _context;
 
-        protected byte[] _rgbEncrypted;
 #if FOR_EXAMPLES
         private byte[] _cek;
 #endif
 
-        protected EncryptCommon(Boolean fEmitTag, Boolean fEmitContent) : base(fEmitTag, fEmitContent) { }
+        protected EncryptCommon(Boolean fEmitTag, Boolean fEmitContent, string context) : base(fEmitTag, fEmitContent)
+        {
+            _context = context;
+        }
+
+        protected byte[] RgbEncrypted { get; set; }
 
         protected void DecryptWithKey(byte[] CEK)
         {
-            if (_rgbEncrypted == null)
+            if (RgbEncrypted == null)
                 throw new CoseException("No Encrypted Content Specified.");
             if (CEK == null)
                 throw new CoseException("Null Key Supplied");
@@ -156,12 +160,12 @@ namespace Com.AugustCellars.COSE
 
         public byte[] GetEncryptedContent()
         {
-            return _rgbEncrypted;
+            return RgbEncrypted;
         }
 
         public void SetEncryptedContent(byte[] rgb)
         {
-            _rgbEncrypted = rgb;
+            RgbEncrypted = rgb;
         }
 
         public void SetContext(string newContext)
@@ -260,7 +264,7 @@ namespace Com.AugustCellars.COSE
             int len = cipher.ProcessBytes(rgbContent, 0, rgbContent.Length, C, 0);
             len += cipher.DoFinal(C, len);
 
-            _rgbEncrypted = C;
+            RgbEncrypted = C;
 
             return K;
         }
@@ -291,8 +295,8 @@ namespace Com.AugustCellars.COSE
             AeadParameters parameters = new AeadParameters(ContentKey, 128, IV, getAADBytes());
 
             cipher.Init(false, parameters);
-            byte[] C = new byte[cipher.GetOutputSize(_rgbEncrypted.Length)];
-            int len = cipher.ProcessBytes(_rgbEncrypted, 0, _rgbEncrypted.Length, C, 0);
+            byte[] C = new byte[cipher.GetOutputSize(RgbEncrypted.Length)];
+            int len = cipher.ProcessBytes(RgbEncrypted, 0, RgbEncrypted.Length, C, 0);
             len += cipher.DoFinal(C, len);
 
             rgbContent = C;
@@ -393,7 +397,7 @@ namespace Com.AugustCellars.COSE
             int len = cipher.ProcessBytes(rgbContent, 0, rgbContent.Length, C, 0);
             len += cipher.DoFinal(C, len);
 
-            _rgbEncrypted = C;
+            RgbEncrypted = C;
 
             return K;
         }
@@ -485,8 +489,8 @@ namespace Com.AugustCellars.COSE
             AeadParameters parameters = new AeadParameters(ContentKey, cbitTag, IV, getAADBytes());
 
             cipher.Init(false, parameters);
-            byte[] C = new byte[cipher.GetOutputSize(_rgbEncrypted.Length)];
-            int len = cipher.ProcessBytes(_rgbEncrypted, 0, _rgbEncrypted.Length, C, 0);
+            byte[] C = new byte[cipher.GetOutputSize(RgbEncrypted.Length)];
+            int len = cipher.ProcessBytes(RgbEncrypted, 0, RgbEncrypted.Length, C, 0);
             len += cipher.DoFinal(C, len);
 
             rgbContent = C;
@@ -589,11 +593,11 @@ namespace Com.AugustCellars.COSE
             CBORObject obj = CBORObject.NewArray();
 
             obj.Add(_context);
-            if (objProtected.Count == 0)
+            if (ProtectedMap.Count == 0)
                 obj.Add(CBORObject.FromObject(new byte[0]));
             else
-                obj.Add(objProtected.EncodeToBytes());
-            obj.Add(CBORObject.FromObject(externalData));
+                obj.Add(ProtectedMap.EncodeToBytes());
+            obj.Add(CBORObject.FromObject(ExternalData));
 
             // Console.WriteLine("COSE AAD = " + BitConverter.ToString(obj.EncodeToBytes()));
 

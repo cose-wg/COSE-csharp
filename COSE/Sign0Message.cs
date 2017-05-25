@@ -55,17 +55,17 @@ namespace Com.AugustCellars.COSE
             if (messageObject.Count != 4) throw new CoseException("Invalid Sign1 structure");
 
             if (messageObject[0].Type == CBORType.ByteString) {
-                if (messageObject[0].GetByteString().Length == 0) objProtected = CBORObject.NewMap();
+                if (messageObject[0].GetByteString().Length == 0) ProtectedMap = CBORObject.NewMap();
                 else {
-                    _rgbProtected = messageObject[0].GetByteString();
-                    objProtected = CBORObject.DecodeFromBytes(_rgbProtected);
-                    if (objProtected.Count == 0) _rgbProtected = new byte[0];
+                    ProtectedBytes = messageObject[0].GetByteString();
+                    ProtectedMap = CBORObject.DecodeFromBytes(ProtectedBytes);
+                    if (ProtectedMap.Count == 0) ProtectedBytes = new byte[0];
                 }
             }
             else throw new CoseException("Invalid Sign1 structure");
 
             if (messageObject[1].Type == CBORType.Map) {
-                objUnprotected = messageObject[1];
+                UnprotectedMap = messageObject[1];
             }
             else throw new CoseException("Invalid Sign1 structure");
 
@@ -82,13 +82,13 @@ namespace Com.AugustCellars.COSE
 
             obj = CBORObject.NewArray();
 
-            if ((objProtected != null) && (objProtected.Count > 0)) {
-                obj.Add(objProtected.EncodeToBytes());
+            if ((ProtectedMap != null) && (ProtectedMap.Count > 0)) {
+                obj.Add(ProtectedMap.EncodeToBytes());
             }
             else obj.Add(new byte[0]);
 
-            if ((objUnprotected == null) || (objUnprotected.Count == 0)) obj.Add(CBORObject.NewMap());
-            else obj.Add(objUnprotected); // Add unprotected attributes
+            if ((UnprotectedMap == null) || (UnprotectedMap.Count == 0)) obj.Add(CBORObject.NewMap());
+            else obj.Add(UnprotectedMap); // Add unprotected attributes
 
             obj.Add(rgbContent);
 
@@ -100,7 +100,7 @@ namespace Com.AugustCellars.COSE
 
         private OneKey _keyToSign;
         private byte[] _rgbSignature;
-        protected string _context = "Signature1";
+        private string _context = "Signature1";
 
         public void AddSigner(OneKey key, CBORObject algorithm = null)
         {
@@ -140,8 +140,8 @@ namespace Com.AugustCellars.COSE
         public void PerformSignature()
         {
             CBORObject cborProtected = CBORObject.FromObject(new byte[0]);
-            if ((objProtected != null) && (objProtected.Count > 0)) {
-                byte[] rgb = objProtected.EncodeToBytes();
+            if ((ProtectedMap != null) && (ProtectedMap.Count > 0)) {
+                byte[] rgb = ProtectedMap.EncodeToBytes();
                 cborProtected = CBORObject.FromObject(rgb);
             }
 
@@ -149,7 +149,7 @@ namespace Com.AugustCellars.COSE
                 CBORObject signObj = CBORObject.NewArray();
                 signObj.Add(_context);
                 signObj.Add(cborProtected);
-                signObj.Add(externalData); // External AAD
+                signObj.Add(ExternalData); // External AAD
                 signObj.Add(rgbContent);
 
                 _rgbSignature = _Sign(toBeSigned());
@@ -163,15 +163,15 @@ namespace Com.AugustCellars.COSE
         private byte[] toBeSigned()
         {
             CBORObject cborProtected = CBORObject.FromObject(new byte[0]);
-            if ((objProtected != null) && (objProtected.Count > 0)) {
-                byte[] rgb = objProtected.EncodeToBytes();
+            if ((ProtectedMap != null) && (ProtectedMap.Count > 0)) {
+                byte[] rgb = ProtectedMap.EncodeToBytes();
                 cborProtected = CBORObject.FromObject(rgb);
             }
 
             CBORObject signObj = CBORObject.NewArray();
             signObj.Add(_context);
             signObj.Add(cborProtected);
-            signObj.Add(externalData); // External AAD
+            signObj.Add(ExternalData); // External AAD
             signObj.Add(rgbContent);
 
 #if FOR_EXAMPLES
@@ -232,7 +232,7 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Unknown or unsupported key type " + _keyToSign[CoseKeyKeys.KeyType].AsString());
                 }
                 else throw new CoseException("Key type is not correctly encoded");
-                objUnprotected.Add(HeaderKeys.Algorithm, alg);
+                UnprotectedMap.Add(HeaderKeys.Algorithm, alg);
             }
 
             IDigest digest;

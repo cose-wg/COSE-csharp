@@ -16,9 +16,8 @@ namespace Com.AugustCellars.COSE
 
     public class MAC0Message : MacMessageCommon
     {
-        public MAC0Message(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
+        public MAC0Message(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent, "MAC0")
         {
-            _strContext = "MAC0";
             m_tag = Tags.MAC0;
         }
 
@@ -30,11 +29,11 @@ namespace Com.AugustCellars.COSE
             if (obj[0].Type == CBORType.ByteString) {
                 byte[] data = obj[0].GetByteString();
                 if (data.Length == 0) {
-                    objProtected = CBORObject.NewMap();
+                    ProtectedMap = CBORObject.NewMap();
                 }
                 else {
-                    objProtected = CBORObject.DecodeFromBytes(data);
-                    if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid MAC0 structure");
+                    ProtectedMap = CBORObject.DecodeFromBytes(data);
+                    if (ProtectedMap.Type != CBORType.Map) throw new CoseException("Invalid MAC0 structure");
                 }
             }
             else {
@@ -42,7 +41,7 @@ namespace Com.AugustCellars.COSE
             }
 
             //  Unprotected attributes
-            if (obj[1].Type == CBORType.Map) objUnprotected = obj[1];
+            if (obj[1].Type == CBORType.Map) UnprotectedMap = obj[1];
             else throw new CoseException("Invalid MAC0 structure");
 
             // Plain Text
@@ -52,7 +51,7 @@ namespace Com.AugustCellars.COSE
             }
 
             // Authentication tag
-            if (obj[3].Type == CBORType.ByteString) _rgbTag = obj[3].GetByteString();
+            if (obj[3].Type == CBORType.ByteString) RgbTag = obj[3].GetByteString();
             else throw new CoseException("Invalid MAC0 structure");
         }
 
@@ -60,18 +59,18 @@ namespace Com.AugustCellars.COSE
         {
             CBORObject obj;
 
-            if (_rgbTag == null) throw new CoseException("Must call Compute before encoding");
+            if (RgbTag == null) throw new CoseException("Must call Compute before encoding");
 
             obj = CBORObject.NewArray();
 
-            if (objProtected.Count > 0) obj.Add(objProtected.EncodeToBytes());
+            if (ProtectedMap.Count > 0) obj.Add(ProtectedMap.EncodeToBytes());
             else obj.Add(new byte[0]);
 
-            if (objUnprotected.Count > 0) obj.Add(objUnprotected); // Add unprotected attributes
+            if (UnprotectedMap.Count > 0) obj.Add(UnprotectedMap); // Add unprotected attributes
             else obj.Add(CBORObject.NewMap());
 
             obj.Add(rgbContent);      // Add ciphertext
-            obj.Add(_rgbTag);
+            obj.Add(RgbTag);
 
             return obj;
         }
@@ -83,8 +82,8 @@ namespace Com.AugustCellars.COSE
             alg = FindAttribute(HeaderKeys.Algorithm);
             if (alg == null) {
                 alg = AlgorithmValues.HMAC_SHA_256;
-                if (objUnprotected == null) objUnprotected = CBORObject.NewMap();
-                objUnprotected.Add(HeaderKeys.Algorithm, alg);
+                if (UnprotectedMap == null) UnprotectedMap = CBORObject.NewMap();
+                UnprotectedMap.Add(HeaderKeys.Algorithm, alg);
 
             }
 
@@ -94,7 +93,7 @@ namespace Com.AugustCellars.COSE
                 switch (alg.AsString()) {
                 case "AES-CMAC-128/64":
                 case "AES-CMAC-256/64":
-                    _rgbTag = AES_CMAC(alg, ContentKey);
+                    RgbTag = AES_CMAC(alg, ContentKey);
                     break;
 
                 default:
@@ -107,14 +106,14 @@ namespace Com.AugustCellars.COSE
                 case AlgorithmValuesInt.HMAC_SHA_384:
                 case AlgorithmValuesInt.HMAC_SHA_512:
                 case AlgorithmValuesInt.HMAC_SHA_256_64:
-                    _rgbTag = HMAC(alg, ContentKey);
+                    RgbTag = HMAC(alg, ContentKey);
                     break;
 
                 case AlgorithmValuesInt.AES_CBC_MAC_128_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_128_128:
                 case AlgorithmValuesInt.AES_CBC_MAC_256_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_256_128:
-                    _rgbTag = AES_CBC_MAC(alg, ContentKey);
+                    RgbTag = AES_CBC_MAC(alg, ContentKey);
                     break;
 
                 default:
@@ -222,7 +221,7 @@ namespace Com.AugustCellars.COSE
 
             bool fReturn = true;
             for (int i = 0; i < rgbCheck.Length; i++) {
-                fReturn &= (_rgbTag[i] == rgbCheck[i]);
+                fReturn &= (RgbTag[i] == rgbCheck[i]);
             }
             return fReturn;
         }
@@ -231,13 +230,12 @@ namespace Com.AugustCellars.COSE
     public class MACMessage : MacMessageCommon
     {
 
-        public MACMessage(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent)
+        public MACMessage(bool fEmitTag = true, bool fEmitContent = true) : base(fEmitTag, fEmitContent, "MAC")
         {
             m_tag = Tags.MAC;
-            _strContext = "MAC";
         }
 
-        protected List<Recipient> _recipientList = new List<Recipient>();
+        private readonly List<Recipient> _recipientList = new List<Recipient>();
         public List<Recipient> RecipientList { get { return _recipientList; } }
 
         public virtual void AddRecipient(Recipient recipient)
@@ -256,17 +254,17 @@ namespace Com.AugustCellars.COSE
             if (obj[0].Type == CBORType.ByteString) {
                 byte[] data = obj[0].GetByteString();
                 if (data.Length > 0) {
-                    objProtected = CBORObject.DecodeFromBytes(data);
-                    if (objProtected.Type != CBORType.Map) throw new CoseException("Invalid MAC structure");
+                    ProtectedMap = CBORObject.DecodeFromBytes(data);
+                    if (ProtectedMap.Type != CBORType.Map) throw new CoseException("Invalid MAC structure");
                 }
-                else objProtected = CBORObject.NewMap();
+                else ProtectedMap = CBORObject.NewMap();
             }
             else {
                 throw new CoseException("Invalid MAC structure");
             }
 
             //  Unprotected attributes
-            if (obj[1].Type == CBORType.Map) objUnprotected = obj[1];
+            if (obj[1].Type == CBORType.Map) UnprotectedMap = obj[1];
             else throw new CoseException("Invalid MAC structure");
 
             // Plain Text
@@ -276,7 +274,7 @@ namespace Com.AugustCellars.COSE
             }
 
             // Authentication tag
-            if (obj[3].Type == CBORType.ByteString) _rgbTag = obj[3].GetByteString();
+            if (obj[3].Type == CBORType.ByteString) RgbTag = obj[3].GetByteString();
             else throw new CoseException("Invalid MAC structure");
 
 
@@ -296,18 +294,18 @@ namespace Com.AugustCellars.COSE
         {
             CBORObject obj;
 
-            if (_rgbTag == null) MAC();
+            if (RgbTag == null) MAC();
 
             obj = CBORObject.NewArray();
 
-            if (objProtected.Count > 0) obj.Add(objProtected.EncodeToBytes());
+            if (ProtectedMap.Count > 0) obj.Add(ProtectedMap.EncodeToBytes());
             else obj.Add(new byte[0]);
 
-            if (objUnprotected.Count > 0) obj.Add(objUnprotected); // Add unprotected attributes
+            if (UnprotectedMap.Count > 0) obj.Add(UnprotectedMap); // Add unprotected attributes
             else obj.Add(CBORObject.NewMap());
 
             obj.Add(rgbContent);      // Add ciphertext
-            obj.Add(_rgbTag);
+            obj.Add(RgbTag);
 
             if ((!m_forceArray) && (_recipientList.Count == 1)) {
                 CBORObject recipient = _recipientList[0].Encode();
@@ -349,8 +347,8 @@ public virtual void Compute()
             alg = FindAttribute(HeaderKeys.Algorithm);
             if (alg == null) {
                 alg = AlgorithmValues.HMAC_SHA_256;
-                if (objUnprotected == null) objUnprotected = CBORObject.NewMap();
-                objUnprotected.Add(HeaderKeys.Algorithm, alg);
+                if (UnprotectedMap == null) UnprotectedMap = CBORObject.NewMap();
+                UnprotectedMap.Add(HeaderKeys.Algorithm, alg);
 
             }
             if (alg.Type == CBORType.TextString) {
@@ -425,7 +423,7 @@ public virtual void Compute()
                 switch (alg.AsString()) {
                 case "AES-CMAC-128/64":
                 case "AES-CMAC-256/64":
-                    _rgbTag = AES_CMAC(alg, ContentKey);
+                    RgbTag = AES_CMAC(alg, ContentKey);
                     break;
 
                 default:
@@ -438,14 +436,14 @@ public virtual void Compute()
                 case AlgorithmValuesInt.HMAC_SHA_384:
                 case AlgorithmValuesInt.HMAC_SHA_512:
                 case AlgorithmValuesInt.HMAC_SHA_256_64:
-                    _rgbTag = HMAC(alg, ContentKey);
+                    RgbTag = HMAC(alg, ContentKey);
                     break;
 
                 case AlgorithmValuesInt.AES_CBC_MAC_128_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_128_128:
                 case AlgorithmValuesInt.AES_CBC_MAC_256_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_256_128:
-                    _rgbTag = AES_CBC_MAC(alg, ContentKey);
+                    RgbTag = AES_CBC_MAC(alg, ContentKey);
                     break;
 
                 default:
@@ -564,7 +562,7 @@ public virtual void Compute()
 
             bool fReturn = true;
             for (int i = 0; i < rgbCheck.Length; i++) {
-                fReturn &= (_rgbTag[i] == rgbCheck[i]);
+                fReturn &= (RgbTag[i] == rgbCheck[i]);
             }
             return fReturn;
         }
@@ -578,10 +576,14 @@ public virtual void Compute()
 
     public abstract class MacMessageCommon : Message
     {
-        protected byte[] _rgbTag;
-        protected string _strContext = "";
+        private readonly string _strContext;
 
-        protected MacMessageCommon(bool fEmitTag, bool fEmitContent) : base(fEmitTag, fEmitContent) { }
+        protected MacMessageCommon(bool fEmitTag, bool fEmitContent, string context) : base(fEmitTag, fEmitContent)
+        {
+            _strContext = context;
+        }
+
+        protected byte[] RgbTag { get; set; }
 
 #if FOR_EXAMPLES
         public byte[] BuildContentBytes()
@@ -592,12 +594,12 @@ public virtual void Compute()
             CBORObject obj = CBORObject.NewArray();
 
             obj.Add(_strContext);
-            if (_rgbProtected == null) {
-                if (objProtected.Count > 0) _rgbProtected = objProtected.EncodeToBytes();
-                else _rgbProtected = new byte[0];
+            if (ProtectedBytes == null) {
+                if (ProtectedMap.Count > 0) ProtectedBytes = ProtectedMap.EncodeToBytes();
+                else ProtectedBytes = new byte[0];
             }
-            obj.Add(_rgbProtected);
-            if (externalData != null) obj.Add(CBORObject.FromObject(externalData));
+            obj.Add(ProtectedBytes);
+            if (ExternalData != null) obj.Add(CBORObject.FromObject(ExternalData));
             else obj.Add(CBORObject.FromObject(new byte[0]));
             obj.Add(rgbContent);
 
