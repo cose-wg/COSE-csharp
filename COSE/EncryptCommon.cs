@@ -550,7 +550,7 @@ namespace Com.AugustCellars.COSE
             int len = cipher.ProcessBytes(rgbContent, 0, rgbContent.Length, C, 0);
             len += cipher.DoFinal(C, len);
 
-            _rgbEncrypted = C;
+            RgbEncrypted = C;
 
             return K;
 
@@ -579,8 +579,8 @@ namespace Com.AugustCellars.COSE
             AeadParameters parameters = new AeadParameters(ContentKey, 128, IV, getAADBytes());
 
             cipher.Init(false, parameters);
-            byte[] C = new byte[cipher.GetOutputSize(_rgbEncrypted.Length)];
-            int len = cipher.ProcessBytes(_rgbEncrypted, 0, _rgbEncrypted.Length, C, 0);
+            byte[] C = new byte[cipher.GetOutputSize(RgbEncrypted.Length)];
+            int len = cipher.ProcessBytes(RgbEncrypted, 0, RgbEncrypted.Length, C, 0);
             len += cipher.DoFinal(C, len);
 
             rgbContent = C;
