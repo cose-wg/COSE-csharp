@@ -2,28 +2,31 @@
 <package>
   <metadata>
     <id>Com.AugustCellars.COSE</id>
-    <version>1.0.2.0</version>
+    <version>1.0.3.0</version>
     <authors>Jim Schaad</authors>
     <owners>jimsch</owners>
     <licenseUrl>https://github.com/cose-wg/COSE-csharp/license.md</licenseUrl>
     <projectUrl>https://github.com/cose-wg/COSE-csharp</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <releaseNotes>
-    1.0.2
-    - Previous release had the prior net4 library.
-    1.0.1
-    - path for the 4.0 version has changed
-    - Add new filter functions to OneKey for use with KeySet.Where()
-    - Added functions
-    1.0.0
-    * Name space has been changed from COSE to Com.AugustCellars.COSE
+1.0.3
+  - Make the library be CLS Compliant and mark it as such.
+  - Apply strong signing to distribution
+1.0.2
+  - Previous release had the prior net4 library.
+1.0.1
+  - path for the 4.0 version has changed
+  - Add new filter functions to OneKey for use with KeySet.Where()
+  - Added functions
+1.0.0
+  * Name space has been changed from COSE to Com.AugustCellars.COSE
     </releaseNotes>
     <description>An implementation of the CBOR Object Signing and Encryption standards.</description>
     <copyright>Copyright @2016-7 Jim Schaad</copyright>
     <tags>COSE CBOR</tags>
     <dependencies>
-      <dependency id="PeterO.CBOR" version="2.4.2"/>
-      <dependency id="PeterO.Numbers" version="0.2.2"/>
+      <dependency id="PeterO.CBOR" version="2.5.1"/>
+      <dependency id="PeterO.Numbers" version="0.4.0"/>
       <dependency id="BouncyCastle" version="1.8.1"/>
     </dependencies>
   </metadata>
