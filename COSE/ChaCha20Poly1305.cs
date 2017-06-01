@@ -105,7 +105,7 @@ namespace Org.BouncyCastle.Crypto.Engines
                 int copied = 0;
                 while (len > copied) {
                     if (_currentBlockOffset == BLOCK_SIZE) {
-                        processBlock();
+                        ProcessBlock();
                         _currentBlockOffset = 0;
                     }
 
@@ -118,7 +118,7 @@ namespace Org.BouncyCastle.Crypto.Engines
             }
 
             static BigInteger HighBit = new BigInteger(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-            private void processBlock()
+            private void ProcessBlock()
             {
                 if (_currentBlockOffset < BLOCK_SIZE) {
                     _currentBlock[_currentBlockOffset] = 1;
@@ -146,7 +146,7 @@ namespace Org.BouncyCastle.Crypto.Engines
 
                 if (_currentBlockOffset > 0) {
                     // Process padded block
-                    processBlock();
+                    ProcessBlock();
                 }
 
                 _a = _a.Add(_s);
@@ -406,6 +406,7 @@ namespace Org.BouncyCastle.Crypto.Engines
             _aadLength = 0;
         }
 
+#if false
         public static uint LE_To_UInt32(byte[] bs, int off)
         {
             return (uint) bs[off]
@@ -413,7 +414,7 @@ namespace Org.BouncyCastle.Crypto.Engines
                 | (uint) bs[off + 2] << 16
                 | (uint) bs[off + 3] << 24;
         }
-
+#endif
 
         public static void SelfTest()
         {
@@ -500,4 +501,4 @@ namespace Org.BouncyCastle.Crypto.Engines
 
     }
 #endif
-}
+    }
