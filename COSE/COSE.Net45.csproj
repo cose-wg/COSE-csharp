@@ -33,8 +33,6 @@
     <DocumentationFile>bin\Release45\COSE.xml</DocumentationFile>
     <AssemblyOriginatorKeyFile>AugustCellarsStrongKey.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-  <PropertyGroup>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
       <HintPath>packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
@@ -85,3 +83,4 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+</Project>
