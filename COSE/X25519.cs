@@ -91,6 +91,7 @@ namespace Com.AugustCellars.COSE
         static readonly int bits = 448;
         static readonly BigInteger a24 = new BigInteger("39081");
         static readonly BigInteger p = new BigInteger("2").Pow(448).Subtract(new BigInteger("2").Pow(224)).Subtract(new BigInteger("1"));
+        static readonly BigInteger _Five = new BigInteger("5");
 
         static public void Mask(byte[] key)
         {
@@ -98,7 +99,22 @@ namespace Com.AugustCellars.COSE
             key[55] |= 128;
         }
 
-        static public byte[] CalculateAgreement(byte[] publicKey, byte[] privateKey)
+        public static byte[] GetPublic(byte[] rgbPrivate)
+        {
+            byte[] X = new byte[rgbPrivate.Length];
+            Array.Copy(rgbPrivate, X, rgbPrivate.Length);
+
+            Mask(X);
+            Array.Reverse(X);
+            BigInteger AlicePrivate = new BigInteger(1, X);
+
+            BigInteger result = Compute(AlicePrivate, _Five, crvData);
+            X = result.ToByteArrayUnsigned();
+            Array.Reverse(X);
+            return X;
+        }
+
+        public static byte[] CalculateAgreement(byte[] publicKey, byte[] privateKey)
         {
             byte[] tmp = new byte[privateKey.Length];
             Array.Copy(privateKey, tmp, privateKey.Length);

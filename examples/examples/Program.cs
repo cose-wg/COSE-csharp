@@ -1590,7 +1590,7 @@ namespace examples
                     SignMessage signMsg = null;
 
                     try {
-                        Message msg = Message.DecodeFromBytes(rgb, Tags.Signed);
+                        Message msg = Message.DecodeFromBytes(rgb, Tags.Sign);
                         signMsg = (SignMessage) msg;
                     }
                     catch (Exception e) {
