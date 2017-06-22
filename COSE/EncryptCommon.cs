@@ -145,7 +145,7 @@ namespace Com.AugustCellars.COSE
             }
 
 #if FOR_EXAMPLES
-            _cek = ContentKey;
+            _cek = contentKey;
 #endif // FOR_EXAMPLES
         }
 

@@ -429,6 +429,12 @@ namespace Com.AugustCellars.COSE
 
             return false;
         }
+
+
+        /// <summary>
+        /// Location to store user defined data that is associated with a key.
+        /// </summary>
+        public object UserData { get; set; }
     }
 
     /// <summary>
