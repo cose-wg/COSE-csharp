@@ -39,6 +39,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Deploy|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Deploy40\</OutputPath>
+    <IntermediateOutputPath>obj\Deploy40</IntermediateOutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CBOR, Version=2.5.1.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
       <HintPath>packages\PeterO.Cbor.2.5.1\lib\portable-net40+sl5+win+wpa81+wp80\CBOR.dll</HintPath>

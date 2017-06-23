@@ -31,6 +31,17 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release40\COSE.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Deploy|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Deploy40\</OutputPath>
+    <IntermediateOutputPath>obj\Deploy40</IntermediateOutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <SignAssembly>true</SignAssembly>
+    <DocumentationFile>bin\Deploy40\COSE.xml</DocumentationFile>
     <AssemblyOriginatorKeyFile>AugustCellarsStrongKey.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
