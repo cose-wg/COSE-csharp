@@ -2,13 +2,18 @@
 <package>
   <metadata>
     <id>Com.AugustCellars.COSE</id>
-    <version>1.0.3.0</version>
+    <version>1.0.5.0</version>
     <authors>Jim Schaad</authors>
     <owners>jimsch</owners>
     <licenseUrl>https://github.com/cose-wg/COSE-csharp/license.md</licenseUrl>
     <projectUrl>https://github.com/cose-wg/COSE-csharp</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <releaseNotes>
+1.0.5
+  - Add strong signature to the net 4.5 file.      
+1.0.4
+  - Add user data field to OneKey class
+  - Kill 
 1.0.3
   - Make the library be CLS Compliant and mark it as such.
   - Apply strong signing to distribution
@@ -31,11 +36,11 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="bin/Release40/COSE.dll" target="lib\portable-net40+sl5+win+wpa81+wp8"/>
-    <file src="bin/Release40/COSE.pdb" target="lib\portable-net40+sl5+win+wpa81+wp8"/>
-    <file src="bin/Release40/COSE.xml" target="lib\portable-net40+sl5+win+wpa81+wp8"/>
-    <file src="bin/Release45/COSE.dll" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8"/>
-    <file src="bin/Release45/COSE.pdb" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8"/>
-    <file src="bin/Release45/COSE.xml" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8"/>
+    <file src="bin/Deploy40/COSE.dll" target="lib\portable-net40+sl5+win+wpa81+wp8"/>
+    <file src="bin/Deploy40/COSE.pdb" target="lib\portable-net40+sl5+win+wpa81+wp8"/>
+    <file src="bin/Deploy40/COSE.xml" target="lib\portable-net40+sl5+win+wpa81+wp8"/>
+    <file src="bin/Deploy45/COSE.dll" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8"/>
+    <file src="bin/Deploy45/COSE.pdb" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8"/>
+    <file src="bin/Deploy45/COSE.xml" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8"/>
   </files>
 </package>
