@@ -2,13 +2,15 @@
 <package>
   <metadata>
     <id>Com.AugustCellars.COSE</id>
-    <version>1.0.5.0</version>
+    <version>1.0.5.2</version>
     <authors>Jim Schaad</authors>
     <owners>jimsch</owners>
     <licenseUrl>https://github.com/cose-wg/COSE-csharp/license.md</licenseUrl>
     <projectUrl>https://github.com/cose-wg/COSE-csharp</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <releaseNotes>
+1.0.5.2
+  - Update net 4.5 file to use latest CBOR      
 1.0.5
   - Add strong signature to the net 4.5 file.      
 1.0.4
@@ -30,7 +32,7 @@
     <copyright>Copyright @2016-7 Jim Schaad</copyright>
     <tags>COSE CBOR</tags>
     <dependencies>
-      <dependency id="PeterO.CBOR" version="2.5.1"/>
+      <dependency id="PeterO.CBOR" version="2.5.2"/>
       <dependency id="PeterO.Numbers" version="0.4.0"/>
       <dependency id="BouncyCastle" version="1.8.1"/>
     </dependencies>
