@@ -72,6 +72,15 @@ namespace Com.AugustCellars.COSE
         }
 
         /// <summary>
+        /// Remove the given key from the list if it is on it.
+        /// </summary>
+        /// <param name="key"></param>
+        public void RemoveKey(OneKey key)
+        {
+            _keyList.Remove(key);
+        }
+
+        /// <summary>
         /// Encode the set of keys in the key set as a CBOR object
         /// </summary>
         /// <returns></returns>
