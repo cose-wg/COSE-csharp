@@ -285,9 +285,9 @@ namespace Com.AugustCellars.COSE
                 if (messageObject.GetTags().Count() != 1) throw new CoseException("Malformed message - too many tags");
 
                 if (defaultTag == Tags.Unknown) {
-                    defaultTag = (Tags) messageObject.OutermostTag.intValue();
+                    defaultTag = (Tags) messageObject.MostOuterTag.ToInt32Checked();
                 }
-                else if (defaultTag != (Tags) messageObject.OutermostTag.intValue()) {
+                else if (defaultTag != (Tags) messageObject.MostOuterTag.ToInt32Checked()) {
                     throw new CoseException("Passed in tag does not match actual tag");
                 }
             }
