@@ -24,6 +24,8 @@ public class CborWebToken
     {
         CBORObject claims = CBORObject.NewMap();
 
+        private static readonly CBORObject _TagProfile = CBORObject.FromObject("profile");
+
         public CborWebToken()
         {
 
@@ -33,6 +35,11 @@ public class CborWebToken
         {
             if (cbor.Type != CBORType.Map) throw new CwtException("CWT must be a map");
             claims = cbor;
+        }
+
+        public ICollection<CBORObject> AllClaimKeys
+        {
+            get => claims.Keys;
         }
 
         public String Audience
@@ -47,9 +54,20 @@ public class CborWebToken
             set => claims.Add((int) ClaimId.Cnf, value.AsCBOR);
         }
 
+        public string Profile
+        {
+            get => claims.ContainsKey(_TagProfile) ? claims[_TagProfile].AsString() : null;
+            set => claims.Add(_TagProfile, value);
+        }
+
         public bool HasClaim(ClaimId claimId)
         {
             return claims.ContainsKey(CBORObject.FromObject(claimId));
+        }
+
+        public CBORObject GetClaim(CBORObject claimKey)
+        {
+            return claims[claimKey];
         }
 
         public void SetClaim(ClaimId claim, string value)
