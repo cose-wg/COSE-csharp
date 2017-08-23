@@ -296,7 +296,7 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Passed in tag does not match actual tag");
                 }
 #else
-                else if (defaultTag != (Tags) messageObject.OuterostTag.intValue()) {
+                else if (defaultTag != (Tags) messageObject.OutermostTag.intValue()) {
                     throw new CoseException("Passed in tag does not match actual tag");
                 }
 #endif

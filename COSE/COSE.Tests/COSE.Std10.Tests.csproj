@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -24,8 +24,8 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <IntermediateOutputPath>obj\Debug45</IntermediateOutputPath>
-    <OutputPath>bin\Debug45\</OutputPath>
+    <IntermediateOutputPath>obj\Debug\Std10</IntermediateOutputPath>
+    <OutputPath>bin\Debug\Std10\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -33,8 +33,8 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release45\</OutputPath>
-    <IntermediateOutputPath>obj\Release45</IntermediateOutputPath>
+    <OutputPath>bin\Release\Std10\</OutputPath>
+    <IntermediateOutputPath>obj\Release\Std10</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -42,8 +42,8 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Deploy|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Deploy45\</OutputPath>
-    <IntermediateOutputPath>obj\Deploy45</IntermediateOutputPath>
+    <OutputPath>bin\Deploy\Std10\</OutputPath>
+    <IntermediateOutputPath>obj\Deploy\Std10</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
