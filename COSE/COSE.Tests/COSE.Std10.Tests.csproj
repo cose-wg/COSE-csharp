@@ -62,9 +62,9 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\COSE.Net45.csproj">
+    <ProjectReference Include="..\COSE.Std10.csproj">
       <Project>{D02F476F-BC2C-4D01-BEDE-EB8E79DD050E}</Project>
-      <Name>COSE.Net45</Name>
+      <Name>COSE.Std10</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
