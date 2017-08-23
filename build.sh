@@ -1,6 +1,8 @@
 #!/bin/bash
 
 set -ev
+ls
+
 cd COSE
 
 echo $SLN
@@ -8,7 +10,7 @@ echo $VERSION
 echo $TARGET
 ls
 
-mono nuget restore $SLN
+mono ../nuget restore $SLN
 
 msbuild /p:Configuration=$VERSION $SLN
 
