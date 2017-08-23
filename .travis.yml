@@ -3,13 +3,13 @@ mono:
   - latest
 
 env:
-   - SLN=COAP.Net40.sln
+   - SLN=COSE.Net40.sln
      TARGET=Net40
      VERSION=Release
-   - SLN=COAP.Net45.sln
+   - SLN=COSE.Net45.sln
      TARGET=Net45
      VERSION=Release
-   - SLN=COAP.Std10.sln
+   - SLN=COSE.Std10.sln
      TARGET=Std10
      VERSION=Release
 
