@@ -7,13 +7,12 @@ echo $SLN
 echo $VERSION
 echo $TARGET
 
-mono nuget.exe restore COSE/$SLN
 
 cd COSE
 
 ls
 
-
+mono ../nuget.exe restore $SLN
 
 msbuild /p:Configuration=$VERSION $SLN
 
