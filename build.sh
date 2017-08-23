@@ -7,7 +7,7 @@ echo $SLN
 echo $VERSION
 echo $TARGET
 
-mono nuget restore COSE/$SLN
+mono nuget.exe restore COSE/$SLN
 
 cd COSE
 
