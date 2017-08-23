@@ -3,14 +3,17 @@
 set -ev
 ls
 
-cd COSE
-
 echo $SLN
 echo $VERSION
 echo $TARGET
+
+mono nuget restore COSE/$SLN
+
+cd COSE
+
 ls
 
-mono ../nuget restore $SLN
+
 
 msbuild /p:Configuration=$VERSION $SLN
 
