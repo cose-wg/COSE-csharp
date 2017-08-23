@@ -16,8 +16,8 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug40\</OutputPath>
-    <IntermediateOutputPath>obj\Debug40</IntermediateOutputPath>
+    <OutputPath>bin\Debug\Net40\</OutputPath>
+    <IntermediateOutputPath>obj\Debug\Net40</IntermediateOutputPath>
     <DefineConstants>TRACE;DEBUG;USE_ARRAY FOR_EXAMPLES</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -25,23 +25,23 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release40\</OutputPath>
-    <IntermediateOutputPath>obj\Release40</IntermediateOutputPath>
+    <OutputPath>bin\Release\Net40\</OutputPath>
+    <IntermediateOutputPath>obj\Release\Net40</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release40\COSE.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\Net40\COSE.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Deploy|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Deploy40\</OutputPath>
-    <IntermediateOutputPath>obj\Deploy40</IntermediateOutputPath>
+    <OutputPath>bin\Deploy\Net40\</OutputPath>
+    <IntermediateOutputPath>obj\Deploy\Net40</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <SignAssembly>true</SignAssembly>
-    <DocumentationFile>bin\Deploy40\COSE.xml</DocumentationFile>
+    <DocumentationFile>bin\Deploy\Net40\COSE.xml</DocumentationFile>
     <AssemblyOriginatorKeyFile>AugustCellarsStrongKey.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
