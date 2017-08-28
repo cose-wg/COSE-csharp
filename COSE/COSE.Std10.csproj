@@ -42,6 +42,8 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Deploy|AnyCPU' ">
     <AssemblyOriginatorKeyFile>AugustCellarsStrongKey.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
+    <IntermediateOutputPath>obj\Deploy\Std10</IntermediateOutputPath>
+    <OutputPath>bin\Deploy\Std10\<OutputPath>
   </PropertyGroup>
   
 
