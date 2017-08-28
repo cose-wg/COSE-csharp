@@ -1,6 +1,7 @@
 language: csharp
 mono:
 - latest
+dist: trusty
 
 env:
 #   - SLN=COSE.Net40.sln
