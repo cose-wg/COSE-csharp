@@ -4,6 +4,7 @@
     <TargetFramework>netstandard1.0</TargetFramework>
     <PackageId>Com.AugustCellars.COSE</PackageId>
     <PackageVersion>1.0.5.3</PackageVersion>
+    <Version>1.0.5.3</Version>
     <Authors>Jim Schaad</Authors>
     <Description>An implementation of the CBOR Object Signing and Encryption standards.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -31,6 +32,8 @@
 1.0.0
   * Name space has been changed from COSE to Com.AugustCellars.COSE
     </PackageReleaseNotes>
+    
+    <Configurations>Debug;Release;Deploy</Configurations>
   </PropertyGroup>
 
   <PropertyGroup>
