@@ -285,21 +285,11 @@ namespace Com.AugustCellars.COSE
                 if (messageObject.GetTags().Count() != 1) throw new CoseException("Malformed message - too many tags");
 
                 if (defaultTag == Tags.Unknown) {
-#if NETSTD10
                     defaultTag = (Tags) messageObject.MostOuterTag.ToInt32Checked();
-#else
-                    defaultTag = (Tags) messageObject.OutermostTag.intValue();
-#endif
                 }
-#if NETSTD10
                 else if (defaultTag != (Tags) messageObject.MostOuterTag.ToInt32Checked()) {
                     throw new CoseException("Passed in tag does not match actual tag");
                 }
-#else
-                else if (defaultTag != (Tags) messageObject.OutermostTag.intValue()) {
-                    throw new CoseException("Passed in tag does not match actual tag");
-                }
-#endif
             }
 
             switch (defaultTag) {
@@ -397,20 +387,16 @@ namespace Com.AugustCellars.COSE
         public byte[] GetContent() { return rgbContent; }
         public string GetContentAsString()
         {
-            return Encoding.ASCII.GetString(rgbContent);
+            return Encoding.UTF8.GetString(rgbContent, 0, rgbContent.Length);
         }
 
         public void SetContent(byte[] contentIn) { rgbContent = contentIn; }
         public void SetContent(String contentString)
         {
-            rgbContent = Encoding.ASCII.GetBytes(contentString);
+            rgbContent = Encoding.UTF8.GetBytes(contentString);
         }
     }
 
-
-
- 
-        [Serializable]
     public class CoseException : Exception
 
     {

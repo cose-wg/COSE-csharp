@@ -390,6 +390,18 @@ namespace Com.AugustCellars.COSE
         }
 
         /// <summary>
+        /// Does the key have the specified key type?
+        /// </summary>
+        /// <param name="keyType">Key type to be checked.</param>
+        /// <returns></returns>
+        public Boolean HasKeyType(CBORObject keyType)
+        {
+            CBORObject obj = _map[CoseKeyKeys.KeyType];
+            if (obj == null) return false;
+            return obj.Equals(keyType);
+        }
+
+        /// <summary>
         /// Check to see if the KID value matches
         /// </summary>
         /// <param name="kidToMatch">value of key to match</param>

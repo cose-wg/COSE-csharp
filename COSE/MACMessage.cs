@@ -612,7 +612,7 @@ public virtual void Compute()
             int cbitTag;
             //  Defaults to PKCS#7
 
-            IBlockCipher aes = new AesFastEngine();
+            IBlockCipher aes = new AesEngine();
 
             KeyParameter ContentKey;
 
@@ -673,7 +673,7 @@ public virtual void Compute()
             int cbitKey;
             int cbitTag;
 
-            IBlockCipher aes = new AesFastEngine();
+            IBlockCipher aes = new AesEngine();
             CMac mac = new CMac(aes);
 
             KeyParameter ContentKey;

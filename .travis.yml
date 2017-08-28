@@ -1,11 +1,11 @@
 language: csharp
 env:
-   - SLN=COSE.Net40.sln
-     TARGET=Net40
-     VERSION=Release
-   - SLN=COSE.Net45.sln
-     TARGET=Net45
-     VERSION=Release
+#   - SLN=COSE.Net40.sln
+#     TARGET=Net40
+#     VERSION=Release
+#   - SLN=COSE.Net45.sln
+#     TARGET=Net45
+#     VERSION=Release
    - SLN=COSE.Std10.sln
      TARGET=Std10
      VERSION=Release
