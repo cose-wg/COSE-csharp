@@ -1,4 +1,7 @@
 language: csharp
+mono:
+- latest
+
 env:
 #   - SLN=COSE.Net40.sln
 #     TARGET=Net40
