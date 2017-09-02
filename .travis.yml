@@ -14,9 +14,9 @@ env:
 
 matrix:
   include:
-     - dotnet:1.0.1
-        mono: none
-        env: DOTDETCORE=1
+     - dotnet: 1.0.1
+       mono: none
+       env: DOTDETCORE=1
      - mono: latest
 
 install:
