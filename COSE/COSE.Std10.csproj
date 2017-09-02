@@ -4,8 +4,8 @@
     <TargetFramework>netstandard1.0</TargetFramework>
     <PackageId>Com.AugustCellars.COSE</PackageId>
     <Id>Com.AugustCellars.COSE</Id>
-    <PackageVersion>1.0.5.4</PackageVersion>
-    <Version>1.0.5.4</Version>
+    <PackageVersion>1.1.0.0</PackageVersion>
+    <Version>1.1.0.0</Version>
     <Authors>Jim Schaad</Authors>
     <Description>An implementation of the CBOR Object Signing and Encryption standards.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -13,7 +13,7 @@
     <PackageTags>COSE CBOR</PackageTags>
     
     <PackageReleaseNotes>
-1.0.5.5
+1.1.0.0
   - Update net 4.5 file to use latest CBOR
   - Switch to use NetStandard 1.0 rather than Net 4.5
   - Remove Net 4.0 distribution
