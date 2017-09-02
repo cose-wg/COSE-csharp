@@ -2,22 +2,11 @@ language: csharp
 dist: trusty
 
 env:
-#   - SLN=COSE.Net40.sln
-#     TARGET=Net40
-#     VERSION=Release
-#   - SLN=COSE.Net45.sln
-#     TARGET=Net45
-#     VERSION=Release
    - SLN=COSE.Std10.sln
      TARGET=Std10
      VERSION=Release
 
-matrix:
-  include:
-     - dotnet: 1.0.1
-       mono: none
-       env: DOTDETCORE=1
-     - mono: latest
+mono: latest
 
 install:
    - curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
