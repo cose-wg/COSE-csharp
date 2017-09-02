@@ -14,6 +14,12 @@ env:
      TARGET=Std10
      VERSION=Release
 
+matrix:
+  include:
+     - dotnet:1.0.1
+        mono: none
+        env: DOTDETCORE=1
+     - mono: latest
 
 install:
    - curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe

@@ -3,8 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard1.0</TargetFramework>
     <PackageId>Com.AugustCellars.COSE</PackageId>
-    <PackageVersion>1.0.5.3</PackageVersion>
-    <Version>1.0.5.3</Version>
+    <Id>Com.AugustCellars.COSE</Id>
+    <PackageVersion>1.0.5.4</PackageVersion>
+    <Version>1.0.5.4</Version>
     <Authors>Jim Schaad</Authors>
     <Description>An implementation of the CBOR Object Signing and Encryption standards.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -12,9 +13,10 @@
     <PackageTags>COSE CBOR</PackageTags>
     
     <PackageReleaseNotes>
-1.0.5.3
+1.0.5.5
   - Update net 4.5 file to use latest CBOR
-  - Update to use NetStandard1.0
+  - Switch to use NetStandard 1.0 rather than Net 4.5
+  - Remove Net 4.0 distribution
 1.0.5
   - Add strong signature to the net 4.5 file.      
 1.0.4
@@ -38,8 +40,10 @@
 
   <PropertyGroup>
     <EnableDefaultItems>false</EnableDefaultItems>
+    <AssemblyName>COSE</AssemblyName>
+    <RootNamespace>Com.AugustCellars.COSE</RootNamespace>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Deploy|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Deploy|Any CPU' ">
     <AssemblyOriginatorKeyFile>AugustCellarsStrongKey.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
     <IntermediateOutputPath>obj\Deploy\Std10</IntermediateOutputPath>

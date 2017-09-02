@@ -75,7 +75,7 @@ namespace Com.AugustCellars.COSE
             return obj;
         }
 
-        public void Compute(byte[] ContentKey)
+        public void Compute(byte[] contentKey)
         {
             CBORObject alg;
 
@@ -93,7 +93,7 @@ namespace Com.AugustCellars.COSE
                 switch (alg.AsString()) {
                 case "AES-CMAC-128/64":
                 case "AES-CMAC-256/64":
-                    RgbTag = AES_CMAC(alg, ContentKey);
+                    RgbTag = AES_CMAC(alg, contentKey);
                     break;
 
                 default:
@@ -106,14 +106,14 @@ namespace Com.AugustCellars.COSE
                 case AlgorithmValuesInt.HMAC_SHA_384:
                 case AlgorithmValuesInt.HMAC_SHA_512:
                 case AlgorithmValuesInt.HMAC_SHA_256_64:
-                    RgbTag = HMAC(alg, ContentKey);
+                    RgbTag = HMAC(alg, contentKey);
                     break;
 
                 case AlgorithmValuesInt.AES_CBC_MAC_128_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_128_128:
                 case AlgorithmValuesInt.AES_CBC_MAC_256_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_256_128:
-                    RgbTag = AES_CBC_MAC(alg, ContentKey);
+                    RgbTag = AES_CBC_MAC(alg, contentKey);
                     break;
 
                 default:
@@ -391,7 +391,7 @@ public virtual void Compute()
             }
             else throw new CoseException("Algorithm incorrectly encoded");
 
-            byte[] ContentKey = null;
+            byte[] contentKey = null;
 
             //  Determine if we are doing a direct encryption
             int recipientTypes = 0;
@@ -402,7 +402,7 @@ public virtual void Compute()
                 case RecipientType.keyAgreeDirect:
                     if ((recipientTypes & 1) != 0) throw new CoseException("It is not legal to have two direct recipients in a message");
                     recipientTypes |= 1;
-                    ContentKey = key.GetKey(alg);
+                    contentKey = key.GetKey(alg);
                     break;
 
                 default:
@@ -414,16 +414,16 @@ public virtual void Compute()
             if (recipientTypes == 3) throw new CoseException("It is not legal to mix direct and indirect recipients in a message");
             if (recipientTypes == 0) throw new CoseException("No recipients supplied");
 
-            if (ContentKey == null) {
-                ContentKey = new byte[cbitKey / 8];
-                s_PRNG.NextBytes(ContentKey);
+            if (contentKey == null) {
+                contentKey = new byte[cbitKey / 8];
+                s_PRNG.NextBytes(contentKey);
             }
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
                 case "AES-CMAC-128/64":
                 case "AES-CMAC-256/64":
-                    RgbTag = AES_CMAC(alg, ContentKey);
+                    RgbTag = AES_CMAC(alg, contentKey);
                     break;
 
                 default:
@@ -436,14 +436,14 @@ public virtual void Compute()
                 case AlgorithmValuesInt.HMAC_SHA_384:
                 case AlgorithmValuesInt.HMAC_SHA_512:
                 case AlgorithmValuesInt.HMAC_SHA_256_64:
-                    RgbTag = HMAC(alg, ContentKey);
+                    RgbTag = HMAC(alg, contentKey);
                     break;
 
                 case AlgorithmValuesInt.AES_CBC_MAC_128_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_128_128:
                 case AlgorithmValuesInt.AES_CBC_MAC_256_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_256_128:
-                    RgbTag = AES_CBC_MAC(alg, ContentKey);
+                    RgbTag = AES_CBC_MAC(alg, contentKey);
                     break;
 
                 default:
@@ -454,7 +454,7 @@ public virtual void Compute()
 
 
             foreach (Recipient key in _recipientList) {
-                key.SetContent(ContentKey);
+                key.SetContent(contentKey);
                 key.Encrypt();
             }
 
@@ -517,8 +517,12 @@ public virtual void Compute()
                     }
                     catch (CoseException) { }
                 }
-                else if (recipientReceiver == null) {
-                    ;
+                else if (recipientReceiver.RecipientList.Count > 0) {
+                    try {
+                        rgbKey = recipientReceiver.Decrypt(cbitKey, alg, recipientReceiver);
+                    }
+                    catch (CoseException) {
+                    }
                 }
                 if (rgbKey != null) break;
             }

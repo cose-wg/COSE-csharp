@@ -150,7 +150,7 @@ namespace Com.AugustCellars.COSE
         }
 
         public CBORObject this[CBORObject name] {
-            get { return _map[name]; }
+            get =>_map[name];
         }
 
         public byte[] AsBytes(CBORObject name)
