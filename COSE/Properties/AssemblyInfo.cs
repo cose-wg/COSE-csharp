@@ -6,12 +6,6 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("COSE")]
-[assembly: AssemblyDescription("CBOR Object Signing and Encryption Library")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("August Cellars")]
-[assembly: AssemblyProduct("COSE")]
-[assembly: AssemblyCopyright("Copyright © August Cellars 2016-2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -22,20 +16,5 @@ using System.Runtime.InteropServices;
 [assembly: CLSCompliant(true)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("4d68fcbc-efd5-48c8-a3f6-130a3da19534")]
-
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version 
-//      Build Number
-//      Revision
-//
-// You can specify all the values or you can default the Build and Revision Numbers 
-// by using the '*' as shown below:
-// [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.4.0")]
-[assembly: AssemblyFileVersion("1.0.4.0")]
-// [assembly: InternalsVisibleTo("COSE.Net40.Tests")]
-// [assembly: InternalsVisibleTo("COSE.Explorables")]
+// [assembly: Guid("4d68fcbc-efd5-48c8-a3f6-130a3da19534")]
 

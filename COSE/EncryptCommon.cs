@@ -208,7 +208,7 @@ namespace Com.AugustCellars.COSE
 
         private byte[] AES(CBORObject alg, byte[] K)
         {
-            GcmBlockCipher cipher = new GcmBlockCipher(new AesFastEngine(), new BasicGcmMultiplier());
+            GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine(), new BasicGcmMultiplier());
             KeyParameter ContentKey;
             byte[] IV;
             CBORObject cbor;
@@ -271,7 +271,7 @@ namespace Com.AugustCellars.COSE
 
         public void AES_Decrypt(CBORObject alg, byte[] K)
         {
-            GcmBlockCipher cipher = new GcmBlockCipher(new AesFastEngine(), new BasicGcmMultiplier());
+            GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine(), new BasicGcmMultiplier());
             KeyParameter ContentKey;
 
             //  The requirements from JWA
@@ -305,7 +305,7 @@ namespace Com.AugustCellars.COSE
 
         private byte[] AES_CCM(CBORObject alg, byte[] K)
         {
-            CcmBlockCipher cipher = new CcmBlockCipher(new AesFastEngine());
+            CcmBlockCipher cipher = new CcmBlockCipher(new AesEngine());
             KeyParameter ContentKey;
             int cbitTag = 64;
             int cbIV;
@@ -404,7 +404,7 @@ namespace Com.AugustCellars.COSE
 
         private void AES_CCM_Decrypt(CBORObject alg, byte[] K)
         {
-            CcmBlockCipher cipher = new CcmBlockCipher(new AesFastEngine());
+            CcmBlockCipher cipher = new CcmBlockCipher(new AesEngine());
             KeyParameter ContentKey;
             int cbitTag;
             int cbIV;

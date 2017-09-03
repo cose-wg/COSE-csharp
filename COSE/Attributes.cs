@@ -3,6 +3,10 @@ using PeterO.Cbor;
 
 namespace Com.AugustCellars.COSE
 {
+    /// <summary>
+    /// This is a base class used for all of the COSE objects which support protected and unprotected attributes.
+    /// The use of the single class allows for a common API on how to set and access the attributes.
+    /// </summary>
     public class Attributes
     {
         private CBORObject _objProtected = CBORObject.NewMap();
@@ -10,9 +14,24 @@ namespace Com.AugustCellars.COSE
         private readonly CBORObject _objDontSend = CBORObject.NewMap();
         private byte[] _rgbProtected;
 
-        public static int PROTECTED = 1;
-        public static int UNPROTECTED = 2;
-        public static int DO_NOT_SEND = 4;
+        /// <summary>
+        /// The attribute is to be placed in the PROTECTED bucket.
+        /// </summary>
+        // ReSharper disable once InconsistentNaming
+        public const int PROTECTED = 1;
+
+        /// <summary>
+        /// The attribute is to be placed in the UNPROTECTED bucket.
+        /// </summary>
+        // ReSharper disable once InconsistentNaming
+        public const int UNPROTECTED = 2;
+
+        /// <summary>
+        /// The attribute is to be placed in the DO NOT SEND bucket.
+        /// These values are available to the code with out being encoded into the final result.
+        /// </summary>
+        // ReSharper disable once InconsistentNaming
+        public const int DO_NOT_SEND = 4;
 
         public Attributes()
         {

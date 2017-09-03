@@ -18,14 +18,14 @@ namespace Com.AugustCellars.COSE
         /// Return number of keys in the key set.
         /// </summary>
         public int Count {
-            get { return _keyList.Count; }
+            get => _keyList.Count;
         }
 
         /// <summary>
         /// Return first key in the set.
         /// </summary>
         public OneKey FirstKey {
-            get { return _keyList.First(); }
+            get => _keyList.First();
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace Com.AugustCellars.COSE
         /// <param name="i">index of element to return</param>
         /// <returns>OneKey</returns>
         public OneKey this[int i] {
-            get { return _keyList[i]; }
+            get => _keyList[i];
         }
 
         /// <summary>
@@ -69,6 +69,15 @@ namespace Com.AugustCellars.COSE
                     return;
             }
             _keyList.Add(key);
+        }
+
+        /// <summary>
+        /// Remove the given key from the list if it is on it.
+        /// </summary>
+        /// <param name="key"></param>
+        public void RemoveKey(OneKey key)
+        {
+            _keyList.Remove(key);
         }
 
         /// <summary>
@@ -111,8 +120,9 @@ namespace Com.AugustCellars.COSE
         /// <returns>New key set with all functions</returns>
         public KeySet Where(Func<OneKey, bool> lambda)
         {
-            KeySet ks = new KeySet();
-            ks._keyList = _keyList.Where(lambda).ToList();
+            KeySet ks = new KeySet {
+                _keyList = _keyList.Where(lambda).ToList()
+            };
             return ks;
         }
 

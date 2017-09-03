@@ -1,0 +1,78 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.0</TargetFramework>
+    <PackageId>Com.AugustCellars.COSE</PackageId>
+    <Id>Com.AugustCellars.COSE</Id>
+    <PackageVersion>1.1.0.0</PackageVersion>
+    <Version>1.1.0.0</Version>
+    <Authors>Jim Schaad</Authors>
+    <Description>An implementation of the CBOR Object Signing and Encryption standards.</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright @2016-7 Jim Schaad</Copyright>
+    <PackageTags>COSE CBOR</PackageTags>
+    
+    <PackageReleaseNotes>
+1.1.0.0
+  - Update net 4.5 file to use latest CBOR
+  - Switch to use NetStandard 1.0 rather than Net 4.5
+  - Remove Net 4.0 distribution
+1.0.5
+  - Add strong signature to the net 4.5 file.      
+1.0.4
+  - Add user data field to OneKey class
+  - Kill 
+1.0.3
+  - Make the library be CLS Compliant and mark it as such.
+  - Apply strong signing to distribution
+1.0.2
+  - Previous release had the prior net4 library.
+1.0.1
+  - path for the 4.0 version has changed
+  - Add new filter functions to OneKey for use with KeySet.Where()
+  - Added functions
+1.0.0
+  * Name space has been changed from COSE to Com.AugustCellars.COSE
+    </PackageReleaseNotes>
+    
+    <Configurations>Debug;Release;Deploy</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <AssemblyName>COSE</AssemblyName>
+    <RootNamespace>Com.AugustCellars.COSE</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Deploy|Any CPU' ">
+    <AssemblyOriginatorKeyFile>AugustCellarsStrongKey.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+    <IntermediateOutputPath>obj\Deploy\Std10</IntermediateOutputPath>
+    <OutputPath>bin\Deploy\Std10\</OutputPath>
+  </PropertyGroup>
+  
+
+  <ItemGroup>
+    <PackageReference Include="PeterO.Cbor" Version="3.0.0" />
+    <PackageReference Include="Portable.BouncyCastle" Version="1.8.1.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Attributes.cs" />
+    <Compile Include="ChaCha20Poly1305.cs" />
+    <Compile Include="Encrypt0Mesage.cs" />
+    <Compile Include="EncryptCommon.cs" />
+    <Compile Include="EncryptMessage.cs" />
+    <Compile Include="Key.cs" />
+    <Compile Include="KeySet.cs" />
+    <Compile Include="MACMessage.cs" />
+    <Compile Include="Message.cs" />
+    <Compile Include="PrettyPrint.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Sign0Message.cs" />
+    <Compile Include="SignMessage.cs" />
+    <Compile Include="X25519.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="AugustCellarsStrongKey.snk" />
+  </ItemGroup>
+  
+</Project>
