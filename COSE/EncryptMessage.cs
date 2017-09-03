@@ -886,7 +886,7 @@ namespace Com.AugustCellars.COSE
                 if (keyBytes.Length != keySize / 8) throw new CoseException("Key is not the correct size");
             }
 
-            GcmBlockCipher cipher = new GcmBlockCipher(new AesFastEngine(), new BasicGcmMultiplier());
+            GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine(), new BasicGcmMultiplier());
             KeyParameter ContentKey;
 
             //  The requirements from JWA
@@ -918,7 +918,7 @@ namespace Com.AugustCellars.COSE
             byte[] keyBytes = key.AsBytes(CoseKeyParameterKeys.Octet_k);
             if (keyBytes.Length != keySize / 8) throw new CoseException("Key is not the correct size");
 
-            GcmBlockCipher cipher = new GcmBlockCipher(new AesFastEngine(), new BasicGcmMultiplier());
+            GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine(), new BasicGcmMultiplier());
             KeyParameter ContentKey;
 
             //  The requirements from JWA
@@ -1201,7 +1201,7 @@ namespace Com.AugustCellars.COSE
 
 
             //  Setup for computing CBC-MAC
-            IBlockCipher aes = new AesFastEngine();
+            IBlockCipher aes = new AesEngine();
 
             IMac mac;
 

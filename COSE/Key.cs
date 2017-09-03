@@ -150,7 +150,7 @@ namespace Com.AugustCellars.COSE
         }
 
         public CBORObject this[CBORObject name] {
-            get { return _map[name]; }
+            get =>_map[name];
         }
 
         public byte[] AsBytes(CBORObject name)
@@ -387,6 +387,18 @@ namespace Com.AugustCellars.COSE
             CBORObject obj = _map[CoseKeyKeys.KeyType];
             if (obj == null) return false;
             return obj.AsInt32() == keyType;
+        }
+
+        /// <summary>
+        /// Does the key have the specified key type?
+        /// </summary>
+        /// <param name="keyType">Key type to be checked.</param>
+        /// <returns></returns>
+        public Boolean HasKeyType(CBORObject keyType)
+        {
+            CBORObject obj = _map[CoseKeyKeys.KeyType];
+            if (obj == null) return false;
+            return obj.Equals(keyType);
         }
 
         /// <summary>
