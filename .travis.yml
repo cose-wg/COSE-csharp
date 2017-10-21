@@ -1,5 +1,8 @@
 language: csharp
-dist: trusty
+
+os: 
+  - linux
+  - osx
 
 env:
    - SLN=COSE.Std10.sln
