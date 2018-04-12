@@ -327,7 +327,35 @@ namespace Com.AugustCellars.COSE
                                 throw new CoseException("Unknown curve");
                             }
                         }
-                        else throw new CoseException("Curve is incorrectly encoded");
+                        else
+                            throw new CoseException("Curve is incorrectly encoded");
+
+                        break;
+
+                    case GeneralValuesInt.KeyType_OKP:
+                        if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Type == CBORType.Number) {
+                            switch ((GeneralValuesInt) _keyToSign[CoseKeyParameterKeys.EC_Curve].AsInt32()) {
+                            case GeneralValuesInt.Ed25519:
+                                alg = AlgorithmValues.EdDSA;
+                                break;
+
+                            case GeneralValuesInt.Ed448:
+                                alg = AlgorithmValues.EdDSA;
+                                break;
+
+                            default:
+                                throw new CoseException("Unknown curve");
+                            }
+                        }
+                        else if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Type == CBORType.TextString) {
+                            switch (_keyToSign[CoseKeyParameterKeys.EC_Curve].AsString()) {
+                            default:
+                                throw new CoseException("Unknown curve");
+                            }
+                        }
+                        else
+                            throw new CoseException("Curve is incorrectly encoded");
+
                         break;
 
                     default:
@@ -341,8 +369,8 @@ namespace Com.AugustCellars.COSE
                 UnprotectedMap.Add(HeaderKeys.Algorithm, alg);
             }
 
-            IDigest digest;
-            IDigest digest2;
+            IDigest digest = null;
+            IDigest digest2 = null;
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
@@ -373,6 +401,9 @@ namespace Com.AugustCellars.COSE
                 case AlgorithmValuesInt.RSA_PSS_512:
                     digest = new Sha512Digest();
                     digest2 = new Sha512Digest();
+                    break;
+
+                case AlgorithmValuesInt.EdDSA:
                     break;
 
                 default:
@@ -446,6 +477,22 @@ namespace Com.AugustCellars.COSE
                         return sigs;
                     }
 
+                case AlgorithmValuesInt.EdDSA: {
+                    EdDSA eddsa;
+                    if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
+                        eddsa = new EdDSA25517();
+                    }
+                    else if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed448)) {
+                        eddsa = new EdDSA448();
+                    }
+                    else {
+                        throw new CoseException("Unrecognized curve");
+                    }
+                    EdDSAPoint publicKey = eddsa.DecodePoint(_keyToSign[CoseKeyParameterKeys.OKP_X].GetByteString());
+                    byte[] sig = eddsa.Sign(publicKey, _keyToSign[CoseKeyParameterKeys.OKP_D].GetByteString(), bytesToBeSigned);
+                    return sig;
+                }
+
                 default:
                     throw new CoseException("Unknown Algorithm");
                 }
@@ -465,8 +512,8 @@ namespace Com.AugustCellars.COSE
                 throw new Exception("No Signature algorithm known");
             }
 
-            IDigest digest;
-            IDigest digest2;
+            IDigest digest = null;
+            IDigest digest2 = null;
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
@@ -497,6 +544,9 @@ namespace Com.AugustCellars.COSE
                 case AlgorithmValuesInt.RSA_PSS_512:
                     digest = new Sha512Digest();
                     digest2 = new Sha512Digest();
+                    break;
+
+                case AlgorithmValuesInt.EdDSA:
                     break;
 
                 default:
@@ -556,6 +606,21 @@ namespace Com.AugustCellars.COSE
                         BigInteger s = new BigInteger(1, _rgbSignature, _rgbSignature.Length/2, _rgbSignature.Length/2);
                         return ecdsa.VerifySignature(digestedMessage, r, s);
                     }
+
+                case AlgorithmValuesInt.EdDSA: {
+                    EdDSA eddsa;
+                    if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
+                        eddsa = new EdDSA25517();
+                    }
+                    else if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed448)) {
+                        eddsa = new EdDSA448();
+                    }
+                    else {
+                        throw new CoseException("Unrecognized curve");
+                    }
+                    byte[] publicKey = _keyToSign[CoseKeyParameterKeys.OKP_X].GetByteString();
+                    return eddsa.Verify(publicKey, bytesToBeSigned, _rgbSignature);
+                }
 
                 default:
                     throw new CoseException("Unknown Algorithm");
