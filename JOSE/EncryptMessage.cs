@@ -414,7 +414,7 @@ namespace JOSE
 
         private byte[] AES_GCM_Encrypt(string alg, byte[] K)
         {
-            GcmBlockCipher cipher = new GcmBlockCipher(new AesFastEngine(), new BasicGcmMultiplier());
+            GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine(), new BasicGcmMultiplier());
             KeyParameter ContentKey;
 
             //  The requirements from JWA
@@ -447,7 +447,7 @@ namespace JOSE
 
         private void AES_GCM_Decrypt(string alg, byte[] K)
         {
-            GcmBlockCipher cipher = new GcmBlockCipher(new AesFastEngine(), new BasicGcmMultiplier());
+            GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine(), new BasicGcmMultiplier());
             KeyParameter ContentKey;
 
             //  The requirements from JWA
@@ -617,7 +617,7 @@ namespace JOSE
 
         private byte[] AES_CCM(string alg, byte[] K)
         {
-            CcmBlockCipher cipher = new CcmBlockCipher(new AesFastEngine());
+            CcmBlockCipher cipher = new CcmBlockCipher(new AesEngine());
             KeyParameter ContentKey;
             int cbitTag = 64;
 
@@ -1505,7 +1505,7 @@ namespace JOSE
             byte[] keyBytes = m_key.AsBytes("k");
             if (keyBytes.Length != keySize / 8) throw new Exception("Key is not the correct size");
 
-            GcmBlockCipher cipher = new GcmBlockCipher(new AesFastEngine(), new BasicGcmMultiplier());
+            GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine(), new BasicGcmMultiplier());
             KeyParameter ContentKey;
 
             //  The requirements from JWA
@@ -1547,7 +1547,7 @@ namespace JOSE
 
         private byte[] AESGCM_KeyWrap(byte[] key, EncryptMessage msg)
         {
-            GcmBlockCipher cipher = new GcmBlockCipher(new AesFastEngine(), new BasicGcmMultiplier());
+            GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine(), new BasicGcmMultiplier());
             KeyParameter ContentKey;
 
             //  The requirements from JWA

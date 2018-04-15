@@ -20,7 +20,7 @@ namespace examples
         static KeySet allkeys = new KeySet();
         static KeySet allPubKeys = new KeySet();
 
-        static string RootDir = "c:\\projects\\COSE\\examples";
+        static string RootDir = "d:\\projects\\COSE\\examples";
 
         static void Main(string[] args)
         {
@@ -64,8 +64,9 @@ namespace examples
             EdDSA25517.SelfTest();
             EdDSA448.SelfTest();
 
+            RunTestsInDirectory("eddsa-examples");
             Recipient.FUseCompressed = true;
-            RunTestsInDirectory("CWT");
+            RunTestsInDirectory("encrypted-tests");
 
             RunTestsInDirectory("spec-examples");
             {
@@ -1134,6 +1135,14 @@ namespace examples
                         newValue = GeneralValues.X25519;
                         break;
 
+                            case "Ed25519":
+                                newValue = GeneralValues.Ed25519;
+                                break;
+
+                            case "Ed448":
+                                newValue = GeneralValues.Ed448;
+                                break;
+
                     default:
                         newValue = control[item];
                         break;
@@ -1331,6 +1340,7 @@ namespace examples
             case "ECDH-SS-A192KW": return AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_192;
             case "ECDH-ES-A256KW": return AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_256;
             case "ECDH-SS-A256KW": return AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_256;
+            case "EdDSA": return AlgorithmValues.EdDSA;
             case "ChaCha-Poly1305": return AlgorithmValues.ChaCha20_Poly1305;
             default: return old;
             }

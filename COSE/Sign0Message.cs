@@ -235,8 +235,8 @@ namespace Com.AugustCellars.COSE
                 UnprotectedMap.Add(HeaderKeys.Algorithm, alg);
             }
 
-            IDigest digest;
-            IDigest digest2;
+            IDigest digest = null;
+            IDigest digest2 = null;
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
@@ -269,6 +269,9 @@ namespace Com.AugustCellars.COSE
                     digest2 = new Sha512Digest();
                     break;
 
+                    case AlgorithmValuesInt.EdDSA:
+                        break;
+
                 default:
                     throw new CoseException("Unknown Algorithm Specified");
                 }
@@ -296,52 +299,77 @@ namespace Com.AugustCellars.COSE
             else if (alg.Type == CBORType.Number) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.RSA_PSS_256:
-                case AlgorithmValuesInt.RSA_PSS_512:
-                    {
-                        PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
+                case AlgorithmValuesInt.RSA_PSS_512: {
+                    PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
 
-                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(_keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
-                        ParametersWithRandom param = new ParametersWithRandom(prv, GetPRNG());
+                    RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(
+                        _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n),
+                        _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e),
+                        _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d),
+                        _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p),
+                        _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q),
+                        _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP),
+                        _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ),
+                        _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
+                    ParametersWithRandom param = new ParametersWithRandom(prv, GetPRNG());
 
-                        signer.Init(true, param);
-                        signer.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
-                        return signer.GenerateSignature();
-                    }
+                    signer.Init(true, param);
+                    signer.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
+                    return signer.GenerateSignature();
+                }
 
                 case AlgorithmValuesInt.ECDSA_256:
                 case AlgorithmValuesInt.ECDSA_384:
-                case AlgorithmValuesInt.ECDSA_512:
-                    {
-                        CBORObject privateKeyD = _keyToSign[CoseKeyParameterKeys.EC_D];
-                        if (privateKeyD == null) throw new CoseException("Private key required to sign");
+                case AlgorithmValuesInt.ECDSA_512: {
+                    CBORObject privateKeyD = _keyToSign[CoseKeyParameterKeys.EC_D];
+                    if (privateKeyD == null) throw new CoseException("Private key required to sign");
 
-                        SecureRandom random = GetPRNG();
+                    SecureRandom random = GetPRNG();
 
-                        digest.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
-                        byte[] digestedMessage = new byte[digest.GetDigestSize()];
-                        digest.DoFinal(digestedMessage, 0);
+                    digest.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
+                    byte[] digestedMessage = new byte[digest.GetDigestSize()];
+                    digest.DoFinal(digestedMessage, 0);
 
-                        X9ECParameters p = _keyToSign.GetCurve();
-                        ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
-                        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters("ECDSA", ConvertBigNum(privateKeyD), parameters);
-                        ParametersWithRandom param = new ParametersWithRandom(privKey, random);
+                    X9ECParameters p = _keyToSign.GetCurve();
+                    ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
+                    ECPrivateKeyParameters privKey =
+                        new ECPrivateKeyParameters("ECDSA", ConvertBigNum(privateKeyD), parameters);
+                    ParametersWithRandom param = new ParametersWithRandom(privKey, random);
 
-                        ECDsaSigner ecdsa = new ECDsaSigner(new HMacDsaKCalculator(new Sha256Digest()));
-                        ecdsa.Init(true, param);
+                    ECDsaSigner ecdsa = new ECDsaSigner(new HMacDsaKCalculator(new Sha256Digest()));
+                    ecdsa.Init(true, param);
 
-                        BigInteger[] sig = ecdsa.GenerateSignature(digestedMessage);
+                    BigInteger[] sig = ecdsa.GenerateSignature(digestedMessage);
 
-                        byte[] r = sig[0].ToByteArrayUnsigned();
-                        byte[] s = sig[1].ToByteArrayUnsigned();
+                    byte[] r = sig[0].ToByteArrayUnsigned();
+                    byte[] s = sig[1].ToByteArrayUnsigned();
 
-                        int cbR = (p.Curve.FieldSize + 7) / 8;
+                    int cbR = (p.Curve.FieldSize + 7) / 8;
 
-                        byte[] sigs = new byte[cbR * 2];
-                        Array.Copy(r, 0, sigs, cbR - r.Length, r.Length);
-                        Array.Copy(s, 0, sigs, cbR + cbR - s.Length, s.Length);
+                    byte[] sigs = new byte[cbR * 2];
+                    Array.Copy(r, 0, sigs, cbR - r.Length, r.Length);
+                    Array.Copy(s, 0, sigs, cbR + cbR - s.Length, s.Length);
 
-                        return sigs;
+                    return sigs;
+                }
+
+                case AlgorithmValuesInt.EdDSA: {
+                    EdDSA eddsa;
+                    if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
+                        eddsa = new EdDSA25517();
                     }
+                    else if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed448)) {
+                        eddsa = new EdDSA448();
+                    }
+                    else {
+                        throw new CoseException("Unrecognized curve");
+                    }
+
+                    EdDSAPoint publicKey = eddsa.DecodePoint(_keyToSign[CoseKeyParameterKeys.OKP_X].GetByteString());
+                    byte[] sig = eddsa.Sign(publicKey, _keyToSign[CoseKeyParameterKeys.OKP_D].GetByteString(),
+                                            bytesToBeSigned);
+                    return sig;
+                }
 
                 default:
                     throw new CoseException("Unknown Algorithm Specified");
@@ -362,8 +390,8 @@ namespace Com.AugustCellars.COSE
                 throw new CoseException("No algorithm specified");
             }
 
-            IDigest digest;
-            IDigest digest2;
+            IDigest digest = null;
+            IDigest digest2 = null;
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
@@ -394,6 +422,9 @@ namespace Com.AugustCellars.COSE
                 case AlgorithmValuesInt.RSA_PSS_512:
                     digest = new Sha512Digest();
                     digest2 = new Sha512Digest();
+                    break;
+
+                case AlgorithmValuesInt.EdDSA:
                     break;
 
                 default:
@@ -454,8 +485,20 @@ namespace Com.AugustCellars.COSE
                         return ecdsa.VerifySignature(digestedMessage, r, s);
                     }
 
-                    case AlgorithmValuesInt.EdDSA:
-                        throw new CoseException(("NYI - Ed signatures"));
+                case AlgorithmValuesInt.EdDSA: {
+                    EdDSA eddsa;
+                    if (signerKey[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
+                        eddsa = new EdDSA25517();
+                    }
+                    else if (signerKey[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed448)) {
+                        eddsa = new EdDSA448();
+                    }
+                    else {
+                        throw new CoseException("Unrecognized curve");
+                    }
+                    byte[] publicKey = signerKey[CoseKeyParameterKeys.OKP_X].GetByteString();
+                    return eddsa.Verify(publicKey, bytesToBeSigned, _rgbSignature);
+                }
 
                 default:
                     throw new CoseException("Unknown Algorithm");
