@@ -459,7 +459,7 @@ public virtual void Compute()
             }
 
 #if FOR_EXAMPLES
-            m_cek = ContentKey;
+            m_cek = contentKey;
 #endif
         }
 

@@ -54,11 +54,11 @@ namespace Com.AugustCellars.COSE.Tests
             try {
                 directory = new DirectoryInfo(directoryName);
                 if (!directory.Exists) {
-                    directory = new DirectoryInfo("C:\\Projects\\cose\\Examples");
+                    directory = new DirectoryInfo("d:\\Projects\\cose\\Examples");
                 }
             }
             catch (Exception) {
-                directory = new DirectoryInfo(Path.Combine("C:\\Projects\\cose", directoryName));
+                directory = new DirectoryInfo(Path.Combine("d:\\Projects\\cose", directoryName));
             }
 
             foreach (var di in directory.EnumerateDirectories()) {
@@ -68,6 +68,7 @@ namespace Com.AugustCellars.COSE.Tests
                     if (di.Name == "chacha-poly-examples") continue;
 #endif
                     if (di.Name == "X25519-tests") continue;
+                    if (di.Name == ".git") continue;
                     ProcessDirectory(Path.Combine(directory.FullName, di.Name));
                 }
             }
@@ -775,29 +776,37 @@ namespace Com.AugustCellars.COSE.Tests
                     break;
 
                     case "crv":
-                    switch (cnValue.AsString()) {
+                        switch (cnValue.AsString()) {
                         case "P-256":
-                        cnValue = CBORObject.FromObject(1);
-                        break;
+                            cnValue = CBORObject.FromObject(1);
+                            break;
 
                         case "P-384":
-                        cnValue = CBORObject.FromObject(2);
-                        break;
+                            cnValue = CBORObject.FromObject(2);
+                            break;
 
                         case "P-521":
-                        cnValue = CBORObject.FromObject(3);
-                        break;
+                            cnValue = CBORObject.FromObject(3);
+                            break;
 
                         case "X25519":
-                        cnValue = GeneralValues.X25519;
-                        break;
+                            cnValue = GeneralValues.X25519;
+                            break;
+
+                        case "Ed25519":
+                            cnValue = GeneralValues.Ed25519;
+                            break;
+
+                        case "Ed448":
+                            cnValue = GeneralValues.Ed448;
+                            break;
 
                         default:
-                        break;
-                    }
+                            break;
+                        }
 
 
-                    cnKeyOut[CBORObject.FromObject(-1)] = cnValue;
+                        cnKeyOut[CBORObject.FromObject(-1)] = cnValue;
                     break;
 
                     case "x":
@@ -913,6 +922,7 @@ namespace Com.AugustCellars.COSE.Tests
                 case "ECDH-SS-A192KW": return AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_192;
                 case "ECDH-ES-A256KW": return AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_256;
                 case "ECDH-SS-A256KW": return AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_256;
+                case "EdDSA": return AlgorithmValues.EdDSA;
 
                 default: return old;
             }
