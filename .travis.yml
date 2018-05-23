@@ -2,14 +2,14 @@ language: csharp
 
 matrix:
   include:
-    - dotnet: 2.1.2
-      mono: none
-      env:
-        - SLN=COSE.Std10.sln
-          TARGET=Std10
-          VERSION=Release
-          NUGET=dotnet
-      os: linux
+#    - dotnet: 2.1.2
+#      mono: none
+#      env:
+#        - SLN=COSE.Std10.sln
+#          TARGET=Std10
+#          VERSION=Release
+#          NUGET=dotnet
+#      os: linux
     - mono: latest
       env:
         - SLN=COSE.Std10.sln
