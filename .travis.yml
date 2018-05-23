@@ -12,7 +12,7 @@ matrix:
         - SLN=COSE.Std10.sln
           TARGET=Std10
           VERSION=Release
-   - mono: latest
+    - mono: latest
       env:
         - SLN=COSE.Std10.sln
           TARGET=Std10
