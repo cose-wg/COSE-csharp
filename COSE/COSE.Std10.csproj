@@ -4,8 +4,8 @@
     <TargetFramework>netstandard1.0</TargetFramework>
     <PackageId>Com.AugustCellars.COSE</PackageId>
     <Id>Com.AugustCellars.COSE</Id>
-    <PackageVersion>1.1.0.0</PackageVersion>
-    <Version>1.1.0.0</Version>
+    <PackageVersion>1.2.0</PackageVersion>
+    <Version>1.2.0</Version>
     <Authors>Jim Schaad</Authors>
     <Description>An implementation of the CBOR Object Signing and Encryption standards.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -13,6 +13,9 @@
     <PackageTags>COSE CBOR</PackageTags>
     
     <PackageReleaseNotes>
+1.2.0
+  - Update the version of CBOR library used again
+  - Add EdDSA signature algorithm and testing
 1.1.0.0
   - Update net 4.5 file to use latest CBOR
   - Switch to use NetStandard 1.0 rather than Net 4.5
@@ -21,7 +24,6 @@
   - Add strong signature to the net 4.5 file.      
 1.0.4
   - Add user data field to OneKey class
-  - Kill 
 1.0.3
   - Make the library be CLS Compliant and mark it as such.
   - Apply strong signing to distribution
