@@ -6,7 +6,7 @@ os:
 
 matrix:
   include:
-    - dotnet: 1.1
+    - dotnet: 2.1.2
       mono: none
       env:
         - SLN=COSE.Std10.sln
