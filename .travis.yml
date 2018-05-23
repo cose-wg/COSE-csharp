@@ -4,10 +4,19 @@ os:
   - linux
   - osx
 
-env:
-   - SLN=COSE.Std10.sln
-     TARGET=Std10
-     VERSION=Release
+matrix:
+  include:
+    - dotnet: 1.1
+      mono: none
+      env:
+        - SLN=COSE.Std10.sln
+          TARGET=Std10
+          VERSION=Release
+   - mono: latest
+      env:
+        - SLN=COSE.Std10.sln
+          TARGET=Std10
+          VERSION=Release
 
 mono: latest
 
