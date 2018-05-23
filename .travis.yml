@@ -18,8 +18,6 @@ matrix:
           TARGET=Std10
           VERSION=Release
 
-mono: latest
-
 install:
    - curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
    - nuget install NUnit.Runners -Version 3.5.0 -OutputDirectory testrunner
