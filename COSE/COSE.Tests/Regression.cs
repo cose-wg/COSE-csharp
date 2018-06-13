@@ -754,6 +754,7 @@ namespace Com.AugustCellars.COSE.Tests
         public OneKey BuildKey(CBORObject keyIn, Boolean fPublicKey)
         {
             CBORObject cnKeyOut = CBORObject.NewMap();
+            string keyType = keyIn[CBORObject.FromObject("kty")].AsString();
 
             foreach (CBORObject key in keyIn.Keys) {
                 CBORObject cnValue = keyIn[ key];
@@ -827,13 +828,23 @@ namespace Com.AugustCellars.COSE.Tests
 
                 case "d":
                     if (!fPublicKey) {
-                        cnKeyOut[CoseKeyParameterKeys.EC_D] = CBORObject.FromObject(Base64urldecode(cnValue.AsString()));
+                        if (keyType == "RSA") {
+                            cnKeyOut[CoseKeyParameterKeys.RSA_d] = CBORObject.FromObject(Base64urldecode(cnValue.AsString()));
+                        }
+                        else {
+                            cnKeyOut[CoseKeyParameterKeys.EC_D] = CBORObject.FromObject(Base64urldecode(cnValue.AsString()));
+                        }
                     }
                     break;
 
                     case "d_hex":
                         if (!fPublicKey) {
-                            cnKeyOut[CoseKeyParameterKeys.EC_D] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
+                            if (keyType == "RSA") {
+                                cnKeyOut[CoseKeyParameterKeys.RSA_d] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
+                            }
+                            else {
+                                cnKeyOut[CoseKeyParameterKeys.EC_D] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
+                            }
                         }
                         break;
 
@@ -844,6 +855,34 @@ namespace Com.AugustCellars.COSE.Tests
                     case "k_hex":
                         cnKeyOut[CBORObject.FromObject(-1)] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
                         break;
+
+                case "n_hex":
+                    cnKeyOut[CoseKeyParameterKeys.RSA_n] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
+                    break;
+
+                case "e_hex":
+                    cnKeyOut[CoseKeyParameterKeys.RSA_e] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
+                    break;
+
+                case "p_hex":
+                    cnKeyOut[CoseKeyParameterKeys.RSA_p] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
+                    break;
+
+                case "q_hex":
+                    cnKeyOut[CoseKeyParameterKeys.RSA_q] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
+                    break;
+
+                case "dP_hex":
+                    cnKeyOut[CoseKeyParameterKeys.RSA_dP] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
+                    break;
+
+                case "dQ_hex":
+                    cnKeyOut[CoseKeyParameterKeys.RSA_dQ] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
+                    break;
+
+                case "qi_hex":
+                    cnKeyOut[CoseKeyParameterKeys.RSA_qInv] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
+                    break;
 
                 case "kid":
                 case "use":
@@ -879,8 +918,9 @@ namespace Com.AugustCellars.COSE.Tests
                 case "A128KW": return AlgorithmValues.AES_KW_128;
                 case "A192KW": return AlgorithmValues.AES_KW_192;
                 case "A256KW": return AlgorithmValues.AES_KW_256;
-                // case "RSA-OAEP": return AlgorithmValues.RSA_OAEP;
-                // case "RSA-OAEP-256": return AlgorithmValues.RSA_OAEP_256;
+                case "RSA-OAEP": return AlgorithmValues.RSA_OAEP;
+                case "RSA-OAEP-256": return AlgorithmValues.RSA_OAEP_256;
+                case "RSA-OAEP-512": return AlgorithmValues.RSA_OAEP_512;
                 case "HS256": return AlgorithmValues.HMAC_SHA_256;
                 case "HS256/64": return AlgorithmValues.HMAC_SHA_256_64;
                 case "HS384": return AlgorithmValues.HMAC_SHA_384;
@@ -888,8 +928,9 @@ namespace Com.AugustCellars.COSE.Tests
                 case "ES256": return AlgorithmValues.ECDSA_256;
                 case "ES384": return AlgorithmValues.ECDSA_384;
                 case "ES512": return AlgorithmValues.ECDSA_512;
-                // case "PS256": return AlgorithmValues.RSA_PSS_256;
-                // case "PS512": return AlgorithmValues.RSA_PSS_512;
+                case "RSA-PSS-256": return AlgorithmValues.RSA_PSS_256;
+                case "RSA-PSS-384": return AlgorithmValues.RSA_PSS_384;
+                case "RSA-PSS-512": return AlgorithmValues.RSA_PSS_512;
                 case "direct": return AlgorithmValues.Direct;
                 //case "AES-CMAC-128/64": return AlgorithmValues.AES_CMAC_128_64;
                 //case "AES-CMAC-256/64": return AlgorithmValues.AES_CMAC_256_64;
