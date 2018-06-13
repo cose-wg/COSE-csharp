@@ -64,11 +64,12 @@ namespace examples
             EdDSA25517.SelfTest();
             EdDSA448.SelfTest();
 
-            RunTestsInDirectory("eddsa-examples");
-            Recipient.FUseCompressed = true;
-            RunTestsInDirectory("encrypted-tests");
+            //  OneKey k1 = OneKey.GenerateKey(null, GeneralValues.KeyType_RSA, "2048");
 
-            RunTestsInDirectory("spec-examples");
+            RunTestsInDirectory("rsa-pss-examples");
+
+
+            RunTestsInDirectory("RFC8152");
             {
                 byte[] result = allkeys.EncodeToBytes();
 
@@ -104,6 +105,7 @@ namespace examples
             RunTestsInDirectory("encrypted-tests");
             RunTestsInDirectory("sign-tests");
             RunTestsInDirectory("sign1-tests");
+            RunTestsInDirectory("rsa-oaep-examples");
         }
 
         static void RunTestsInDirectory(string strDirectory)
@@ -1170,10 +1172,12 @@ namespace examples
                 case "y": newKey = CoseKeyParameterKeys.EC_Y; goto BinaryValue;
                 case "y_hex": newKey = CoseKeyParameterKeys.EC_Y; goto HexValue;
 
-                    case "e": newKey = CoseKeyParameterKeys.RSA_e; goto BinaryValue;
+                case "e": newKey = CoseKeyParameterKeys.RSA_e; goto BinaryValue;
+                case "e_hex": newKey = CoseKeyParameterKeys.RSA_e; goto HexValue;
                 case "n": newKey = CoseKeyParameterKeys.RSA_n; goto BinaryValue;
+                case "n_hex": newKey = CoseKeyParameterKeys.RSA_n; goto HexValue;
 
-                case "d":
+                    case "d":
                     // if (!fPublicKey) continue;
                     if (type == "RSA") newKey = CoseKeyParameterKeys.RSA_d;
                     else if (type == "OKP") newKey = CoseKeyParameterKeys.OKP_D;
@@ -1190,12 +1194,19 @@ namespace examples
                 case "k": newKey = CoseKeyParameterKeys.Octet_k; goto BinaryValue;
                 case "k_hex": newKey = CoseKeyParameterKeys.Octet_k; goto HexValue;
                 case "p": newKey = CoseKeyParameterKeys.RSA_p; goto BinaryValue;
+                case "p_hex": newKey = CoseKeyParameterKeys.RSA_p; goto HexValue;
                 case "q": newKey = CoseKeyParameterKeys.RSA_q; goto BinaryValue;
+                case "q_hex": newKey = CoseKeyParameterKeys.RSA_q; goto HexValue;
                 case "dp": newKey = CoseKeyParameterKeys.RSA_dP; goto BinaryValue;
+                case "dP_hex":
+                case "dp_hex": newKey = CoseKeyParameterKeys.RSA_dP; goto HexValue;
                 case "dq": newKey = CoseKeyParameterKeys.RSA_dQ; goto BinaryValue;
+                case "dQ_hex":
+                case "dq_hex": newKey = CoseKeyParameterKeys.RSA_dQ; goto HexValue;
                 case "qi": newKey = CoseKeyParameterKeys.RSA_qInv; goto BinaryValue;
+                case "qi_hex": newKey = CoseKeyParameterKeys.RSA_qInv; goto HexValue;
 
-                default:
+                    default:
                     throw new Exception("Unrecognized field name " + item + " in key object");
                 }
             }
@@ -1297,8 +1308,6 @@ namespace examples
             case "A128KW": return AlgorithmValues.AES_KW_128;
             case "A192KW": return AlgorithmValues.AES_KW_192;
             case "A256KW": return AlgorithmValues.AES_KW_256;
-            case "RSA-OAEP": return AlgorithmValues.RSA_OAEP;
-            case "RSA-OAEP-256": return AlgorithmValues.RSA_OAEP_256;
             case "HS256": return AlgorithmValues.HMAC_SHA_256;
             case "HS256/64": return AlgorithmValues.HMAC_SHA_256_64;
             case "HS384": return AlgorithmValues.HMAC_SHA_384;
@@ -1342,6 +1351,12 @@ namespace examples
             case "ECDH-SS-A256KW": return AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_256;
             case "EdDSA": return AlgorithmValues.EdDSA;
             case "ChaCha-Poly1305": return AlgorithmValues.ChaCha20_Poly1305;
+            case "RSA-OAEP": return AlgorithmValues.RSA_OAEP;
+            case "RSA-OAEP-256": return AlgorithmValues.RSA_OAEP_256;
+            case "RSA-OAEP-512": return AlgorithmValues.RSA_OAEP_512;
+            case "RSA-PSS-256": return AlgorithmValues.RSA_PSS_256;
+            case "RSA-PSS-384": return AlgorithmValues.RSA_PSS_384;
+            case "RSA-PSS-512": return AlgorithmValues.RSA_PSS_512;
             default: return old;
             }
         }
@@ -1517,7 +1532,7 @@ namespace examples
                     msg.Decrypt(recipX);
                     
                 }
-                catch (Exception) {
+                catch (Exception e) {
                     if (fFail || fFailRecipient) return true;
                     return false;
                 }

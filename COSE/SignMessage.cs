@@ -299,7 +299,7 @@ namespace Com.AugustCellars.COSE
                 if (_keyToSign[CoseKeyKeys.KeyType].Type == CBORType.Number) {
                     switch ((GeneralValuesInt) _keyToSign[CoseKeyKeys.KeyType].AsInt32()) {
                     case GeneralValuesInt.KeyType_RSA:
-                        alg = CBORObject.FromObject("PS256");
+                        alg = AlgorithmValues.RSA_PSS_256;
                         break;
 
                     case GeneralValuesInt.KeyType_EC2:
@@ -414,18 +414,6 @@ namespace Com.AugustCellars.COSE
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
-                case "PS384":
-                    {
-                        PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
-
-                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(_keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
-                        ParametersWithRandom param = new ParametersWithRandom(prv, Message.GetPRNG());
-
-                        signer.Init(true, param);
-                        signer.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
-                        return signer.GenerateSignature();
-
-                    }
 
                 default:
                     throw new CoseException("Unknown Algorithm");
@@ -434,6 +422,7 @@ namespace Com.AugustCellars.COSE
             else if (alg.Type == CBORType.Number) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.RSA_PSS_256:
+                case AlgorithmValuesInt.RSA_PSS_384:
                 case AlgorithmValuesInt.RSA_PSS_512:
                     {
                         PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
@@ -517,11 +506,6 @@ namespace Com.AugustCellars.COSE
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
-                case "PS384":
-                    digest = new Sha384Digest();
-                    digest2 = new Sha384Digest();
-                    break;
-
                 default:
                     throw new Exception("Unknown signature algorithm");
                 }
@@ -557,17 +541,6 @@ namespace Com.AugustCellars.COSE
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
-                case "PS384": {
-                        PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
-
-                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(_keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
-                        ParametersWithRandom param = new ParametersWithRandom(prv, Message.GetPRNG());
-
-                        signer.Init(true, param);
-                        signer.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
-                        return signer.VerifySignature(_rgbSignature);
-
-                    }
 
                 default:
                     throw new CoseException("Unknown Algorithm");
@@ -576,13 +549,14 @@ namespace Com.AugustCellars.COSE
             else if (alg.Type == CBORType.Number) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.RSA_PSS_256:
+                case AlgorithmValuesInt.RSA_PSS_384:
                 case AlgorithmValuesInt.RSA_PSS_512: {
                         PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
 
-                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(_keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
+                        RsaKeyParameters prv = new RsaKeyParameters(false, _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e));
                         ParametersWithRandom param = new ParametersWithRandom(prv, Message.GetPRNG());
 
-                        signer.Init(true, param);
+                        signer.Init(false, param);
                         signer.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
                         return signer.VerifySignature(_rgbSignature);
                     }
