@@ -62,23 +62,32 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_512:
                     case AlgorithmValuesInt.Direct_HKDF_AES_128:
                     case AlgorithmValuesInt.Direct_HKDF_AES_256:
-                        if (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid parameters");
+                        if (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) {
+                            throw new CoseException("Invalid parameters");
+                        }
                         break;
 
 
                     case AlgorithmValuesInt.RSA_OAEP:
                     case AlgorithmValuesInt.RSA_OAEP_256:
-                        if (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_RSA)) throw new CoseException("Invalid Parameter");
+                    case AlgorithmValuesInt.RSA_OAEP_512:
+                        if (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_RSA)) {
+                            throw new CoseException("Invalid Parameter");
+                        }
                         break;
 
                     case AlgorithmValuesInt.AES_KW_128:
                     case AlgorithmValuesInt.AES_KW_192:
                     case AlgorithmValuesInt.AES_KW_256:
-                        if ((key != null) && (!key[CoseKeyKeys.KeyType].Equals( GeneralValues.KeyType_Octet))) throw new CoseException("Invalid Parameter");
+                        if ((key != null) && (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet))) {
+                            throw new CoseException("Invalid Parameter");
+                        }
                         break;
 
-                    case AlgorithmValuesInt.DIRECT:  // Direct encryption mode
-                        if (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Invalid parameters");
+                    case AlgorithmValuesInt.DIRECT: // Direct encryption mode
+                        if (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) {
+                            throw new CoseException("Invalid parameters");
+                        }                
                         break;
 
                     case AlgorithmValuesInt.ECDH_ES_HKDF_256_AES_KW_128:
@@ -87,7 +96,10 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_128:
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_192:
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_256:
-                        if ((!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) && (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) throw new CoseException("Invalid Parameter");
+                        if ((!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) &&
+                            (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) {
+                            throw new CoseException("Invalid Parameter");
+                        }
                         break;
 
                     case AlgorithmValuesInt.ECDH_ES_HKDF_256:
@@ -96,7 +108,10 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.ECDH_SS_HKDF_256:
                     case AlgorithmValuesInt.ECDH_SS_HKDF_512:
 #endif // DEBUG
-                        if ((!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) && (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) throw new CoseException("Invalid Parameters");
+                        if ((!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_EC)) &&
+                            (!key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_OKP))) {
+                            throw new CoseException("Invalid Parameters");
+                        }
                         break;
 
                     default:
@@ -209,6 +224,11 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.AES_KW_192:
                     case AlgorithmValuesInt.AES_KW_256:
                         return RecipientType.keyWrap;
+
+                    case AlgorithmValuesInt.RSA_OAEP:
+                    case AlgorithmValuesInt.RSA_OAEP_256:
+                    case AlgorithmValuesInt.RSA_OAEP_512:
+                        return RecipientType.keyTransport;
 
                     default:
                         return RecipientType.keyAgree;
@@ -340,6 +360,7 @@ namespace Com.AugustCellars.COSE
 
                 case AlgorithmValuesInt.RSA_OAEP: return RSA_OAEP_KeyUnwrap(key, new Sha1Digest());
                 case AlgorithmValuesInt.RSA_OAEP_256: return RSA_OAEP_KeyUnwrap(key, new Sha256Digest());
+                case AlgorithmValuesInt.RSA_OAEP_512: return RSA_OAEP_KeyUnwrap(key, new Sha512Digest());
 
                 case AlgorithmValuesInt.AES_KW_128: return AES_KeyUnwrap(key, 128);
                 case AlgorithmValuesInt.AES_KW_192: return AES_KeyUnwrap(key, 192);
@@ -623,9 +644,15 @@ namespace Com.AugustCellars.COSE
                     if (rgbKey != null) throw new CoseException("Can't wrap around this algorithm");
                     RSA_OAEP_KeyWrap(new Sha1Digest()); 
                     break;
+
                 case AlgorithmValuesInt.RSA_OAEP_256: 
                     if (rgbKey != null) throw new CoseException("Can't wrap around this algorithm");
                     RSA_OAEP_KeyWrap(new Sha256Digest()); 
+                    break;
+
+                case AlgorithmValuesInt.RSA_OAEP_512:
+                    if (rgbKey != null) throw new CoseException("Can't wrap around this algorithm");
+                    RSA_OAEP_KeyWrap(new Sha512Digest());
                     break;
 
                 case AlgorithmValuesInt.AES_KW_128: AES_KeyWrap(128, rgbKey); break;
@@ -863,11 +890,19 @@ namespace Com.AugustCellars.COSE
         private byte[] RSA_OAEP_KeyUnwrap(OneKey key, IDigest digest)
         {
             IAsymmetricBlockCipher cipher = new OaepEncoding(new RsaEngine(), digest);
-            RsaKeyParameters pubParameters = new RsaKeyParameters(false, key.AsBigInteger(CoseKeyParameterKeys.RSA_n), key.AsBigInteger(CoseKeyParameterKeys.RSA_e));
+            RsaKeyParameters priv;
+            if (key.ContainsName(CoseKeyParameterKeys.RSA_dP)) {
+                priv = new RsaPrivateCrtKeyParameters(key.AsBigInteger(CoseKeyParameterKeys.RSA_n), key.AsBigInteger(CoseKeyParameterKeys.RSA_e), key.AsBigInteger(CoseKeyParameterKeys.RSA_d),
+                                                     key.AsBigInteger(CoseKeyParameterKeys.RSA_p), key.AsBigInteger(CoseKeyParameterKeys.RSA_q), key.AsBigInteger(CoseKeyParameterKeys.RSA_dP),
+                                                     key.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), key.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
+            }
+            else {
+                priv = new RsaKeyParameters(true, key.AsBigInteger(CoseKeyParameterKeys.RSA_n), key.AsBigInteger(CoseKeyParameterKeys.RSA_d));
+            }
 
-            cipher.Init(true, new ParametersWithRandom(pubParameters));
+            cipher.Init(false, new ParametersWithRandom(priv));
 
-            byte[] outBytes = cipher.ProcessBlock(rgbContent, 0, rgbContent.Length);
+            byte[] outBytes = cipher.ProcessBlock(RgbEncrypted, 0, RgbEncrypted.Length);
 
             return outBytes;
 

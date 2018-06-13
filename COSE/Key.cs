@@ -1,5 +1,4 @@
 ﻿using System;
-
 using PeterO.Cbor;
 
 using Org.BouncyCastle.Asn1.Nist;
@@ -10,7 +9,9 @@ using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 
 using Org.BouncyCastle.Crypto.EC;
+using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
 
 namespace Com.AugustCellars.COSE
 {
@@ -138,8 +139,9 @@ namespace Com.AugustCellars.COSE
             byte[] rgb2 = new byte[rgb.Length + 2];
             rgb2[0] = 0;
             rgb2[1] = 0;
-            for (int i = 0; i < rgb.Length; i++)
+            for (int i = 0; i < rgb.Length; i++) {
                 rgb2[i + 2] = rgb[i];
+            }
 
             return new Org.BouncyCastle.Math.BigInteger(rgb2);
         }
@@ -315,6 +317,10 @@ namespace Com.AugustCellars.COSE
                     if (parameters == null) parameters = "Ed25519";
                     return GenerateEDKey(algorithm, parameters);
                 }
+                else if (keyType.Equals(GeneralValues.KeyType_RSA)) {
+                    if (parameters == null) parameters = "RSA-256";
+                    return GenerateRsaKey(algorithm, parameters);
+                }
             }
             else {
                 
@@ -361,6 +367,34 @@ namespace Com.AugustCellars.COSE
 
             return new OneKey(epk);
         }
+
+        private static OneKey GenerateRsaKey(CBORObject algorithm, string parameters)
+        {
+            RsaKeyPairGenerator pGen = new RsaKeyPairGenerator();
+            RsaKeyGenerationParameters genParam = new RsaKeyGenerationParameters(new BigInteger(1, new byte[] {0x1, 0x0, 0x1}), new SecureRandom(), Int32.Parse(parameters), 5);
+            pGen.Init(genParam);
+
+            AsymmetricCipherKeyPair p1 = pGen.GenerateKeyPair();
+
+            CBORObject rsaKey = CBORObject.NewMap();
+            rsaKey.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_RSA);
+            RsaKeyParameters pub = (RsaKeyParameters)p1.Public;
+            rsaKey.Add(CoseKeyParameterKeys.RSA_n, pub.Modulus.ToByteArrayUnsigned());
+            rsaKey.Add(CoseKeyParameterKeys.RSA_e, pub.Exponent.ToByteArrayUnsigned());
+
+            RsaPrivateCrtKeyParameters priv = (RsaPrivateCrtKeyParameters) p1.Private;
+            rsaKey.Add(CoseKeyParameterKeys.RSA_d, priv.Exponent.ToByteArrayUnsigned());
+            rsaKey.Add(CoseKeyParameterKeys.RSA_p, priv.P.ToByteArrayUnsigned());
+            rsaKey.Add(CoseKeyParameterKeys.RSA_q, priv.Q.ToByteArrayUnsigned());
+            rsaKey.Add(CoseKeyParameterKeys.RSA_dP, priv.DP.ToByteArrayUnsigned());
+            rsaKey.Add(CoseKeyParameterKeys.RSA_dQ, priv.DQ.ToByteArrayUnsigned());
+            rsaKey.Add(CoseKeyParameterKeys.RSA_qInv, priv.QInv.ToByteArrayUnsigned());
+
+            if (algorithm != null) rsaKey.Add(CoseKeyKeys.Algorithm, algorithm);
+
+            return new OneKey(rsaKey);
+        }
+
 
         /// <summary>
         /// See if the key has an algorithm attribute that matches the parameter.
