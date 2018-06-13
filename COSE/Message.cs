@@ -72,7 +72,7 @@ namespace Com.AugustCellars.COSE
         AES_CCM_16_64_128 =10, AES_CCM_16_64_256=11, AES_CCM_64_64_128=12, AES_CCM_64_64_256=13,
         AES_CCM_16_128_128=30, AES_CCM_16_128_256=31, AES_CCM_64_128_128=32, AES_CCM_64_128_256=33,
 
-        RSA_OAEP = -125, RSA_OAEP_256 = -126,
+        RSA_OAEP = -40, RSA_OAEP_256 = -41, RSA_OAEP_512 = -42,
 
         AES_KW_128 = -3, AES_KW_192=-4, AES_KW_256=-5,
         DIRECT = -6,
@@ -80,7 +80,7 @@ namespace Com.AugustCellars.COSE
         Direct_HKDF_AES_128=-12, Direct_HKDF_AES_256=-13,
 
         ECDSA_256 = -7, ECDSA_384=-35, ECDSA_512=-36,
-        RSA_PSS_256 = -26, RSA_PSS_384=-27, RSA_PSS_512 = -28,
+        RSA_PSS_256 = -37, RSA_PSS_384=-38, RSA_PSS_512 = -39,
         EdDSA = -8,
         ECDH_ES_HKDF_256=-25, ECDH_ES_HKDF_512=-26,
         ECDH_SS_HKDF_256=-27, ECDH_SS_HKDF_512=-28,
@@ -126,6 +126,7 @@ namespace Com.AugustCellars.COSE
 
         public static readonly CBORObject RSA_OAEP = CBORObject.FromObject(AlgorithmValuesInt.RSA_OAEP);
         public static readonly CBORObject RSA_OAEP_256 = CBORObject.FromObject(AlgorithmValuesInt.RSA_OAEP_256);
+        public static readonly CBORObject RSA_OAEP_512 = CBORObject.FromObject(AlgorithmValuesInt.RSA_OAEP_512);
 
         public static readonly CBORObject AES_KW_128 = CBORObject.FromObject(AlgorithmValuesInt.AES_KW_128);
         public static readonly CBORObject AES_KW_192 = CBORObject.FromObject(AlgorithmValuesInt.AES_KW_192);
@@ -141,6 +142,7 @@ namespace Com.AugustCellars.COSE
         public static readonly CBORObject EdDSA = CBORObject.FromObject(AlgorithmValuesInt.EdDSA);
 
         public static readonly CBORObject RSA_PSS_256 = CBORObject.FromObject(AlgorithmValuesInt.RSA_PSS_256);
+        public static readonly CBORObject RSA_PSS_384 = CBORObject.FromObject(AlgorithmValuesInt.RSA_PSS_384);
         public static readonly CBORObject RSA_PSS_512 = CBORObject.FromObject(AlgorithmValuesInt.RSA_PSS_512);
 
         public static readonly CBORObject ECDH_ES_HKDF_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_ES_HKDF_256);
@@ -179,8 +181,8 @@ namespace Com.AugustCellars.COSE
         public static readonly CBORObject OKP_X = CBORObject.FromObject(-2);
         public static readonly CBORObject OKP_D = CBORObject.FromObject(-4);
 
-        public static readonly CBORObject RSA_e = CBORObject.FromObject(-1);
-        public static readonly CBORObject RSA_n = CBORObject.FromObject(-2);
+        public static readonly CBORObject RSA_e = CBORObject.FromObject(-2);
+        public static readonly CBORObject RSA_n = CBORObject.FromObject(-1);
         public static readonly CBORObject RSA_d = CBORObject.FromObject(-3);
         public static readonly CBORObject RSA_p = CBORObject.FromObject(-4);
         public static readonly CBORObject RSA_q = CBORObject.FromObject(-5);
