@@ -8,5 +8,4 @@ before_build:
     - nuget restore COSE.Std10.sln 
 
 build:
-    - ps: cd COSE
-    - project: COSE\COSE.Std10.sln
+    project: COSE\COSE.Std10.sln
