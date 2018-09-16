@@ -21,6 +21,20 @@ matrix:
       env:
         - SLN=COSE.Std10.sln
           TARGET=Std10
+          VERSION=Debug
+          NUGET=../nuget.exe
+      os: linux
+    - mono: 5.14.0
+      env:
+        - SLN=COSE.Std10.sln
+          TARGET=Std10
+          VERSION=Debug
+          NUGET=../nuget.exe
+      os: linux
+    - mono: latest
+      env:
+        - SLN=COSE.Std10.sln
+          TARGET=Std10
           VERSION=Release
           NUGET=../nuget.exe
       os: osx

@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using PeterO.Cbor;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using Com.AugustCellars.COSE;
 
-namespace Com.AugustCellars.COSE
+namespace Com.AugustCellars.COSE.Tests
 {
+    [TestClass]
     public class EncryptMessageTest
     {
         static byte[] rgbKey128 = { (byte)'a', (byte)'b', (byte)'c', 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
@@ -20,7 +22,8 @@ namespace Com.AugustCellars.COSE
         OneKey cnKey128;
 
 
-        [OneTimeSetUp]
+        [TestInitialize]
+        
         public void setUp()
         {
             recipient128 = new Recipient();
@@ -35,7 +38,7 @@ namespace Com.AugustCellars.COSE
         /**
          * Test of Decrypt method, of class Encrypt0Message.
          */
-        [Test]
+        [TestMethod]
         public void testRoundTrip()
         {
             EncryptMessage msg = new EncryptMessage();
@@ -46,7 +49,7 @@ namespace Com.AugustCellars.COSE
             msg.Encrypt();
 
             List<Recipient> rList = msg.RecipientList;
-            Assert.That(rList.Count(), Is.EqualTo(1));
+            Assert.AreEqual(rList.Count(), (1));
 
             byte[] rgbMsg = msg.EncodeToBytes();
 
@@ -55,47 +58,47 @@ namespace Com.AugustCellars.COSE
             r.SetKey(cnKey128);
             byte[] contentNew = msg.Decrypt(r);
 
-            Assert.That(contentNew, Is.EqualTo(rgbContent));
+            CollectionAssert.AreEqual(contentNew, (rgbContent));
         }
 
-        [Test]
+        [TestMethod]
         public void testRecipientListCount()
         {
             EncryptMessage msg = new EncryptMessage();
 
-            Assert.That(msg.RecipientList.Count, Is.EqualTo(0));
+            Assert.AreEqual(msg.RecipientList.Count, (0));
 
             Recipient r = new Recipient();
             msg.AddRecipient(r);
-            Assert.That(msg.RecipientList.Count, Is.EqualTo(1));
+            Assert.AreEqual(msg.RecipientList.Count, (1));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptNoRecipients()
         {
             EncryptMessage msg = new EncryptMessage();
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
             msg.SetContent(rgbContent);
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg.Encrypt());
 
-            Assert.That(e.Message, Is.EqualTo("No recipients supplied"));
+            Assert.AreEqual(e.Message, ("No recipients supplied"));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptNoAlgorithm()
         {
             EncryptMessage msg = new EncryptMessage();
             msg.AddRecipient(recipient128);
 
             msg.SetContent(rgbContent);
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg.Encrypt());
-            Assert.That(e.Message, Is.EqualTo("No Algorithm Specified"));
+            Assert.AreEqual(e.Message, ("No Algorithm Specified"));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptUnknownAlgorithm()
         {
             EncryptMessage msg = new EncryptMessage();
@@ -103,12 +106,12 @@ namespace Com.AugustCellars.COSE
 
             msg.AddAttribute(HeaderKeys.Algorithm, CBORObject.FromObject("Unknown"), Attributes.PROTECTED);
             msg.SetContent(rgbContent);
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg.Encrypt());
-            Assert.That(e.Message, Is.EqualTo("Unknown Algorithm Specified"));
+            Assert.AreEqual(e.Message, ("Unknown Algorithm Specified"));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptUnsupportedAlgorithm()
         {
             EncryptMessage msg = new EncryptMessage();
@@ -116,24 +119,24 @@ namespace Com.AugustCellars.COSE
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.HMAC_SHA_256, Attributes.PROTECTED);
             msg.SetContent(rgbContent);
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg.Encrypt());
-            Assert.That(e.Message, Is.EqualTo("Incorrect key size" /*"Unsupported Algorithm Specified"*/));
+            Assert.AreEqual(e.Message, ("Incorrect key size" /*"Unsupported Algorithm Specified"*/));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptNoContent()
         {
             EncryptMessage msg = new EncryptMessage();
             msg.AddRecipient(recipient128);
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg.Encrypt());
-            Assert.That(e.Message, Is.EqualTo("No Content Specified"));
+            Assert.AreEqual(e.Message, ("No Content Specified"));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptBadIV()
         {
             EncryptMessage msg = new EncryptMessage();
@@ -142,12 +145,12 @@ namespace Com.AugustCellars.COSE
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject("IV"), Attributes.UNPROTECTED);
             msg.SetContent(rgbContent);
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg.Encrypt());
-            Assert.That(e.Message, Is.EqualTo("IV is incorrectly formed."));
+            Assert.AreEqual(e.Message, ("IV is incorrectly formed."));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptIncorrectIV()
         {
             EncryptMessage msg = new EncryptMessage();
@@ -156,24 +159,24 @@ namespace Com.AugustCellars.COSE
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
             msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV128), Attributes.UNPROTECTED);
             msg.SetContent(rgbContent);
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg.Encrypt());
-            Assert.That(e.Message, Is.EqualTo("IV size is incorrect."));
+            Assert.AreEqual(e.Message, ("IV size is incorrect."));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptDecodeWrongBasis()
 
         {
             CBORObject obj = CBORObject.NewMap();
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Encrypt));
-            Assert.That(e.Message, Is.EqualTo("Message is not a COSE security message."));
+            Assert.AreEqual(e.Message, ("Message is not a COSE security message."));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptDecodeWrongCount()
 
         {
@@ -181,12 +184,12 @@ namespace Com.AugustCellars.COSE
             obj.Add(CBORObject.False);
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Encrypt));
-            Assert.That(e.Message, Is.EqualTo("Invalid Encrypt structure"));
+            Assert.AreEqual(e.Message, ("Invalid Encrypt structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptDecodeBadProtected()
 
         {
@@ -197,12 +200,12 @@ namespace Com.AugustCellars.COSE
             obj.Add(CBORObject.False);
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Encrypt));
-            Assert.That(e.Message, Is.EqualTo("Invalid Encrypt structure"));
+            Assert.AreEqual(e.Message, ("Invalid Encrypt structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptDecodeBadProtected2()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -212,12 +215,12 @@ namespace Com.AugustCellars.COSE
             obj.Add(CBORObject.False);
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Encrypt));
-            Assert.That(e.Message, Is.EqualTo("Invalid Encrypt structure"));
+            Assert.AreEqual(e.Message, ("Invalid Encrypt structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptDecodeBadUnprotected()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -227,12 +230,12 @@ namespace Com.AugustCellars.COSE
             obj.Add(CBORObject.False);
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Encrypt));
-            Assert.That(e.Message, Is.EqualTo("Invalid Encrypt structure"));
+            Assert.AreEqual(e.Message, ("Invalid Encrypt structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptDecodeBadContent()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -242,12 +245,12 @@ namespace Com.AugustCellars.COSE
             obj.Add(CBORObject.False);
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Encrypt));
-            Assert.That(e.Message, Is.EqualTo("Invalid Encrypt structure"));
+            Assert.AreEqual(e.Message, ("Invalid Encrypt structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void encryptDecodeBadRecipients()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -257,9 +260,9 @@ namespace Com.AugustCellars.COSE
             obj.Add(CBORObject.False);
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Encrypt));
-            Assert.That(e.Message, Is.EqualTo("Invalid Encrypt structure"));
+            Assert.AreEqual(e.Message, ("Invalid Encrypt structure"));
         }
     }
 }

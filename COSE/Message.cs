@@ -168,6 +168,10 @@ namespace Com.AugustCellars.COSE
         public static readonly CBORObject x5c = CBORObject.FromObject("x5c");
         public static readonly CBORObject x5t = CBORObject.FromObject("x5t");
         public static readonly CBORObject x5t_sha_256 = CBORObject.FromObject("x5t#S256");
+        public static readonly CBORObject slt = CBORObject.FromObject(8);
+        public static readonly CBORObject kdf = CBORObject.FromObject(9);
+        public static readonly CBORObject clientId = CBORObject.FromObject(10);
+        public static readonly CBORObject serverId = CBORObject.FromObject(11);
     }
 
     public class CoseKeyParameterKeys

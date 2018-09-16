@@ -1,6 +1,6 @@
 ﻿using System;
 using Com.AugustCellars.COSE;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PeterO.Cbor;
 
 namespace Com.AugustCellars.COSE.Tests
@@ -18,7 +18,7 @@ namespace Com.AugustCellars.COSE.Tests
         /**
          * Test of DecodeFromBytes method, of class Message.
          */
-        [Test]
+        [TestMethod]
         public void testDecodeUnknown()
         {
             Encrypt0Message msg = new Encrypt0Message(false, true);
@@ -28,15 +28,15 @@ namespace Com.AugustCellars.COSE.Tests
             msg.Encrypt(rgbKey128);
             byte[] rgbMsg = msg.EncodeToBytes();
 
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg = (Encrypt0Message)Message.DecodeFromBytes(rgbMsg, Tags.Unknown));
-            Assert.That(e.Message, Is.EqualTo("Message was not tagged and no default tagging option given"));
+            Assert.AreEqual(e.Message, ("Message was not tagged and no default tagging option given"));
         }
 
         /**
          * Test of DecodeFromBytes method, of class Message.
          */
-        [Test]
+        [TestMethod]
         public void testDecodeFromBytes_byteArr_MessageTag()
         {
             Encrypt0Message msg = new Encrypt0Message(true, false);
@@ -47,29 +47,29 @@ namespace Com.AugustCellars.COSE.Tests
             byte[] rgbMsg = msg.EncodeToBytes();
 
             msg = (Encrypt0Message)Message.DecodeFromBytes(rgbMsg);
-            Assert.That(false, Is.EqualTo(msg.HasContent()));
+            Assert.AreEqual(false, (msg.HasContent()));
         }
 
         /**
          * Test of HasContent method, of class Message.
          */
-        [Test]
+        [TestMethod]
         public void testHasContent()
         {
             Message instance = new Encrypt0Message();
             Boolean expResult = false;
             Boolean result = instance.HasContent();
-            Assert.That(expResult, Is.EqualTo(expResult));
+            Assert.AreEqual(expResult, (expResult));
 
             instance.SetContent(new byte[10]);
             result = instance.HasContent();
-            Assert.That(result, Is.EqualTo(true));
+            Assert.AreEqual(result, (true));
         }
 
         /**
          * Test of SetContent method, of class Message.
          */
-        [Test]
+        [TestMethod]
         public void testSetContent_byteArr()
         {
             byte[] rgbData = new byte[] { 1, 2, 3, 4, 5, 6, 7 };
@@ -77,13 +77,13 @@ namespace Com.AugustCellars.COSE.Tests
             instance.SetContent(rgbData);
 
             byte[] result = instance.GetContent();
-            Assert.That(result, Is.EqualTo(rgbData));
+            Assert.AreEqual(result, (rgbData));
         }
 
         /**
          * Test of SetContent method, of class Message.
          */
-        [Test]
+        [TestMethod]
         public void testSetContent_String()
         {
             String strData = "12345678";
@@ -92,7 +92,7 @@ namespace Com.AugustCellars.COSE.Tests
             Message instance = new Encrypt0Message();
             instance.SetContent(strData);
             byte[] result = instance.GetContent();
-            Assert.That(result, Is.EqualTo(rgbData));
+            Assert.AreEqual(result, (rgbData));
         }
     }
 }
