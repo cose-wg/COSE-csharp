@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 using PeterO.Cbor;
 using Com.AugustCellars.COSE;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Com.AugustCellars.COSE.Tests
 {
+    [TestClass]
     public class Sign0MessageTest
     {
         static byte[] rgbContent = UTF8Encoding.UTF8.GetBytes("This is some content");
@@ -18,8 +19,8 @@ namespace Com.AugustCellars.COSE.Tests
         static OneKey cnKeyPrivate;
 
 
-        [OneTimeSetUp]
-        public static void setUpClass()
+        [TestInitialize]
+        public void setUpClass()
         {
             cnKeyPrivate = OneKey.GenerateKey(null, GeneralValues.KeyType_EC, "P-256");
             cnKeyPublic = cnKeyPrivate.PublicKey();
@@ -28,7 +29,7 @@ namespace Com.AugustCellars.COSE.Tests
         /**
          * Test of Decrypt method, of class Encrypt0Message.
          */
-        [Test]
+        [TestMethod]
         public void testRoundTrip()
         {
             Sign1Message msg = new Sign1Message();
@@ -39,46 +40,46 @@ namespace Com.AugustCellars.COSE.Tests
 
             msg = (Sign1Message)Message.DecodeFromBytes(rgbMsg, Tags.Sign1);
             Boolean f = msg.Validate(cnKeyPublic);
-            Assert.That(f, Is.EqualTo(true));
+            Assert.AreEqual(f, (true));
         }
 
         [Ignore("Uses a default algorithm - different from JAVA - review this")]
-        [Test]
+        [TestMethod]
         public void noAlgorithm()
         {
             Sign1Message msg = new Sign1Message();
 
             msg.SetContent(rgbContent);
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg.Sign(cnKeyPrivate));
-            Assert.That(e.Message, Is.EqualTo("No Algorithm Specified"));
+            Assert.AreEqual(e.Message, ("No Algorithm Specified"));
         }
 
-        [Test]
+        [TestMethod]
         public void unknownAlgorithm()
         {
             Sign1Message msg = new Sign1Message();
 
             msg.AddAttribute(HeaderKeys.Algorithm, CBORObject.FromObject("Unknown"), Attributes.PROTECTED);
             msg.SetContent(rgbContent);
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg.Sign(cnKeyPrivate));
-            Assert.That(e.Message, Is.EqualTo("Unknown Algorithm Specified"));
+            Assert.AreEqual(e.Message, ("Unknown Algorithm Specified"));
         }
 
-        [Test]
+        [TestMethod]
         public void unsupportedAlgorithm()
         {
             Sign1Message msg = new Sign1Message();
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.HMAC_SHA_256, Attributes.PROTECTED);
             msg.SetContent(rgbContent);
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg.Sign(cnKeyPrivate));
-            Assert.That(e.Message, Is.EqualTo("Unknown Algorithm Specified"));
+            Assert.AreEqual(e.Message, ("Unknown Algorithm Specified"));
         }
 
-        [Test]
+        [TestMethod]
         public void nullKey()
         {
             Sign1Message msg = new Sign1Message();
@@ -86,34 +87,34 @@ namespace Com.AugustCellars.COSE.Tests
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.ECDSA_256, Attributes.PROTECTED);
             msg.SetContent(rgbContent);
-            Assert.Throws<NullReferenceException>(() =>
+            Assert.ThrowsException<NullReferenceException>(() =>
                 msg.Sign(key));
         }
 
-        [Test]
+        [TestMethod]
         public void noContent()
         {
             Sign1Message msg = new Sign1Message();
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.ECDSA_256, Attributes.PROTECTED);
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg.Sign(cnKeyPrivate));
-            Assert.That(e.Message, Is.EqualTo("No Content Specified"));
+            Assert.AreEqual(e.Message, ("No Content Specified"));
         }
 
-        [Test]
+        [TestMethod]
         public void publicKey()
         {
             Sign1Message msg = new Sign1Message();
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.ECDSA_256, Attributes.PROTECTED);
             msg.SetContent(rgbContent);
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 msg.Sign(cnKeyPublic));
-            Assert.That(e.Message, Is.EqualTo("Private key required to sign"));
+            Assert.AreEqual(e.Message, ("Private key required to sign"));
         }
 
-        [Test]
+        [TestMethod]
         public void decodeWrongBasis()
 
         {
@@ -121,12 +122,12 @@ namespace Com.AugustCellars.COSE.Tests
 
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Sign1));
-            Assert.That(e.Message, Is.EqualTo("Message is not a COSE security message."));
+            Assert.AreEqual(e.Message, ("Message is not a COSE security message."));
         }
 
-        [Test]
+        [TestMethod]
         public void codeWrongCount()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -134,12 +135,12 @@ namespace Com.AugustCellars.COSE.Tests
 
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Sign1));
-            Assert.That(e.Message, Is.EqualTo("Invalid Sign1 structure"));
+            Assert.AreEqual(e.Message, ("Invalid Sign1 structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void decodeBadProtected()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -150,12 +151,12 @@ namespace Com.AugustCellars.COSE.Tests
 
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Sign1));
-            Assert.That(e.Message, Is.EqualTo("Invalid Sign1 structure"));
+            Assert.AreEqual(e.Message, ("Invalid Sign1 structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void decodeBadProtected2()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -166,12 +167,12 @@ namespace Com.AugustCellars.COSE.Tests
 
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Sign1));
-            Assert.That(e.Message, Is.EqualTo("Invalid Sign1 structure"));
+            Assert.AreEqual(e.Message, ("Invalid Sign1 structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void decodeBadUnprotected()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -181,12 +182,12 @@ namespace Com.AugustCellars.COSE.Tests
             obj.Add(CBORObject.False);
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Sign1));
-            Assert.That(e.Message, Is.EqualTo("Invalid Sign1 structure"));
+            Assert.AreEqual(e.Message, ("Invalid Sign1 structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void decodeBadContent()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -197,12 +198,12 @@ namespace Com.AugustCellars.COSE.Tests
 
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Sign1));
-            Assert.That(e.Message, Is.EqualTo("Invalid Sign1 structure"));
+            Assert.AreEqual(e.Message, ("Invalid Sign1 structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void decodeBadSignature()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -213,9 +214,9 @@ namespace Com.AugustCellars.COSE.Tests
 
 
             byte[] rgb = obj.EncodeToBytes();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 Message.DecodeFromBytes(rgb, Tags.Sign1));
-            Assert.That(e.Message, Is.EqualTo("Invalid Sign1 structure"));
+            Assert.AreEqual(e.Message, ("Invalid Sign1 structure"));
         }
     }
 }

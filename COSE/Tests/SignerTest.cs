@@ -5,11 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 
 using PeterO.Cbor;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Com.AugustCellars.COSE;
 
 namespace Com.AugustCellars.COSE.Tests
 {
+    [TestClass]
     public class SignerTest
     {
 
@@ -33,19 +34,19 @@ namespace Com.AugustCellars.COSE.Tests
     }
 #endif
 
-        [Test]
+        [TestMethod]
         public void signerDecodeWrongBasis()
         {
             CBORObject obj = CBORObject.NewMap();
 
 
             Signer sig = new Signer();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 sig.DecodeFromCBORObject(obj));
-            Assert.That(e.Message, Is.EqualTo("Invalid Signer structure"));
+            Assert.AreEqual(e.Message, ("Invalid Signer structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void signerDecodeWrongCount()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -53,12 +54,12 @@ namespace Com.AugustCellars.COSE.Tests
 
 
             Signer sig = new Signer();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 sig.DecodeFromCBORObject(obj));
-            Assert.That(e.Message, Is.EqualTo("Invalid Signer structure"));
+            Assert.AreEqual(e.Message, ("Invalid Signer structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void signerDecodeBadProtected()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -68,12 +69,12 @@ namespace Com.AugustCellars.COSE.Tests
 
 
             Signer sig = new Signer();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 sig.DecodeFromCBORObject(obj));
-            Assert.That(e.Message, Is.EqualTo("Invalid Signer structure"));
+            Assert.AreEqual(e.Message, ("Invalid Signer structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void signerDecodeBadProtected2()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -83,12 +84,12 @@ namespace Com.AugustCellars.COSE.Tests
 
 
             Signer sig = new Signer();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 sig.DecodeFromCBORObject(obj));
-            Assert.That(e.Message, Is.EqualTo("Invalid Signer structure"));
+            Assert.AreEqual(e.Message, ("Invalid Signer structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void signerDecodeBadUnprotected()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -98,12 +99,12 @@ namespace Com.AugustCellars.COSE.Tests
 
 
             Signer sig = new Signer();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 sig.DecodeFromCBORObject(obj));
-            Assert.That(e.Message, Is.EqualTo("Invalid Signer structure"));
+            Assert.AreEqual(e.Message, ("Invalid Signer structure"));
         }
 
-        [Test]
+        [TestMethod]
         public void signerDecodeBadSignature()
         {
             CBORObject obj = CBORObject.NewArray();
@@ -113,9 +114,9 @@ namespace Com.AugustCellars.COSE.Tests
 
 
             Signer sig = new Signer();
-            CoseException e = Assert.Throws<CoseException>(() =>
+            CoseException e = Assert.ThrowsException<CoseException>(() =>
                 sig.DecodeFromCBORObject(obj));
-            Assert.That(e.Message, Is.EqualTo("Invalid Signer structure"));
+            Assert.AreEqual(e.Message, ("Invalid Signer structure"));
         }
     }
 }

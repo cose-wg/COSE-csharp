@@ -4,8 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PeterO.Cbor;
 using Com.AugustCellars.COSE;
 
@@ -45,7 +44,7 @@ namespace Com.AugustCellars.COSE.Tests
 
         public int CFails = 0;
 
-        [Test]
+        [TestMethod]
         public void ProcessDirectory()
         {
             CFails = 0;
@@ -79,7 +78,7 @@ namespace Com.AugustCellars.COSE.Tests
                     ProcessFile(fi.FullName);
                 }
             }
-            Assert.That(CFails, Is.EqualTo(0));
+            Assert.AreEqual(CFails, (0));
         }
 
         public void ProcessDirectory(string dirName)
@@ -107,7 +106,7 @@ namespace Com.AugustCellars.COSE.Tests
                     ProcessFile(fi.FullName);
                 }
             }
-            Assert.That(CFails, Is.EqualTo(0));
+            Assert.AreEqual(CFails, (0));
         }
 
         public void ProcessFile(String test)
@@ -232,7 +231,7 @@ namespace Com.AugustCellars.COSE.Tests
                     byte[] rgbContent = enc0.Decrypt(kk.GetByteString());
                     if ((cnFail != null) && !cnFail.AsBoolean()) CFails++;
                     byte[] oldContent = GetContent(cnInput);
-                    Assert.That(oldContent, Is.EqualTo(rgbContent));
+                    Assert.AreEqual(oldContent, (rgbContent));
                 }
                 catch (Exception) {
                     if (!fFailBody && ((cnFail == null) || !cnFail.AsBoolean())) CFails++;
