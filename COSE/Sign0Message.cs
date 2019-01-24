@@ -50,7 +50,14 @@ namespace Com.AugustCellars.COSE
             return obj;
         }
 
-        virtual public void DecodeFromCBORObject(CBORObject messageObject)
+
+ #region Decoders
+        public static Sign1Message DecodeFromCBOR(CBORObject obj)
+        {
+            return (Sign1Message)Message.DecodeFromCBOR(obj, Tags.Sign1);
+        }
+
+        protected override void InternalDecodeFromCBORObject(CBORObject messageObject)
         {
             if (messageObject.Count != 4) throw new CoseException("Invalid Sign1 structure");
 
@@ -75,6 +82,7 @@ namespace Com.AugustCellars.COSE
             if (messageObject[3].Type == CBORType.ByteString) _rgbSignature = messageObject[3].GetByteString();
             else throw new CoseException("Invalid Sign1 structure");
         }
+        #endregion
 
         public override CBORObject Encode()
         {
@@ -86,6 +94,10 @@ namespace Com.AugustCellars.COSE
                 obj.Add(ProtectedMap.EncodeToBytes());
             }
             else obj.Add(new byte[0]);
+
+            ProtectedBytes = obj[0].GetByteString();
+
+            ProcessCounterSignatures();
 
             if ((UnprotectedMap == null) || (UnprotectedMap.Count == 0)) obj.Add(CBORObject.NewMap());
             else obj.Add(UnprotectedMap); // Add unprotected attributes

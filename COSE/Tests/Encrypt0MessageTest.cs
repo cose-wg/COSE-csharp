@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using PeterO.Cbor;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -11,19 +10,15 @@ namespace Com.AugustCellars.COSE.Tests
     {
         byte[] rgbKey128 = { (byte)'a', (byte)'b', (byte)'c', 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
         byte[] rgbKey256 = { (byte)'a', (byte)'b', (byte)'c', 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
-        byte[] rgbContent = UTF8Encoding.UTF8.GetBytes("This is some content");
+        byte[] rgbContent = Encoding.UTF8.GetBytes("This is some content");
         byte[] rgbIV128 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
         byte[] rgbIV96 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-
-        public Encrypt0MessageTest()
-        {
-        }
 
         /**
          * Test of decrypt method, of class Encrypt0Message.
          */
         [TestMethod]
-        public void testRoundTrip()
+        public void TestRoundTrip()
         {
             Encrypt0Message msg = new Encrypt0Message();
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
@@ -38,8 +33,65 @@ namespace Com.AugustCellars.COSE.Tests
             CollectionAssert.AreEqual(rgbContent, (contentNew));
         }
 
+        /**
+         * Test of decrypt method, of class Encrypt0Message.
+         */
         [TestMethod]
-        public void encryptNoAlgorithm()
+        public void TestRoundTrip2()
+        {
+            Encrypt0Message msg = new Encrypt0Message();
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
+            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), Attributes.PROTECTED);
+            msg.SetContent(rgbContent);
+            msg.Encrypt(rgbKey128);
+            byte[] rgbMsg = msg.EncodeToBytes();
+
+            msg = Encrypt0Message.DecodeFromBytes(rgbMsg);
+            byte[] contentNew = msg.Decrypt(rgbKey128);
+
+            CollectionAssert.AreEqual(rgbContent, (contentNew));
+        }
+
+        /**
+         * Test of decrypt method, of class Encrypt0Message.
+         */
+        [TestMethod]
+        public void TestRoundTrip3()
+        {
+            Encrypt0Message msg = new Encrypt0Message();
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
+            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), Attributes.PROTECTED);
+            msg.SetContent(rgbContent);
+            msg.Encrypt(rgbKey128);
+            CBORObject rgbMsg = msg.EncodeToCBORObject();
+
+            msg = Encrypt0Message.DecodeFromCBOR(rgbMsg);
+            byte[] contentNew = msg.Decrypt(rgbKey128);
+
+            CollectionAssert.AreEqual(rgbContent, (contentNew));
+        }
+
+        /**
+  * Test of decrypt method, of class Encrypt0Message.
+  */
+        [TestMethod]
+        public void TestRoundTrip4()
+        {
+            Encrypt0Message msg = new Encrypt0Message();
+            msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
+            msg.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(rgbIV96), Attributes.PROTECTED);
+            msg.SetContent(rgbContent);
+            msg.Encrypt(rgbKey128);
+            CBORObject rgbMsg = msg.EncodeToCBORObject();
+
+            msg = (Encrypt0Message) Message.DecodeFromCBOR(rgbMsg);
+            byte[] contentNew = msg.Decrypt(rgbKey128);
+
+            CollectionAssert.AreEqual(rgbContent, (contentNew));
+        }
+
+        [TestMethod]
+        public void EncryptNoAlgorithm()
         {
             Encrypt0Message msg = new Encrypt0Message();
 
@@ -51,7 +103,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptUnknownAlgorithm()
+        public void EncryptUnknownAlgorithm()
         {
             Encrypt0Message msg = new Encrypt0Message();
 
@@ -63,7 +115,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptUnsupportedAlgorithm()
+        public void EncryptUnsupportedAlgorithm()
         {
             Encrypt0Message msg = new Encrypt0Message();
 
@@ -75,7 +127,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptIncorrectKeySize()
+        public void EncryptIncorrectKeySize()
         {
             Encrypt0Message msg = new Encrypt0Message();
 
@@ -87,18 +139,18 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptNullKey()
+        public void EncryptNullKey()
         {
             Encrypt0Message msg = new Encrypt0Message();
 
             msg.AddAttribute(HeaderKeys.Algorithm, AlgorithmValues.AES_GCM_128, Attributes.PROTECTED);
             msg.SetContent(rgbContent);
-            CoseException e = Assert.ThrowsException<CoseException>(() =>
-                msg.Encrypt(null));
+            Assert.ThrowsException<CoseException>(() =>
+                                                      msg.Encrypt(null));
         }
 
         [TestMethod]
-        public void encryptNoContent()
+        public void EncryptNoContent()
         {
             Encrypt0Message msg = new Encrypt0Message();
 
@@ -109,7 +161,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptBadIV()
+        public void EncryptBadIV()
         {
             Encrypt0Message msg = new Encrypt0Message();
 
@@ -122,7 +174,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptIncorrectIV()
+        public void EncryptIncorrectIV()
         {
             Encrypt0Message msg = new Encrypt0Message();
 
@@ -135,7 +187,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptNoTag()
+        public void EncryptNoTag()
         {
             Encrypt0Message msg = new Encrypt0Message(false, true);
 
@@ -149,7 +201,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptNoEmitContent()
+        public void EncryptNoEmitContent()
         {
             Encrypt0Message msg = new Encrypt0Message(true, false);
 
@@ -164,7 +216,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void noContentForDecrypt()
+        public void NoContentForDecrypt()
         {
             Encrypt0Message msg = new Encrypt0Message(true, false);
 
@@ -184,7 +236,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void roundTripDetached()
+        public void RoundTripDetached()
         {
             Encrypt0Message msg = new Encrypt0Message(true, false);
 
@@ -204,7 +256,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptWrongBasis()
+        public void EncryptWrongBasis()
         {
             CBORObject obj = CBORObject.NewMap();
 
@@ -215,7 +267,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptDecodeWrongCount()
+        public void EncryptDecodeWrongCount()
         {
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.False);
@@ -227,7 +279,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptDecodeBadProtected()
+        public void EncryptDecodeBadProtected()
         {
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.False);
@@ -241,7 +293,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptDecodeBadProtected2()
+        public void EncryptDecodeBadProtected2()
         {
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.False));
@@ -255,7 +307,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptDecodeBadUnprotected()
+        public void EncryptDecodeBadUnprotected()
         {
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());
@@ -269,7 +321,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptDecodeBadContent()
+        public void EncryptDecodeBadContent()
         {
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());
@@ -283,7 +335,7 @@ namespace Com.AugustCellars.COSE.Tests
         }
 
         [TestMethod]
-        public void encryptDecodeBadTag()
+        public void EncryptDecodeBadTag()
         {
             CBORObject obj = CBORObject.NewArray();
             obj.Add(CBORObject.FromObject(CBORObject.NewArray()).EncodeToBytes());

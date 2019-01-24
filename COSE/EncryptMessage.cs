@@ -242,6 +242,16 @@ namespace Com.AugustCellars.COSE
             _recipientList.Add(recipient);
         }
 
+
+
+        #region Decoders
+
+
+        protected override void InternalDecodeFromCBORObject(CBORObject obj)
+        {
+            throw new CoseException("Internal Error - Recipient.InternalDecodeFromObject should never be called.");
+        }
+
         public void DecodeFromCBORObject(CBORObject obj)
         {
             if ((obj.Count != 3) && (obj.Count != 4)) throw new CoseException("Invalid Encrypt structure");
@@ -279,6 +289,7 @@ namespace Com.AugustCellars.COSE
                 else throw new CoseException("Invalid Encrypt structure");
             }
         }
+#endregion
 
         public byte[] Decrypt(int cbitCEK, CBORObject algCEK, Recipient recipientIn)
         {
@@ -409,19 +420,6 @@ namespace Com.AugustCellars.COSE
 
             if (RgbEncrypted == null) Encrypt();
 
-            if (m_counterSignerList.Count() != 0) {
-                byte[] rgbProtected;
-                if (ProtectedMap.Count > 0) rgbProtected = ProtectedMap.EncodeToBytes();
-                else rgbProtected = new byte[0];
-                if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, RgbEncrypted), UNPROTECTED);
-                }
-                else {
-                    foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(rgbProtected, RgbEncrypted);
-                    }
-                }
-            }
 
             obj = CBORObject.NewArray();
 
@@ -669,6 +667,28 @@ namespace Com.AugustCellars.COSE
                 key.SetContent(rgbKey);
                 key.Encrypt();
             }
+
+            if (CounterSignerList.Count() != 0) {
+                byte[] rgbProtected;
+                if (ProtectedMap.Count > 0) rgbProtected = ProtectedMap.EncodeToBytes();
+                else rgbProtected = new byte[0];
+                if (CounterSignerList.Count() == 1) {
+                    AddAttribute(HeaderKeys.CounterSignature, CounterSignerList[0].EncodeToCBORObject(rgbProtected, RgbEncrypted), UNPROTECTED);
+                }
+                else {
+                    foreach (CounterSignature sig in CounterSignerList) {
+                        sig.EncodeToCBORObject(rgbProtected, RgbEncrypted);
+                    }
+                }
+            }
+
+            if (CounterSigner1 != null) {
+                byte[] rgbProtected;
+                if (ProtectedMap.Count > 0) rgbProtected = ProtectedMap.EncodeToBytes();
+                else rgbProtected = new byte[0];
+                AddAttribute(HeaderKeys.CounterSignature0, CounterSigner1.EncodeToCBORObject(rgbProtected, RgbEncrypted), UNPROTECTED);
+            }
+
         }
 
         public byte[] GetKey(CBORObject alg)
@@ -1467,14 +1487,40 @@ namespace Com.AugustCellars.COSE
             get => _recipientList;
         }
 
-        public virtual void DecodeFromCBORObject(CBORObject obj)
+#region Decoders
+        /// <summary>
+        /// Given a byte array, decode and return the correct COSE message object.
+        /// Message type can be provided explicitly or inferred from the CBOR tag element.
+        /// If the explicit and inferred elements provide different answers, then it fails.
+        /// </summary>
+        /// <param name="messageData"></param>
+        /// <param name="defaultTag"></param>
+        /// <returns></returns>
+        public static EncryptMessage DecodeFromBytes(byte[] messageData)
+        {
+            CBORObject messageObject = CBORObject.DecodeFromBytes(messageData);
+
+            return (EncryptMessage)DecodeFromCBOR(messageObject, Tags.Encrypt);
+        }
+
+        public static EncryptMessage DecodeFromCBOR(CBORObject obj)
+        {
+            return (EncryptMessage)Message.DecodeFromCBOR(obj, Tags.Encrypt);
+        }
+
+        protected override void InternalDecodeFromCBORObject(CBORObject obj)
         {
             if (obj.Count != 4) throw new CoseException("Invalid Encrypt structure");
 
             //  Protected values.
             if (obj[0].Type == CBORType.ByteString) {
-                if (obj[0].GetByteString().Length == 0) ProtectedMap = CBORObject.NewMap();
-                else ProtectedMap = CBORObject.DecodeFromBytes(obj[0].GetByteString());
+                ProtectedBytes = obj[0].GetByteString();
+                if (obj[0].GetByteString().Length == 0) {
+                    ProtectedMap = CBORObject.NewMap();
+                }
+                else {
+                    ProtectedMap = CBORObject.DecodeFromBytes(obj[0].GetByteString());
+                }
                 if (ProtectedMap.Type != CBORType.Map) throw new CoseException("Invalid Encrypt structure");
             }
             else {
@@ -1502,6 +1548,7 @@ namespace Com.AugustCellars.COSE
             }
             else throw new CoseException("Invalid Encrypt structure");
         }
+#endregion
 
         public override CBORObject Encode()
         {
@@ -1520,17 +1567,7 @@ namespace Com.AugustCellars.COSE
             }
             obj.Add(rgbProtect);
 
-            if (m_counterSignerList.Count() != 0) {
-                if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtect, RgbEncrypted), UNPROTECTED);
-                }
-                else {
-                    foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(rgbProtect, RgbEncrypted);
-                    }
-                }
-            }
-
+            ProcessCounterSignatures();
 
             obj.Add(UnprotectedMap); // Add unprotected attributes
 
@@ -1649,6 +1686,8 @@ namespace Com.AugustCellars.COSE
                 key.SetContent(ContentKey);
                 key.Encrypt();
             }
+
+            ProcessCounterSignatures();
         }
     }
 

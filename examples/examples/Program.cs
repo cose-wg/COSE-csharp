@@ -6,6 +6,7 @@ using System.IO;
 
 using PeterO.Cbor;
 using Com.AugustCellars.COSE;
+using Org.BouncyCastle.Crypto.Generators;
 
 namespace examples
 {
@@ -13,9 +14,17 @@ namespace examples
 
     class Program
     {
-        enum Outputs { cbor = 1, cborDiag = 2, jose = 3, jose_compact = 4, jose_flatten = 5 };
+        enum Outputs
+        {
+            cbor = 1,
+            cborDiag = 2,
+            jose = 3,
+            jose_compact = 4,
+            jose_flatten = 5
+        };
 
-        static Outputs[] RgOutputs = new Outputs[] { Outputs.cborDiag, Outputs.cbor  /*, Outputs.cbor, Outputs.cborFlatten*/ };
+        static Outputs[] RgOutputs = new Outputs[]
+            {Outputs.cborDiag, Outputs.cbor /*, Outputs.cbor, Outputs.cborFlatten*/};
 
         static KeySet allkeys = new KeySet();
         static KeySet allPubKeys = new KeySet();
@@ -56,18 +65,18 @@ namespace examples
         {
             Console.WriteLine("Command line for test program is: ");
             Console.WriteLine("example [--cose directory] [--jose directory]");
-            Environment.Exit(1);    
+            Environment.Exit(1);
         }
 
         static void RunCoseExamples()
-        { 
+        {
             EdDSA25517.SelfTest();
             EdDSA448.SelfTest();
 
             //  OneKey k1 = OneKey.GenerateKey(null, GeneralValues.KeyType_RSA, "2048");
 
-            RunTestsInDirectory("rsa-pss-examples");
 
+            RunTestsInDirectory("countersign0");
 
             RunTestsInDirectory("RFC8152");
             {
@@ -93,6 +102,7 @@ namespace examples
             RunTestsInDirectory("aes-ccm-examples");
             RunTestsInDirectory("aes-gcm-examples");
             RunTestsInDirectory("chacha-poly-examples");
+            RunTestsInDirectory("countersign");
             RunTestsInDirectory("ecdsa-examples");
             RunTestsInDirectory("hkdf-hmac-sha-examples");
             RunTestsInDirectory("hkdf-aes-examples");
@@ -122,6 +132,7 @@ namespace examples
 
             foreach (var di in diTop.EnumerateFiles()) {
                 if (di.Extension == ".json") {
+                    if (di.Name[0] == '.') continue;
                     ProcessFile(strDirectory, di.Name);
                 }
             }
@@ -151,7 +162,7 @@ namespace examples
                     file2.Write(fileText);
                     file2.Write("\r\n");
                     file2.Close();
-            }
+                }
 #endif
 
                 ValidateJSON(control);
@@ -181,6 +192,7 @@ namespace examples
                     }
                 }
             }
+
             Message.SetPRNG(prng);
             JOSE.Message.SetPRNG(prng);
 
@@ -213,6 +225,7 @@ namespace examples
                     control["output"].Add("cbor", ToHex(rgbNew));
                     modified = true;
                 }
+
                 FileStream bw = File.OpenWrite(fileName);
                 bw.SetLength(0);
                 bw.Write(rgbNew, 0, rgbNew.Length);
@@ -239,8 +252,10 @@ namespace examples
                         else control["input"].Add("rng_stream", prng.buffer);
                     }
                     else {
-                        if (control["input"].ContainsKey("rng_stream")) control["input"].Remove(CBORObject.FromObject("rng_stream"));
+                        if (control["input"].ContainsKey("rng_stream"))
+                            control["input"].Remove(CBORObject.FromObject("rng_stream"));
                     }
+
                     modified = true;
                 }
             }
@@ -271,8 +286,10 @@ namespace examples
             if (sign.ContainsKey("unprotected")) AddAttributes(msg, sign["unprotected"], 1);
             if (sign.ContainsKey("unsent")) AddAttributes(msg, sign["unsent"], 2);
             if (sign.ContainsKey("countersign")) AddCounterSignature(msg, sign["countersign"]);
+            if (sign.ContainsKey("countersign0")) AddCounterSignature0(msg, sign["countersign0"]);
 
-            if ((!sign.ContainsKey("signers")) || (sign["signers"].Type != CBORType.Array)) throw new Exception("Missing or malformed recipients");
+            if ((!sign.ContainsKey("signers")) || (sign["signers"].Type != CBORType.Array))
+                throw new Exception("Missing or malformed recipients");
             foreach (CBORObject recip in sign["signers"].Values) {
                 msg.AddSigner(GetSigner(recip));
             }
@@ -286,17 +303,14 @@ namespace examples
                     CBORObject sig = signers[iSigner];
 
                     SetField(signers[iSigner], "ToBeSign_hex", msg.SignerList[iSigner].GetToBeSigned(), ref fDirty);
+
+                    SaveCountersignDebug(msg.SignerList[iSigner].CounterSignerList, signers[iSigner], ref fDirty);
+                    SaveCountersign0Debug(msg.SignerList[iSigner].CounterSigner1, signers[iSigner], ref fDirty);
+
                 }
 
-                if (msg.CounterSignerList.Count > 0) {
-                    signers = GetSection(GetSection(control, "intermediates"), "countersigners");
-                    for (int iSigner = 0; iSigner < msg.CounterSignerList.Count; iSigner++) {
-                        CBORObject sig = signers[iSigner];
-
-                        SetField(signers[iSigner], "ToBeSign_hex", msg.CounterSignerList[iSigner].GetToBeSigned(), ref fDirty);
-
-                    }
-                }
+                SaveCountersignDebug(msg.CounterSignerList, GetSection(control, "intermediates"), ref fDirty);
+                SaveCountersign0Debug(msg.CounterSigner1, GetSection(control, "intermediates"), ref fDirty);
             }
 
             CBORObject msgOut = msg.EncodeToCBORObject();
@@ -335,7 +349,7 @@ namespace examples
             else {
                 throw new Exception("missing plaintext field");
             }
-        
+
 
             if (!sign.ContainsKey("alg")) throw new Exception("Signer missing alg field");
 
@@ -347,12 +361,16 @@ namespace examples
             if (sign.ContainsKey("unprotected")) AddAttributes(msg, sign["unprotected"], 1);
             if (sign.ContainsKey("unsent")) AddAttributes(msg, sign["unsent"], 2);
             if (sign.ContainsKey("external")) AddExternalData(msg, sign["external"]);
+            if (sign.ContainsKey("countersign")) AddCounterSignature(msg, sign["countersign"]);
+            if (sign.ContainsKey("countersign0")) AddCounterSignature0(msg, sign["countersign0"]);
 
             {
                 msg.Encode();
 
                 SetField(GetSection(control, "intermediates"), "ToBeSign_hex", msg.GetToBeSigned(), ref fDirty);
 
+                SaveCountersignDebug(msg.CounterSignerList, GetSection(control, "intermediates"), ref fDirty);
+                SaveCountersign0Debug(msg.CounterSigner1, GetSection(control, "intermediates"), ref fDirty);
             }
 
             CBORObject msgOut = msg.EncodeToCBORObject();
@@ -361,6 +379,7 @@ namespace examples
             if (input.ContainsKey("failures")) {
                 msgOut = ProcessFailures(msgOut, input["failures"], 2);
             }
+
             return msgOut;
         }
 #endif
@@ -376,7 +395,7 @@ namespace examples
 
             fFail = HasFailMarker(cnControl);
 
-                cnSign = cnInput["sign0"];
+            cnSign = cnInput["sign0"];
 
             try {
                 Message msg = Message.DecodeFromBytes(rgb, Tags.Sign1);
@@ -387,7 +406,7 @@ namespace examples
                 return false;
             }
 
-            SetRecievingAttributes(hSig, cnSign);
+            SetReceivingAttributes(hSig, cnSign);
 
             OneKey cnkey = GetKey(cnSign["key"], true);
 
@@ -402,7 +421,17 @@ namespace examples
                 if (fFail || fFailInput) return true;
                 return false;
             }
-            
+
+            CBORObject cnCounter = cnSign["countersign"];
+            if (cnCounter != null) {
+                CheckCounterSignatures(hSig, cnCounter);
+            }
+
+            cnCounter = cnSign["countersign0"];
+            if (cnCounter != null) {
+                CheckCounterSignature0(hSig, cnCounter);
+            }
+
             return true;
         }
 
@@ -429,13 +458,15 @@ namespace examples
             if (encrypt.ContainsKey("unprotected")) AddAttributes(msg, encrypt["unprotected"], 1);
             if (encrypt.ContainsKey("unsent")) AddAttributes(msg, encrypt["unsent"], 2);
             if (encrypt.ContainsKey("countersign")) AddCounterSignature(msg, encrypt["countersign"]);
+            if (encrypt.ContainsKey("countersign0")) AddCounterSignature0(msg, encrypt["countersign0"]);
             if (encrypt.ContainsKey("external")) AddExternalData(msg, encrypt["external"]);
 
             if (encrypt.ContainsKey("alg")) {
                 encrypt.Remove(CBORObject.FromObject("alg"));
             }
 
-            if ((!encrypt.ContainsKey("recipients")) || (encrypt["recipients"].Type != CBORType.Array)) throw new Exception("Missing or malformed recipients");
+            if ((!encrypt.ContainsKey("recipients")) || (encrypt["recipients"].Type != CBORType.Array))
+                throw new Exception("Missing or malformed recipients");
 
             byte[] rgbKey;
 
@@ -451,6 +482,9 @@ namespace examples
 
                 SetField(intermediates, "AAD_hex", msg.getAADBytes(), ref fDirty);
                 SetField(intermediates, "CEK_hex", msg.getCEK(), ref fDirty);
+
+                SaveCountersignDebug(msg.CounterSignerList, intermediates, ref fDirty);
+                SaveCountersign0Debug(msg.CounterSigner1, intermediates, ref fDirty);
             }
 
             CBORObject msgOut = msg.EncodeToCBORObject();
@@ -459,7 +493,26 @@ namespace examples
             if (input.ContainsKey("failures")) {
                 msgOut = ProcessFailures(msgOut, input["failures"], 2);
             }
+
             return msgOut;
+        }
+
+        static void SaveCountersignDebug(List<CounterSignature> counterSignerList, CBORObject dest, ref bool fDirty)
+        {
+            if (counterSignerList.Count > 0) {
+                CBORObject signers = GetSection(dest, "countersigners");
+                for (int iSigner = 0; iSigner < counterSignerList.Count; iSigner++) {
+                    SetField(signers[iSigner], "ToBeSign_hex", counterSignerList[iSigner].GetToBeSigned(), ref fDirty);
+                }
+            }
+        }
+
+        static void SaveCountersign0Debug(CounterSignature1 counterSigner, CBORObject dest, ref bool fDirty)
+        {
+            if (counterSigner != null) {
+                CBORObject signers = GetSection(dest, "countersign0");
+                SetField(signers[0], "ToBeSign_hex", counterSigner.GetToBeSigned(), ref fDirty);
+            }
         }
 #endif
 
@@ -471,7 +524,7 @@ namespace examples
 
             CBORObject cnFail = control["fail"];
             if ((cnFail != null) && (cnFail.Type == CBORType.Boolean) &&
-                  cnFail.AsBoolean()) {
+                cnFail.AsBoolean()) {
                 fFailBody = true;
             }
 
@@ -482,7 +535,7 @@ namespace examples
                 Encrypt0Message enc0 = (Encrypt0Message) msg;
 
                 CBORObject cnEncrypt = cnInput["encrypted"];
-                SetRecievingAttributes(msg, cnEncrypt);
+                SetReceivingAttributes(msg, cnEncrypt);
 
                 CBORObject cnRecipients = cnEncrypt["recipients"];
                 cnRecipients = cnRecipients[0];
@@ -495,10 +548,20 @@ namespace examples
 
                 try {
                     byte[] rgbContent = enc0.Decrypt(kk.GetByteString());
-                    if ((cnFail != null) && !cnFail.AsBoolean()) return false; 
+                    if ((cnFail != null) && !cnFail.AsBoolean()) return false;
                 }
                 catch (Exception) {
                     if (!fFailBody && ((cnFail == null) || !cnFail.AsBoolean())) return false;
+                }
+
+                CBORObject cnCounter = cnEncrypt["countersign"];
+                if (cnCounter != null) {
+                    CheckCounterSignatures(msg, cnCounter);
+                }
+
+                cnCounter = cnEncrypt["countersign0"];
+                if (cnCounter != null) {
+                    CheckCounterSignature0(msg, cnCounter);
                 }
             }
             catch (Exception) {
@@ -523,13 +586,15 @@ namespace examples
             if (encrypt.ContainsKey("unprotected")) AddAttributes(msg, encrypt["unprotected"], 1);
             if (encrypt.ContainsKey("unsent")) AddAttributes(msg, encrypt["unsent"], 2);
             if (encrypt.ContainsKey("countersign")) AddCounterSignature(msg, encrypt["countersign"]);
+            if (encrypt.ContainsKey("countersign0")) AddCounterSignature0(msg, encrypt["countersign0"]);
             if (encrypt.ContainsKey("external")) AddExternalData(msg, encrypt["external"]);
 
             if (encrypt.ContainsKey("alg")) {
                 encrypt.Remove(CBORObject.FromObject("alg"));
             }
 
-            if ((!encrypt.ContainsKey("recipients")) || (encrypt["recipients"].Type != CBORType.Array)) throw new Exception("Missing or malformed recipients");
+            if ((!encrypt.ContainsKey("recipients")) || (encrypt["recipients"].Type != CBORType.Array))
+                throw new Exception("Missing or malformed recipients");
             foreach (CBORObject recip in encrypt["recipients"].Values) {
                 msg.AddRecipient(GetRecipient(recip));
             }
@@ -544,37 +609,10 @@ namespace examples
 
                 CBORObject rList = GetSection(intermediates, "recipients");
 
-                for (int iRecipient = 0; iRecipient < msg.RecipientList.Count; iRecipient++) {
-                    Recipient r = msg.RecipientList[iRecipient];
+                SaveRecipientDebug(msg.RecipientList, rList, ref fDirty);
 
-                    SetField(rList[iRecipient], "Context_hex", r.getContext(), ref fDirty);
-                    SetField(rList[iRecipient], "Secret_hex", r.getSecret(), ref fDirty);
-                    SetField(rList[iRecipient], "KEK_hex", r.getKEK(), ref fDirty);
-
-                    if (r.RecipientList.Count > 0) {
-                        CBORObject rList2 = GetSection(rList[iRecipient], "recipients");
-
-                        for (int iRecipient2 = 0; iRecipient2 < r.RecipientList.Count; iRecipient2++) {
-                            Recipient r2 = r.RecipientList[iRecipient2];
-
-                            SetField(rList2[iRecipient2], "Context_hex", r2.getContext(), ref fDirty);
-                            SetField(rList2[iRecipient2], "Secret_hex", r2.getSecret(), ref fDirty);
-                            SetField(rList2[iRecipient2], "KEK_hex", r2.getKEK(), ref fDirty);
-
-                        }
-                    }
-                }
-
-                if (msg.CounterSignerList.Count > 0) {
-                    CBORObject signers = GetSection(GetSection(control, "intermediates"), "countersigners");
-                    for (int iSigner = 0; iSigner < msg.CounterSignerList.Count; iSigner++) {
-                        CBORObject sig = signers[iSigner];
-
-                        SetField(signers[iSigner], "ToBeSign_hex", msg.CounterSignerList[iSigner].GetToBeSigned(), ref fDirty);
-
-                    }
-                }
-
+                SaveCountersignDebug(msg.CounterSignerList, GetSection(control, "intermediates"), ref fDirty);
+                SaveCountersign0Debug(msg.CounterSigner1, GetSection(control, "intermediates"), ref fDirty);
             }
 
             CBORObject msgOut = msg.EncodeToCBORObject();
@@ -583,7 +621,26 @@ namespace examples
             if (input.ContainsKey("failures")) {
                 msgOut = ProcessFailures(msgOut, input["failures"], 2);
             }
+
             return msgOut;
+        }
+
+        static void SaveRecipientDebug(List<Recipient> recipientList, CBORObject rList, ref bool fDirty)
+        {
+            for (int iRecipient = 0; iRecipient < recipientList.Count; iRecipient++) {
+                Recipient r = recipientList[iRecipient];
+
+                SetField(rList[iRecipient], "Context_hex", r.getContext(), ref fDirty);
+                SetField(rList[iRecipient], "Secret_hex", r.getSecret(), ref fDirty);
+                SetField(rList[iRecipient], "KEK_hex", r.getKEK(), ref fDirty);
+
+                SaveCountersignDebug(r.CounterSignerList, rList[iRecipient], ref fDirty);
+                SaveCountersign0Debug(r.CounterSigner1, rList[iRecipient], ref fDirty);
+
+                if (r.RecipientList.Count > 0) {
+                    SaveRecipientDebug(r.RecipientList, GetSection(rList[iRecipient], "recipients"), ref fDirty);
+                }
+            }
         }
 #endif
 
@@ -606,8 +663,11 @@ namespace examples
             if (mac.ContainsKey("unprotected")) AddAttributes(msg, mac["unprotected"], 1);
             if (mac.ContainsKey("unsent")) AddAttributes(msg, mac["unsent"], 2);
             if (mac.ContainsKey("external")) AddExternalData(msg, mac["external"]);
+            if (mac.ContainsKey("countersign")) AddCounterSignature(msg, mac["countersign"]);
+            if (mac.ContainsKey("countersign0")) AddCounterSignature0(msg, mac["countersign0"]);
 
-            if ((!mac.ContainsKey("recipients")) || (mac["recipients"].Type != CBORType.Array)) throw new Exception("Missing or malformed recipients");
+            if ((!mac.ContainsKey("recipients")) || (mac["recipients"].Type != CBORType.Array))
+                throw new Exception("Missing or malformed recipients");
 
             foreach (CBORObject recip in mac["recipients"].Values) {
                 msg.AddRecipient(GetRecipient(recip));
@@ -615,32 +675,18 @@ namespace examples
 
             msg.MAC();
 
-            CBORObject intermediates = GetSection(control, "intermediates");
+            {
+                CBORObject intermediates = GetSection(control, "intermediates");
 
-            SetField(intermediates, "ToMac_hex", msg.BuildContentBytes(), ref fDirty);
-            SetField(intermediates, "CEK_hex", msg.getCEK(), ref fDirty);
+                SetField(intermediates, "ToMac_hex", msg.BuildContentBytes(), ref fDirty);
+                SetField(intermediates, "CEK_hex", msg.getCEK(), ref fDirty);
 
-            CBORObject rList = GetSection(intermediates, "recipients");
+                SaveCountersignDebug(msg.CounterSignerList, intermediates, ref fDirty);
+                SaveCountersign0Debug(msg.CounterSigner1, intermediates, ref fDirty);
 
-            for (int iRecipient = 0; iRecipient < msg.RecipientList.Count; iRecipient++) {
-                Recipient r = msg.RecipientList[iRecipient];
+                CBORObject rList = GetSection(intermediates, "recipients");
 
-                SetField(rList[iRecipient], "Context_hex", r.getContext(), ref fDirty);
-                SetField(rList[iRecipient], "Secret_hex", r.getSecret(), ref fDirty);
-                SetField(rList[iRecipient], "KEK_hex", r.getKEK(), ref fDirty);
-
-                if (r.RecipientList.Count > 0) {
-                    CBORObject rList2 = GetSection(rList[iRecipient], "recipients");
-
-                    for (int iRecipient2 = 0; iRecipient2 < r.RecipientList.Count; iRecipient2++) {
-                        Recipient r2 = r.RecipientList[iRecipient2];
-
-                        SetField(rList2[iRecipient2], "Context_hex", r2.getContext(), ref fDirty);
-                        SetField(rList2[iRecipient2], "Secret_hex", r2.getSecret(), ref fDirty);
-                        SetField(rList2[iRecipient2], "KEK_hex", r2.getKEK(), ref fDirty);
-
-                    }
-                }
+                SaveRecipientDebug(msg.RecipientList, rList, ref fDirty);
             }
 
             CBORObject msgOut = msg.EncodeToCBORObject();
@@ -649,6 +695,7 @@ namespace examples
             if (input.ContainsKey("failures")) {
                 msgOut = ProcessFailures(msgOut, input["failures"], 3);
             }
+
             return msgOut;
         }
 #endif
@@ -666,7 +713,8 @@ namespace examples
             }
 
             if (input.ContainsKey("plaintext")) {
-                if (input.ContainsKey("plaintext_hex")) throw new Exception("Can't have both plaintext and plaintext_hex");
+                if (input.ContainsKey("plaintext_hex"))
+                    throw new Exception("Can't have both plaintext and plaintext_hex");
                 msg.SetContent(input["plaintext"].AsString());
             }
             else if (input.ContainsKey("plaintext_hex")) {
@@ -678,8 +726,11 @@ namespace examples
             if (mac.ContainsKey("unprotected")) AddAttributes(msg, mac["unprotected"], 1);
             if (mac.ContainsKey("unsent")) AddAttributes(msg, mac["unsent"], 2);
             if (mac.ContainsKey("external")) AddExternalData(msg, mac["external"]);
+            if (mac.ContainsKey("countersign")) AddCounterSignature(msg, mac["countersign"]);
+            if (mac.ContainsKey("countersign0")) AddCounterSignature0(msg, mac["countersign0"]);
 
-            if ((!mac.ContainsKey("recipients")) || (mac["recipients"].Type != CBORType.Array)) throw new Exception("Missing or malformed recipients");
+            if ((!mac.ContainsKey("recipients")) || (mac["recipients"].Type != CBORType.Array))
+                throw new Exception("Missing or malformed recipients");
 
             OneKey key;
 
@@ -693,6 +744,15 @@ namespace examples
 
                 SetField(intermediates, "ToMac_hex", msg.BuildContentBytes(), ref fDirty);
                 SetField(intermediates, "CEK_hex", rgbKey, ref fDirty);
+
+                if (msg.CounterSignerList.Count > 0) {
+                    CBORObject signers = GetSection(GetSection(control, "intermediates"), "countersigners");
+                    for (int iSigner = 0; iSigner < msg.CounterSignerList.Count; iSigner++) {
+                        SetField(signers[iSigner], "ToBeSign_hex", msg.CounterSignerList[iSigner].GetToBeSigned(),
+                                 ref fDirty);
+
+                    }
+                }
             }
 
             CBORObject msgOut = msg.EncodeToCBORObject();
@@ -701,6 +761,7 @@ namespace examples
             if (input.ContainsKey("failures")) {
                 msgOut = ProcessFailures(msgOut, input["failures"], 3);
             }
+
             return msgOut;
         }
 #endif
@@ -720,7 +781,7 @@ namespace examples
                 MAC0Message mac0 = (MAC0Message) msg;
 
                 CBORObject cnMac = cnInput["mac0"];
-                SetRecievingAttributes(msg, cnMac);
+                SetReceivingAttributes(msg, cnMac);
 
                 CBORObject cnRecipients = cnMac["recipients"];
                 cnRecipients = cnRecipients[0];
@@ -741,6 +802,15 @@ namespace examples
                     if (!fFail && !fFailBody) return false;
                 }
 
+                CBORObject cnCounter = cnMac["countersign"];
+                if (cnCounter != null) {
+                    CheckCounterSignatures(msg, cnCounter);
+                }
+
+                cnCounter = cnMac["countersign0"];
+                if (cnCounter != null) {
+                    CheckCounterSignature0(msg, cnCounter);
+                }
             }
             catch (Exception) {
                 if (!fFailBody) return false;
@@ -765,14 +835,15 @@ namespace examples
 
                 case "AddProtected":
                 case "ChangeAttr": {
-                        CBORObject protect;
-                        if (msgOut.Untag()[0].GetByteString().Length > 0) {
-                            protect = CBORObject.DecodeFromBytes(msgOut.Untag()[0].GetByteString());
-                        }
-                        else protect = CBORObject.NewMap();
-                        AddAttributes(protect, failures[failure.AsString()]);
-                        msgOut.Untag()[0] = CBORObject.FromObject(protect.EncodeToBytes());
+                    CBORObject protect;
+                    if (msgOut.Untag()[0].GetByteString().Length > 0) {
+                        protect = CBORObject.DecodeFromBytes(msgOut.Untag()[0].GetByteString());
                     }
+                    else protect = CBORObject.NewMap();
+
+                    AddAttributes(protect, failures[failure.AsString()]);
+                    msgOut.Untag()[0] = CBORObject.FromObject(protect.EncodeToBytes());
+                }
                     break;
 
                 case "ChangeProtected":
@@ -784,28 +855,32 @@ namespace examples
                     break;
 
                 case "RemoveProtected": {
-                        CBORObject protect = CBORObject.DecodeFromBytes(msgOut.Untag()[0].GetByteString());
-                        CBORObject mapRemove = CBORObject.NewMap();
-                        AddAttributes(mapRemove, failures[failure.AsString()]);
-                        foreach (CBORObject removeKey in mapRemove.Keys) {
-                            protect.Remove(removeKey);
-                        }
-                        msgOut.Untag()[0] = CBORObject.FromObject(protect.EncodeToBytes());
+                    CBORObject protect = CBORObject.DecodeFromBytes(msgOut.Untag()[0].GetByteString());
+                    CBORObject mapRemove = CBORObject.NewMap();
+                    AddAttributes(mapRemove, failures[failure.AsString()]);
+                    foreach (CBORObject removeKey in mapRemove.Keys) {
+                        protect.Remove(removeKey);
                     }
+
+                    msgOut.Untag()[0] = CBORObject.FromObject(protect.EncodeToBytes());
+                }
                     break;
 
                 default:
                     throw new Exception("Unknown failure string " + failure.AsString());
                 }
             }
+
             return msgOut;
         }
 #endif
 
         static CBORObject GetAttribute(CBORObject obj, string attrName)
         {
-            if (obj.ContainsKey("protected") && obj["protected"].ContainsKey(attrName)) return obj["protected"][attrName];
-            if (obj.ContainsKey("unprotected") && obj["unprotected"].ContainsKey(attrName)) return obj["unprotected"][attrName];
+            if (obj.ContainsKey("protected") && obj["protected"].ContainsKey(attrName))
+                return obj["protected"][attrName];
+            if (obj.ContainsKey("unprotected") && obj["unprotected"].ContainsKey(attrName))
+                return obj["unprotected"][attrName];
             if (obj.ContainsKey("unsent") && obj["unsent"].ContainsKey(attrName)) return obj["unsent"][attrName];
             return null;
         }
@@ -836,7 +911,8 @@ namespace examples
                 case "kid":
                     cborKey = HeaderKeys.KeyId;
                     binFromText:
-                    if (cborValue.Type == CBORType.TextString) cborValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cborValue.AsString()));
+                    if (cborValue.Type == CBORType.TextString)
+                        cborValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cborValue.AsString()));
                     break;
 
                 case "epk":
@@ -848,19 +924,43 @@ namespace examples
                     cborValue = GetKey(cborValue).EncodeToCBORObject();
                     break;
 
-                case "salt": cborKey = CoseKeyParameterKeys.HKDF_Salt; goto binFromText;
-                case "apu_id": cborKey = CoseKeyParameterKeys.HKDF_Context_PartyU_ID; goto binFromText;
-                case "apv_id": cborKey = CoseKeyParameterKeys.HKDF_Context_PartyV_ID; goto binFromText;
-                case "apu_nonce": cborKey = CoseKeyParameterKeys.HKDF_Context_PartyU_nonce; goto binFromText;
-                case "apv_nonce": cborKey = CoseKeyParameterKeys.HKDF_Context_PartyV_nonce; goto binFromText;
-                case "apu_other": cborKey = CoseKeyParameterKeys.HKDF_Context_PartyU_Other; goto binFromText;
-                case "apv_other": cborKey = CoseKeyParameterKeys.HKDF_Context_PartyV_Other; goto binFromText;
-                case "pub_other": cborKey = CoseKeyParameterKeys.HKDF_SuppPub_Other; goto binFromText;
-                case "priv_other": cborKey = CoseKeyParameterKeys.HKDF_SuppPriv_Other; goto binFromText;
-                case "spk_kid": cborKey = CoseKeyParameterKeys.ECDH_StaticKey_kid; goto binFromText;
+                case "salt":
+                    cborKey = CoseKeyParameterKeys.HKDF_Salt;
+                    goto binFromText;
+                case "apu_id":
+                    cborKey = CoseKeyParameterKeys.HKDF_Context_PartyU_ID;
+                    goto binFromText;
+                case "apv_id":
+                    cborKey = CoseKeyParameterKeys.HKDF_Context_PartyV_ID;
+                    goto binFromText;
+                case "apu_nonce":
+                    cborKey = CoseKeyParameterKeys.HKDF_Context_PartyU_nonce;
+                    goto binFromText;
+                case "apv_nonce":
+                    cborKey = CoseKeyParameterKeys.HKDF_Context_PartyV_nonce;
+                    goto binFromText;
+                case "apu_other":
+                    cborKey = CoseKeyParameterKeys.HKDF_Context_PartyU_Other;
+                    goto binFromText;
+                case "apv_other":
+                    cborKey = CoseKeyParameterKeys.HKDF_Context_PartyV_Other;
+                    goto binFromText;
+                case "pub_other":
+                    cborKey = CoseKeyParameterKeys.HKDF_SuppPub_Other;
+                    goto binFromText;
+                case "priv_other":
+                    cborKey = CoseKeyParameterKeys.HKDF_SuppPriv_Other;
+                    goto binFromText;
+                case "spk_kid":
+                    cborKey = CoseKeyParameterKeys.ECDH_StaticKey_kid;
+                    goto binFromText;
 
-                case "IV": cborKey = HeaderKeys.IV; goto binFromText;
-                case "partialIV": cborKey = HeaderKeys.PartialIV; goto binFromText;
+                case "IV":
+                    cborKey = HeaderKeys.IV;
+                    goto binFromText;
+                case "partialIV":
+                    cborKey = HeaderKeys.PartialIV;
+                    goto binFromText;
 #if false
                     if (cborValue.Type == CBORType.TextString) {
                         cborValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cborValue.AsString()));
@@ -880,10 +980,11 @@ namespace examples
 
                 case "op time":
                     cborKey = HeaderKeys.OperationTime; {
-                        DateTime when = DateTime.Parse(cborValue.AsString());
-                        cborValue = CBORObject.FromObject((long) (when - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds);
+                    DateTime when = DateTime.Parse(cborValue.AsString());
+                    cborValue = CBORObject.FromObject(
+                        (long) (when - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds);
 
-                    }
+                }
                     break;
 
                 case "ctyp":
@@ -895,10 +996,18 @@ namespace examples
                 }
 
                 switch (destination) {
-                case 0: msg.AddAttribute(cborKey, cborValue, Attributes.PROTECTED); break;
-                case 1: msg.AddAttribute(cborKey, cborValue, Attributes.UNPROTECTED); break;
-                case 2: msg.AddAttribute(cborKey, cborValue, Attributes.DO_NOT_SEND); break;
-                case 4: map[cborKey] = cborValue; break;
+                case 0:
+                    msg.AddAttribute(cborKey, cborValue, Attributes.PROTECTED);
+                    break;
+                case 1:
+                    msg.AddAttribute(cborKey, cborValue, Attributes.UNPROTECTED);
+                    break;
+                case 2:
+                    msg.AddAttribute(cborKey, cborValue, Attributes.DO_NOT_SEND);
+                    break;
+                case 4:
+                    map[cborKey] = cborValue;
+                    break;
                 }
             }
         }
@@ -912,7 +1021,8 @@ namespace examples
         {
             foreach (CBORObject key in items.Keys) {
                 if ((key.AsString().Length > 4) && (key.AsString().Substring(key.AsString().Length - 4, 4) == "_hex")) {
-                    msg.AddAttribute(key.AsString().Substring(0, key.AsString().Length - 4), JOSE.Message.base64urlencode(FromHex(items[key].AsString())), fProtected);
+                    msg.AddAttribute(key.AsString().Substring(0, key.AsString().Length - 4),
+                                     JOSE.Message.base64urlencode(FromHex(items[key].AsString())), fProtected);
                 }
                 else msg.AddAttribute(key.AsString(), items[key].AsString(), fProtected);
             }
@@ -936,9 +1046,45 @@ namespace examples
         static void AddCounterSignature(Message msg, CBORObject items)
         {
             if (items.Type == CBORType.Map) {
-                if ((!items.ContainsKey("signers")) || (items["signers"].Type != CBORType.Array)) throw new Exception("Missing or malformed counter signatures");
+                if ((!items.ContainsKey("signers")) || (items["signers"].Type != CBORType.Array))
+                    throw new Exception("Missing or malformed counter signatures");
                 foreach (CBORObject recip in items["signers"].Values) {
-                    msg.AddCounterSignature(GetSigner(recip, true));
+                    msg.AddCounterSignature((CounterSignature) GetSigner(recip, 1));
+                }
+            }
+        }
+
+        static void AddCounterSignature(Signer msg, CBORObject items)
+        {
+            if (items.Type == CBORType.Map) {
+                if ((!items.ContainsKey("signers")) || (items["signers"].Type != CBORType.Array))
+                    throw new Exception("Missing or malformed counter signatures");
+                foreach (CBORObject recip in items["signers"].Values) {
+                    msg.AddCounterSignature((CounterSignature) GetSigner(recip, 1));
+                }
+            }
+        }
+
+        static void AddCounterSignature0(Message msg, CBORObject items)
+        {
+            if (items.Type == CBORType.Map) {
+                if ((!items.ContainsKey("signers")) || (items["signers"].Type != CBORType.Array))
+                    throw new Exception("Missing or malformed counter signatures");
+                if (items["signers"].Count != 1) throw new Exception("Incorrect number of singers for countersign0");
+                foreach (CBORObject recip in items["signers"].Values) {
+                    msg.CounterSigner1 = (CounterSignature1) GetSigner(recip, 2);
+                }
+            }
+        }
+
+        static void AddCounterSignature0(Signer msg, CBORObject items)
+        {
+            if (items.Type == CBORType.Map) {
+                if ((!items.ContainsKey("signers")) || (items["signers"].Type != CBORType.Array))
+                    throw new Exception("Missing or malformed counter signatures");
+                if (items["signers"].Count != 1) throw new Exception("Incorrect number of singers for countersign0");
+                foreach (CBORObject recip in items["signers"].Values) {
+                    msg.CounterSigner1 = (CounterSignature1) GetSigner(recip, 2);
                 }
             }
         }
@@ -965,9 +1111,12 @@ namespace examples
             if (control.ContainsKey("unprotected")) AddAttributes(recipient, control["unprotected"], 1);
             if (control.ContainsKey("unsent")) AddAttributes(recipient, control["unsent"], 2);
             if (control.ContainsKey("external")) AddExternalData(recipient, control["external"]);
+            if (control.ContainsKey("countersign")) AddCounterSignature(recipient, control["countersign"]);
+            if (control.ContainsKey("countersign0")) AddCounterSignature(recipient, control["countersign0"]);
 
             if (control.ContainsKey("recipients")) {
-                if ((!control.ContainsKey("recipients")) || (control["recipients"].Type != CBORType.Array)) throw new Exception("Missing or malformed recipients");
+                if ((!control.ContainsKey("recipients")) || (control["recipients"].Type != CBORType.Array))
+                    throw new Exception("Missing or malformed recipients");
                 foreach (CBORObject recip in control["recipients"].Values) {
                     recipient.AddRecipient(GetRecipient(recip));
                 }
@@ -977,12 +1126,15 @@ namespace examples
                 OneKey myKey = GetKey(control["sender_key"]);
                 recipient.SetSenderKey(myKey);
                 if (myKey.ContainsName(CoseKeyKeys.KeyIdentifier)) {
-                    recipient.AddAttribute(HeaderKeys.StaticKey_ID, CBORObject.FromObject(myKey.AsBytes(CoseKeyKeys.KeyIdentifier)), Attributes.UNPROTECTED);
+                    recipient.AddAttribute(HeaderKeys.StaticKey_ID,
+                                           CBORObject.FromObject(myKey.AsBytes(CoseKeyKeys.KeyIdentifier)),
+                                           Attributes.UNPROTECTED);
                 }
                 else {
                     recipient.AddAttribute(HeaderKeys.StaticKey, myKey.PublicKey().AsCBOR(), Attributes.UNPROTECTED);
                 }
             }
+
             return recipient;
         }
 
@@ -1016,10 +1168,11 @@ namespace examples
                 JOSE.Key myKey = new JOSE.Key(JOSE.JSON.Parse(control["sender_key"].ToJSONString()));
                 recipient.SetSenderKey(myKey);
             }
+
             return recipient;
         }
 
-        static Signer GetSigner(CBORObject control, bool fCounterSign = false)
+        static Signer GetSigner(CBORObject control, int fCounterSign = 0)
         {
             CBORObject alg = GetAttribute(control, "alg");
             if (control.ContainsKey("alg")) {
@@ -1030,16 +1183,33 @@ namespace examples
 
             Signer signer;
 
-            if (fCounterSign) signer = new CounterSignature(key, alg);
-            else signer = new Signer(key, control["alg"]);
+            switch (fCounterSign) {
+            case 0:
+                signer = new Signer(key, alg);
+                break;
+
+            case 1:
+                signer = new CounterSignature(key, alg);
+                break;
+
+            case 2:
+                signer = new CounterSignature1(key, alg);
+                break;
+
+            default:
+                throw new Exception("Invalid fCounterSign parameter");
+            }
 
             if (control.ContainsKey("protected")) AddAttributes(signer, control["protected"], 0);
             if (control.ContainsKey("unprotected")) AddAttributes(signer, control["unprotected"], 1);
             if (control.ContainsKey("unsent")) AddAttributes(signer, control["unsent"], 2);
             if (control.ContainsKey("external")) signer.SetExternalData(FromHex(control["external"].AsString()));
+            if (control.ContainsKey("countersign")) AddCounterSignature(signer, control["countersign"]);
+            if (control.ContainsKey("countersign0")) AddCounterSignature0(signer, control["countersign0"]);
 
             return signer;
         }
+
 
         static JOSE.Signer GetSignerJOSE(CBORObject control)
         {
@@ -1071,13 +1241,22 @@ namespace examples
                 case "kty":
                     newKey = CoseKeyKeys.KeyType;
                     switch (control[item].AsString()) {
-                    case "OKP": newValue = GeneralValues.KeyType_OKP; goto NewValue;
-                    case "EC": newValue = GeneralValues.KeyType_EC; goto NewValue;
-                    case "RSA": newValue = GeneralValues.KeyType_RSA; goto NewValue;
-                    case "oct": newValue = GeneralValues.KeyType_Octet; goto NewValue;
+                    case "OKP":
+                        newValue = GeneralValues.KeyType_OKP;
+                        goto NewValue;
+                    case "EC":
+                        newValue = GeneralValues.KeyType_EC;
+                        goto NewValue;
+                    case "RSA":
+                        newValue = GeneralValues.KeyType_RSA;
+                        goto NewValue;
+                    case "oct":
+                        newValue = GeneralValues.KeyType_Octet;
+                        goto NewValue;
                     default:
                         break;
                     }
+
                     TextValue:
                     key.Add(newKey, control[item]);
                     break;
@@ -1098,11 +1277,13 @@ namespace examples
                             control[item] = CBORObject.FromObject(base64urlencode(y));
                             v = y;
                         }
+
                         key.Add(newKey, CBORObject.FromObject(v));
                     }
                     else {
                         key.Add(newKey, CBORObject.FromObject(base64urldecode(control[item].AsString())));
                     }
+
                     break;
 
                 case "kid_hex":
@@ -1137,18 +1318,19 @@ namespace examples
                         newValue = GeneralValues.X25519;
                         break;
 
-                            case "Ed25519":
-                                newValue = GeneralValues.Ed25519;
-                                break;
+                    case "Ed25519":
+                        newValue = GeneralValues.Ed25519;
+                        break;
 
-                            case "Ed448":
-                                newValue = GeneralValues.Ed448;
-                                break;
+                    case "Ed448":
+                        newValue = GeneralValues.Ed448;
+                        break;
 
                     default:
                         newValue = control[item];
                         break;
                     }
+
                     NewValue:
                     key.Add(newKey, newValue);
                     break;
@@ -1169,15 +1351,27 @@ namespace examples
                     else newKey = CoseKeyParameterKeys.EC_X;
                     goto HexValue;
 
-                case "y": newKey = CoseKeyParameterKeys.EC_Y; goto BinaryValue;
-                case "y_hex": newKey = CoseKeyParameterKeys.EC_Y; goto HexValue;
+                case "y":
+                    newKey = CoseKeyParameterKeys.EC_Y;
+                    goto BinaryValue;
+                case "y_hex":
+                    newKey = CoseKeyParameterKeys.EC_Y;
+                    goto HexValue;
 
-                case "e": newKey = CoseKeyParameterKeys.RSA_e; goto BinaryValue;
-                case "e_hex": newKey = CoseKeyParameterKeys.RSA_e; goto HexValue;
-                case "n": newKey = CoseKeyParameterKeys.RSA_n; goto BinaryValue;
-                case "n_hex": newKey = CoseKeyParameterKeys.RSA_n; goto HexValue;
+                case "e":
+                    newKey = CoseKeyParameterKeys.RSA_e;
+                    goto BinaryValue;
+                case "e_hex":
+                    newKey = CoseKeyParameterKeys.RSA_e;
+                    goto HexValue;
+                case "n":
+                    newKey = CoseKeyParameterKeys.RSA_n;
+                    goto BinaryValue;
+                case "n_hex":
+                    newKey = CoseKeyParameterKeys.RSA_n;
+                    goto HexValue;
 
-                    case "d":
+                case "d":
                     // if (!fPublicKey) continue;
                     if (type == "RSA") newKey = CoseKeyParameterKeys.RSA_d;
                     else if (type == "OKP") newKey = CoseKeyParameterKeys.OKP_D;
@@ -1191,22 +1385,46 @@ namespace examples
                     else newKey = CoseKeyParameterKeys.EC_D;
                     goto HexValue;
 
-                case "k": newKey = CoseKeyParameterKeys.Octet_k; goto BinaryValue;
-                case "k_hex": newKey = CoseKeyParameterKeys.Octet_k; goto HexValue;
-                case "p": newKey = CoseKeyParameterKeys.RSA_p; goto BinaryValue;
-                case "p_hex": newKey = CoseKeyParameterKeys.RSA_p; goto HexValue;
-                case "q": newKey = CoseKeyParameterKeys.RSA_q; goto BinaryValue;
-                case "q_hex": newKey = CoseKeyParameterKeys.RSA_q; goto HexValue;
-                case "dp": newKey = CoseKeyParameterKeys.RSA_dP; goto BinaryValue;
+                case "k":
+                    newKey = CoseKeyParameterKeys.Octet_k;
+                    goto BinaryValue;
+                case "k_hex":
+                    newKey = CoseKeyParameterKeys.Octet_k;
+                    goto HexValue;
+                case "p":
+                    newKey = CoseKeyParameterKeys.RSA_p;
+                    goto BinaryValue;
+                case "p_hex":
+                    newKey = CoseKeyParameterKeys.RSA_p;
+                    goto HexValue;
+                case "q":
+                    newKey = CoseKeyParameterKeys.RSA_q;
+                    goto BinaryValue;
+                case "q_hex":
+                    newKey = CoseKeyParameterKeys.RSA_q;
+                    goto HexValue;
+                case "dp":
+                    newKey = CoseKeyParameterKeys.RSA_dP;
+                    goto BinaryValue;
                 case "dP_hex":
-                case "dp_hex": newKey = CoseKeyParameterKeys.RSA_dP; goto HexValue;
-                case "dq": newKey = CoseKeyParameterKeys.RSA_dQ; goto BinaryValue;
+                case "dp_hex":
+                    newKey = CoseKeyParameterKeys.RSA_dP;
+                    goto HexValue;
+                case "dq":
+                    newKey = CoseKeyParameterKeys.RSA_dQ;
+                    goto BinaryValue;
                 case "dQ_hex":
-                case "dq_hex": newKey = CoseKeyParameterKeys.RSA_dQ; goto HexValue;
-                case "qi": newKey = CoseKeyParameterKeys.RSA_qInv; goto BinaryValue;
-                case "qi_hex": newKey = CoseKeyParameterKeys.RSA_qInv; goto HexValue;
+                case "dq_hex":
+                    newKey = CoseKeyParameterKeys.RSA_dQ;
+                    goto HexValue;
+                case "qi":
+                    newKey = CoseKeyParameterKeys.RSA_qInv;
+                    goto BinaryValue;
+                case "qi_hex":
+                    newKey = CoseKeyParameterKeys.RSA_qInv;
+                    goto HexValue;
 
-                    default:
+                default:
                     throw new Exception("Unrecognized field name " + item + " in key object");
                 }
             }
@@ -1217,7 +1435,8 @@ namespace examples
             if (pubKey != null) {
                 allPubKeys.AddKey(key.PublicKey());
             }
-            if (fPublicKey && (type!= "oct")) return pubKey;
+
+            if (fPublicKey && (type != "oct")) return pubKey;
             return key;
         }
 
@@ -1238,12 +1457,17 @@ namespace examples
             switch (s.Length % 4) // Pad with trailing '='s
             {
             case 0: break; // No pad chars in this case
-            case 2: s += "=="; break; // Two pad chars
-            case 3: s += "="; break; // One pad char
+            case 2:
+                s += "==";
+                break; // Two pad chars
+            case 3:
+                s += "=";
+                break; // One pad char
             default:
                 throw new System.Exception(
-         "Illegal base64url string!");
+                    "Illegal base64url string!");
             }
+
             return Convert.FromBase64String(s); // Standard base64 decoder
         }
 
@@ -1272,6 +1496,7 @@ namespace examples
                 foreach (JOSE.JSON pair in json.array) {
                     obj.Add(AsCbor(pair));
                 }
+
                 return obj;
 
             case JOSE.JsonType.map:
@@ -1279,6 +1504,7 @@ namespace examples
                 foreach (KeyValuePair<string, JOSE.JSON> pair in json.map) {
                     obj.Add(pair.Key, AsCbor(pair.Value));
                 }
+
                 return obj;
 
             case JOSE.JsonType.number:
@@ -1443,6 +1669,7 @@ namespace examples
                     fDirty = true;
                     return;
                 }
+
                 string old = obj[tag].AsString();
                 string newVal = ToHex(value);
                 if (old != newVal) {
@@ -1487,6 +1714,7 @@ namespace examples
                 Console.WriteLine();
                 throw e;
             }
+
             Console.WriteLine(result ? ".... PASS" : ".... FAILED");
         }
 
@@ -1496,7 +1724,8 @@ namespace examples
             CBORObject encrypt = input["enveloped"];
             byte[] rgb = FromHex(control["output"]["cbor"].AsString());
 
-            if ((!encrypt.ContainsKey("recipients")) || (encrypt["recipients"].Type != CBORType.Array)) throw new Exception("Missing or malformed recipients");
+            if ((!encrypt.ContainsKey("recipients")) || (encrypt["recipients"].Type != CBORType.Array))
+                throw new Exception("Missing or malformed recipients");
             for (int iRecipient = 0; iRecipient < encrypt["recipients"].Count; iRecipient++) {
 
                 bool fFail = HasFailMarker(control) || HasFailMarker(encrypt);
@@ -1507,7 +1736,7 @@ namespace examples
                     Message msgX = Message.DecodeFromBytes(rgb, Tags.Encrypt);
                     msg = (EncryptMessage) msgX;
                 }
-                catch(Exception) {
+                catch (Exception) {
                     if (fFail) return true;
                     return false;
                 }
@@ -1518,11 +1747,12 @@ namespace examples
                 CBORObject recip = encrypt["recipients"][iRecipient];
                 Recipient recipX = msg.RecipientList[iRecipient];
 
-                recipX = SetRecievingAttributes(recipX, recip);
+                recipX = SetReceivingAttributes(recipX, recip);
 
                 if (recip["sender_key"] != null) {
                     if (recipX.FindAttribute(HeaderKeys.StaticKey) == null) {
-                        recipX.AddAttribute(HeaderKeys.StaticKey, GetKey(recip["sender_key"], true).AsCBOR(), Attributes.DO_NOT_SEND);
+                        recipX.AddAttribute(HeaderKeys.StaticKey, GetKey(recip["sender_key"], true).AsCBOR(),
+                                            Attributes.DO_NOT_SEND);
                     }
                 }
 
@@ -1530,11 +1760,21 @@ namespace examples
 
                 try {
                     msg.Decrypt(recipX);
-                    
+
                 }
                 catch (Exception e) {
                     if (fFail || fFailRecipient) return true;
                     return false;
+                }
+
+                CBORObject cnCounter = encrypt["countersign"];
+                if (cnCounter != null) {
+                    CheckCounterSignatures(msg, cnCounter);
+                }
+
+                cnCounter = encrypt["countersign0"];
+                if (cnCounter != null) {
+                    CheckCounterSignature0(msg, cnCounter);
                 }
             }
 
@@ -1548,7 +1788,8 @@ namespace examples
             byte[] rgb = FromHex(control["output"]["cbor"].AsString());
             bool f = true;
 
-            if ((!mac.ContainsKey("recipients")) || (mac["recipients"].Type != CBORType.Array)) throw new Exception("Missing or malformed recipients");
+            if ((!mac.ContainsKey("recipients")) || (mac["recipients"].Type != CBORType.Array))
+                throw new Exception("Missing or malformed recipients");
 
             for (int iRecipient = 0; iRecipient < mac["recipients"].Count; iRecipient++) {
                 CBORObject recip = mac["recipients"][iRecipient];
@@ -1568,18 +1809,19 @@ namespace examples
 
                 bool fFailRecip = HasFailMarker(recip);
 
-                SetRecievingAttributes(msg, mac);
+                SetReceivingAttributes(msg, mac);
 
                 Recipient recipX = msg.RecipientList[iRecipient];
                 OneKey key = GetKey(recip["key"], false);
                 recipX.SetKey(key);
 
-                recipX = SetRecievingAttributes(recipX, recip);
+                recipX = SetReceivingAttributes(recipX, recip);
 
                 CBORObject cnStatic = recip["sender_key"];
                 if (cnStatic != null) {
                     if (recipX.FindAttribute(HeaderKeys.StaticKey) == null) {
-                        recipX.AddAttribute(HeaderKeys.StaticKey, GetKey(cnStatic, true).AsCBOR(), Attributes.DO_NOT_SEND);
+                        recipX.AddAttribute(HeaderKeys.StaticKey, GetKey(cnStatic, true).AsCBOR(),
+                                            Attributes.DO_NOT_SEND);
                     }
                 }
 
@@ -1590,6 +1832,16 @@ namespace examples
                 }
                 catch (Exception) {
                     if (!(fFail || fFailRecip)) return false;
+                }
+
+                CBORObject cnCounter = mac["countersign"];
+                if (cnCounter != null) {
+                    CheckCounterSignatures(msg, cnCounter);
+                }
+
+                cnCounter = mac["countersign0"];
+                if (cnCounter != null) {
+                    CheckCounterSignature0(msg, cnCounter);
                 }
             }
 
@@ -1623,12 +1875,12 @@ namespace examples
                         throw e;
                     }
 
-                    SetRecievingAttributes(signMsg, cnMessage);
+                    SetReceivingAttributes(signMsg, cnMessage);
 
                     OneKey cnKey = GetKey(cnSigner["key"]);
                     Signer hSigner = signMsg.SignerList[i];
 
-                    SetRecievingAttributes(hSigner, cnSigner);
+                    SetReceivingAttributes(hSigner, cnSigner);
 
                     hSigner.SetKey(cnKey);
 
@@ -1646,21 +1898,32 @@ namespace examples
                     if (i == 0) {
                         cnCounter = cnMessage["countersign"];
                         if (cnCounter != null) {
-                            CheckCounterSignatures(signMsg, cnMessage);
+                            CheckCounterSignatures(signMsg, cnCounter);
+                        }
+
+                        cnCounter = cnMessage["countersign0"];
+                        if (cnCounter != null) {
+                            CheckCounterSignature0(signMsg, cnCounter);
                         }
                     }
-#if false
+
                     cnCounter = cnSigner["countersign"];
                     if (cnCounter != null) {
-                        CheckCounterSignatures(hSigner, cnSigner);
+                        CheckCounterSignatures(hSigner, cnCounter);
                     }
-#endif
+
+                    cnCounter = cnSigner["countersign0"];
+                    if (cnCounter != null) {
+                        CheckCounterSignature0(hSigner, cnCounter);
+                    }
+
                     i++;
                 }
             }
             catch (Exception) {
                 return false;
             }
+
             return true;
         }
 
@@ -1671,7 +1934,7 @@ namespace examples
             return false;
         }
 
-        static Recipient SetRecievingAttributes(Recipient recip, CBORObject control)
+        static Recipient SetReceivingAttributes(Recipient recip, CBORObject control)
         {
             OneKey key = null;
 
@@ -1686,14 +1949,14 @@ namespace examples
             return recip;
         }
 
-        static void SetRecievingAttributes(Message recip, CBORObject control)
+        static void SetReceivingAttributes(Message recip, CBORObject control)
         {
             if (control.ContainsKey("unsent")) AddAttributes(recip, control["unsent"], 2);
 
             if (control.ContainsKey("external")) AddExternalData(recip, control["external"]);
         }
 
-        static void SetRecievingAttributes(Signer recip, CBORObject control)
+        static void SetReceivingAttributes(Signer recip, CBORObject control)
         {
             if (control.ContainsKey("unsent")) AddAttributes(recip, control["unsent"], 2);
 
@@ -1709,33 +1972,135 @@ namespace examples
             if (cSigs.Type != CBORType.Array) throw new Exception("Incorrect counter sign object");
 
             CBORObject cSigConfig = cSigInfo["signers"];
+            if (msg.CounterSignerList.Count != cSigConfig.Count) {
+                throw new Exception("Number of counter signatures does not match");
+            }
 
-#if false
             int iCSign;
             for (iCSign = 0; iCSign < cSigConfig.Count; iCSign++) {
-                CounterSignature sig;
-                if (cSigs[0].Type != CBORType.Array) {
-                    sig = new CounterSignature();
-                    sig.DecodeFromCBORObject(cSigs);
-                }
-                else {
-                    sig = new CounterSignature();
-                    sig.DecodeFromCBORObject(cSigs[iCSign]);
-                }
 
-                CBORObject cnKey = BuildKey(cSigConfig[iCSign]["key"], false);
+                CounterSignature sig = msg.CounterSignerList[iCSign];
+
                 SetReceivingAttributes(sig, cSigConfig[iCSign]);
 
-                sig.setKey(cnKey);
+                OneKey cnKey = GetKey(cSigConfig[iCSign]["key"]);
+                sig.SetKey(cnKey);
 
-                Boolean f = sig.Validate(msg);
+                try {
+                    Boolean f = msg.Validate(sig);
+                    if (!f) {
+                        throw new Exception("Failed countersignature validation");
+                    }
+                }
+                catch (Exception e) {
+                    throw new Exception("Failed countersignature validation");
+                }
             }
-#endif
+        }
+
+        static void CheckCounterSignatures(Signer msg, CBORObject cSigInfo)
+        {
+            CBORObject cSigs = msg.FindAttribute(HeaderKeys.CounterSignature);
+
+            if (cSigs == null) throw new Exception("No counter signature found");
+
+            if (cSigs.Type != CBORType.Array) throw new Exception("Incorrect counter sign object");
+
+            CBORObject cSigConfig = cSigInfo["signers"];
+            if (msg.CounterSignerList.Count != cSigConfig.Count) {
+                throw new Exception("Number of counter signatures does not match");
+            }
+
+            int iCSign;
+            for (iCSign = 0; iCSign < cSigConfig.Count; iCSign++) {
+
+                CounterSignature sig = msg.CounterSignerList[iCSign];
+
+                SetReceivingAttributes(sig, cSigConfig[iCSign]);
+
+                OneKey cnKey = GetKey(cSigConfig[iCSign]["key"]);
+                sig.SetKey(cnKey);
+
+                try {
+                    Boolean f = msg.Validate(sig);
+                    if (!f) {
+                        throw new Exception("Failed countersignature validation");
+                    }
+                }
+                catch (Exception e) {
+                    throw new Exception("Failed countersignature validation");
+                }
+            }
+        }
+
+        static void CheckCounterSignature0(Message msg, CBORObject cSigInfo)
+        {
+            CBORObject cSigs = msg.FindAttribute(HeaderKeys.CounterSignature0);
+
+            if (cSigs == null) throw new Exception("No counter signature 1 found");
+
+            if (cSigs.Type != CBORType.ByteString) throw new Exception("Incorrect counter sign 1 object");
+
+            CBORObject cSigConfig = cSigInfo["signers"];
+            if (1 != cSigConfig.Count) {
+                throw new Exception("Number of counter signatures does not match");
+            }
+
+            CounterSignature1 sig = msg.CounterSigner1;
+
+            SetReceivingAttributes(sig, cSigConfig[0]);
+
+            OneKey cnKey = GetKey(cSigConfig[0]["key"]);
+            sig.SetKey(cnKey);
+
+            try {
+                Boolean f = msg.Validate(sig);
+                if (!f) {
+                    throw new Exception("Failed countersignature validation");
+                }
+            }
+            catch (Exception e) {
+                throw new Exception("Failed countersignature validation");
+            }
+        }
+
+        static void CheckCounterSignature0(Signer msg, CBORObject cSigInfo)
+        {
+            CBORObject cSigs = msg.FindAttribute(HeaderKeys.CounterSignature0);
+
+            if (cSigs == null) throw new Exception("No counter signature found");
+
+            if (cSigs.Type != CBORType.ByteString) throw new Exception("Incorrect counter sign object");
+
+            CBORObject cSigConfig = cSigInfo["signers"];
+            if (1 != cSigConfig.Count) {
+                throw new Exception("Number of counter signatures does not match");
+            }
+
+
+            CounterSignature1 sig = msg.CounterSigner1;
+
+            SetReceivingAttributes(sig, cSigConfig[0]);
+
+            OneKey cnKey = GetKey(cSigConfig[0]["key"]);
+            sig.SetKey(cnKey);
+
+            try {
+                Boolean f = msg.Validate(sig);
+                if (!f) {
+                    throw new Exception("Failed countersignature validation");
+                }
+            }
+            catch (Exception e) {
+                throw new Exception("Failed countersignature validation");
+            }
         }
     }
 
     class BadOutputException : Exception
     {
-        public BadOutputException() : base("Output selection not supported for this input set") { }
+        public BadOutputException() : base("Output selection not supported for this input set")
+        {
+        }
     }
 }

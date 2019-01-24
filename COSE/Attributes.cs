@@ -43,7 +43,7 @@ namespace Com.AugustCellars.COSE
         /// </summary>
         public byte[] ExternalData { get; set; }
 
-        protected CBORObject ProtectedMap {
+        internal CBORObject ProtectedMap {
             get => _objProtected;
             set => _objProtected = value;
         }

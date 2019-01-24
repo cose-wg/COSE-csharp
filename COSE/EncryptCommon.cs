@@ -147,6 +147,8 @@ namespace Com.AugustCellars.COSE
 #if FOR_EXAMPLES
             _cek = contentKey;
 #endif // FOR_EXAMPLES
+
+            ProcessCounterSignatures();
         }
 
 #if FOR_EXAMPLES
@@ -593,15 +595,51 @@ namespace Com.AugustCellars.COSE
             CBORObject obj = CBORObject.NewArray();
 
             obj.Add(_context);
-            if (ProtectedMap.Count == 0)
-                obj.Add(CBORObject.FromObject(new byte[0]));
-            else
-                obj.Add(ProtectedMap.EncodeToBytes());
+            if (ProtectedMap.Count == 0) {
+                ProtectedBytes = new byte[0];
+            }
+            else {
+                ProtectedBytes = ProtectedMap.EncodeToBytes();
+            }
+
+            obj.Add(ProtectedBytes);
+        
             obj.Add(CBORObject.FromObject(ExternalData));
 
             // Console.WriteLine("COSE AAD = " + BitConverter.ToString(obj.EncodeToBytes()));
 
             return obj.EncodeToBytes();
         }
+
+        protected new void ProcessCounterSignatures()
+        {
+            if (CounterSignerList.Count() != 0) {
+                if (CounterSignerList.Count() == 1) {
+                    AddAttribute(HeaderKeys.CounterSignature, CounterSignerList[0].EncodeToCBORObject(ProtectedBytes, RgbEncrypted), UNPROTECTED);
+                }
+                else {
+                    CBORObject list = CBORObject.NewArray();
+                    foreach (CounterSignature sig in CounterSignerList) {
+                        list.Add(sig.EncodeToCBORObject(ProtectedBytes, RgbEncrypted));
+                    }
+                    AddAttribute(HeaderKeys.CounterSignature, list, UNPROTECTED);
+                }
+            }
+
+            if (CounterSigner1 != null) {
+                AddAttribute(HeaderKeys.CounterSignature0, CounterSigner1.EncodeToCBORObject(ProtectedBytes, RgbEncrypted), UNPROTECTED);
+            }
+        }
+
+        public override bool Validate(CounterSignature counterSignature)
+        {
+            return counterSignature.Validate(RgbEncrypted, ProtectedBytes);
+        }
+
+        public override bool Validate(CounterSignature1 counterSignature)
+        {
+            return counterSignature.Validate(RgbEncrypted, ProtectedBytes);
+        }
+
     }
 }

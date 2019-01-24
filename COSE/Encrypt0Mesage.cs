@@ -25,11 +25,28 @@ namespace Com.AugustCellars.COSE
             m_tag = Tags.Encrypt0;
         }
 
+#region Decoders
+        /// <summary>
+        /// Decode an Encrypt0 Message from bytes
+        /// </summary>
+        /// <param name="rgb">encoded message</param>
+        /// <returns>decoded Encrypt0Message object</returns>
+        public static Encrypt0Message DecodeFromBytes(byte[] rgb)
+        {
+            return (Encrypt0Message) Message.DecodeFromBytes(rgb, Tags.Encrypt0);
+        }
+
         /// <summary>
         /// Given a CBOR tree, try and parse the tree into an Encrypt0 item.
         /// </summary>
-        /// <param name="cbor"></param>
-        public virtual void DecodeFromCBORObject(CBORObject cbor)
+        /// <param name="obj">CBOR Object to decode</param>
+        /// <returns>Decoded Encrypt0Message</returns>
+        public static Encrypt0Message DecodeFromCBOR(CBORObject obj)
+        {
+            return (Encrypt0Message)Message.DecodeFromCBOR(obj, Tags.Encrypt0);
+        }
+
+        protected override void InternalDecodeFromCBORObject(CBORObject cbor)
         {
             if (cbor.Count != 3) throw new CoseException("Invalid Encrypt0 structure");
 
@@ -56,6 +73,7 @@ namespace Com.AugustCellars.COSE
                 throw new CoseException("Invalid Encrypt0 structure");
             }
         }
+#endregion
 
         /// <summary>
         /// Encode the COSE Encrypt0 item to a CBOR tree.
@@ -68,16 +86,8 @@ namespace Com.AugustCellars.COSE
 
             if (RgbEncrypted == null) throw new CoseException("Must call Encrypt first");
 
-            if (m_counterSignerList.Count() != 0) {
-                if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(ProtectedBytes, RgbEncrypted), UNPROTECTED);
-                }
-                else {
-                    foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(ProtectedBytes, RgbEncrypted);
-                    }
-                }
-            }
+            ProcessCounterSignatures();
+
             cbor = CBORObject.NewArray();
 
             if (ProtectedMap.Count > 0) {
@@ -111,6 +121,8 @@ namespace Com.AugustCellars.COSE
         public void Encrypt(byte[] rgbKey)
         {
             EncryptWithKey(rgbKey);
+
+            ProcessCounterSignatures();
         }
     }
 }
