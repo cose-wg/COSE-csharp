@@ -41,7 +41,7 @@ namespace Com.AugustCellars.COSE.Tests
 
         @Parameter // first data value (0) is default
 #endif
-        public /* NOT private */ String directoryName = "../Regressions";
+        public /* NOT private */ String directoryName = "..\\Regressions";
 
         public int CFails = 0;
 
