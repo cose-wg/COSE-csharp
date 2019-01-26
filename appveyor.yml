@@ -6,6 +6,7 @@ install:
 before_build:
     - ps: cd COSE
     - nuget restore COSE.Std10.sln 
+    - git clone --depth 1 https://github.com/cose-wg/Examples Regressions
 
 build:
     project: COSE\COSE.Std10.sln
