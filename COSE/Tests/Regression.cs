@@ -497,7 +497,7 @@ namespace Com.AugustCellars.COSE.Tests
                 //  Set enveloped attributes
                 SetReceivingAttributes(hEnc, cnEnveloped);
 
-                //  Set attibutes on base recipient
+                //  Set attributes on base recipient
                 hRecip1 = hEnc.RecipientList[iRecipient1];
                 SetReceivingAttributes(hRecip1, cnRecipient1);
 
