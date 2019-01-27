@@ -12,8 +12,8 @@ cd COSE
 
 ls
 
-mono ../nuget.exe
-mono ../nuget.exe restore $SLN
+#mono ../nuget.exe restore $SLN
+nuget.exe restore $SLN
 
 msbuild /p:Configuration=$VERSION $SLN
 #xbuild /p:Configuration=$VERSION $SLN
