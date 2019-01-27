@@ -45,6 +45,9 @@ install:
    - nuget install NUnit.Runners -Version 3.5.0 -OutputDirectory testrunner
    - git clone --depth 1 https://github.com/cose-wg/Examples Regressions
    - git clone --depth 1 https://github.com/ietf-jose/cookbook cookbook
+   - ls
+   - cd cose-wg
+   - ls
    - nuget restore cose-wg/COSE-csharp/COSE/COSE.Std10.sln
    
 script:
