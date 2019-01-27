@@ -56,7 +56,10 @@ namespace Com.AugustCellars.COSE.Tests
             try {
                 directory = new DirectoryInfo(directoryName);
                 if (!directory.Exists) {
-                    directory = new DirectoryInfo("d:\\Projects\\cose\\Examples");
+                    directory = new DirectoryInfo("..\\..\\..\\..\\" + directoryName);
+                    if (!directory.Exists) {
+                        directory = new DirectoryInfo("d:\\Projects\\cose\\Examples");
+                    }
                 }
             }
             catch (Exception) {
