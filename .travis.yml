@@ -40,7 +40,7 @@ matrix:
       os: osx
 
 install:
-   - curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
+#   - curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
    - nuget install NUnit.Runners -Version 3.5.0 -OutputDirectory testrunner
    - git clone --depth 1 https://github.com/cose-wg/Examples Regressions
    - git clone --depth 1 https://github.com/ietf-jose/cookbook cookbook
