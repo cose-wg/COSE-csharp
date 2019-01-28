@@ -70,13 +70,11 @@ namespace examples
 
         static void RunCoseExamples()
         {
-            EdDSA25517.SelfTest();
-            EdDSA448.SelfTest();
 
             //  OneKey k1 = OneKey.GenerateKey(null, GeneralValues.KeyType_RSA, "2048");
 
 
-            RunTestsInDirectory("countersign0");
+            RunTestsInDirectory("eddsa-examples");
 
             RunTestsInDirectory("RFC8152");
             {
@@ -103,6 +101,7 @@ namespace examples
             RunTestsInDirectory("aes-gcm-examples");
             RunTestsInDirectory("chacha-poly-examples");
             RunTestsInDirectory("countersign");
+            RunTestsInDirectory("countersign0");
             RunTestsInDirectory("ecdsa-examples");
             RunTestsInDirectory("hkdf-hmac-sha-examples");
             RunTestsInDirectory("hkdf-aes-examples");

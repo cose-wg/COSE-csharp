@@ -357,19 +357,27 @@ namespace Com.AugustCellars.COSE
                         }
 
                     case AlgorithmValuesInt.EdDSA: {
-                            EdDSA eddsa;
+                            ISigner eddsa;
                             if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
-                                eddsa = new EdDSA25517();
+                                Ed25519PrivateKeyParameters privKey =
+                                    new Ed25519PrivateKeyParameters(_keyToSign[CoseKeyParameterKeys.OKP_D].GetByteString(), 0);
+                                eddsa = new Ed25519Signer();
+                                eddsa.Init(true, privKey);
                             }
                             else if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed448)) {
-                                eddsa = new EdDSA448();
+                                Ed448PrivateKeyParameters privKey =
+                                    new Ed448PrivateKeyParameters(_keyToSign[CoseKeyParameterKeys.OKP_D].GetByteString(), 0);
+                                eddsa = new Ed448Signer(new byte[0]);
+                                eddsa.Init(true, privKey);
                             }
                             else {
                                 throw new CoseException("Unrecognized curve");
                             }
-                            EdDSAPoint publicKey = eddsa.DecodePoint(_keyToSign[CoseKeyParameterKeys.OKP_X].GetByteString());
-                            byte[] sig = eddsa.Sign(publicKey, _keyToSign[CoseKeyParameterKeys.OKP_D].GetByteString(), bytesToBeSigned);
-                            return sig;
+
+
+                            eddsa.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
+
+                            return eddsa.GenerateSignature();
                         }
 
                     default:
@@ -472,18 +480,25 @@ namespace Com.AugustCellars.COSE
                         }
 
                     case AlgorithmValuesInt.EdDSA: {
-                            EdDSA eddsa;
+                            ISigner eddsa;
                             if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
-                                eddsa = new EdDSA25517();
+                                Ed25519PublicKeyParameters privKey =
+                                    new Ed25519PublicKeyParameters(_keyToSign[CoseKeyParameterKeys.OKP_X].GetByteString(), 0);
+                                eddsa = new Ed25519Signer();
+                                eddsa.Init(false, privKey);
                             }
                             else if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed448)) {
-                                eddsa = new EdDSA448();
+                                Ed448PublicKeyParameters privKey =
+                                    new Ed448PublicKeyParameters(_keyToSign[CoseKeyParameterKeys.OKP_X].GetByteString(), 0);
+                                eddsa = new Ed448Signer(new byte[0]);
+                                eddsa.Init(false, privKey);
                             }
                             else {
                                 throw new CoseException("Unrecognized curve");
                             }
-                            byte[] publicKey = _keyToSign[CoseKeyParameterKeys.OKP_X].GetByteString();
-                            return eddsa.Verify(publicKey, bytesToBeSigned, _rgbSignature);
+
+                            eddsa.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
+                            return eddsa.VerifySignature(_rgbSignature);
                         }
 
                     default:
@@ -493,7 +508,7 @@ namespace Com.AugustCellars.COSE
             else throw new CoseException("Algorithm incorrectly encoded");
         }
 
-        private BigInteger ConvertBigNum(CBORObject cbor)
+        private static BigInteger ConvertBigNum(CBORObject cbor)
         {
             byte[] rgb = cbor.GetByteString();
             byte[] rgb2 = new byte[rgb.Length + 2];

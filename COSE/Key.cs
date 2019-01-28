@@ -354,15 +354,33 @@ namespace Com.AugustCellars.COSE
 
         private static OneKey GenerateEDKey(CBORObject algorithm, string genParameters)
         {
-            X25519KeyPair pair = X25519KeyPair.GenerateKeyPair();
-
             CBORObject epk = CBORObject.NewMap();
             epk.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_OKP);
-            if (genParameters == "Ed25519") epk.Add(CoseKeyParameterKeys.OKP_Curve, GeneralValues.Ed25519);
-            else if (genParameters == "X25519") epk.Add(CoseKeyParameterKeys.OKP_Curve, GeneralValues.X25519);
-            else throw new Exception("Bad parameter " + genParameters);
-            epk.Add(CoseKeyParameterKeys.OKP_X, pair.Public);
-            epk.Add(CoseKeyParameterKeys.OKP_D, pair.Private);
+            switch (genParameters) {
+            case "Ed25519": {
+                Ed25519KeyPairGenerator pg = new Ed25519KeyPairGenerator();
+                AsymmetricCipherKeyPair cs = pg.GenerateKeyPair();
+
+                epk.Add(CoseKeyParameterKeys.OKP_Curve, GeneralValues.Ed25519);
+                epk.Add(CoseKeyParameterKeys.OKP_X, ((Ed25519PublicKeyParameters) cs.Public).GetEncoded());
+                epk.Add(CoseKeyParameterKeys.OKP_D, ((Ed25519PrivateKeyParameters) cs.Private).GetEncoded());
+                break;
+            }
+
+            case "X25519": {
+                X25519KeyPairGenerator pg = new X25519KeyPairGenerator();
+                AsymmetricCipherKeyPair cs = pg.GenerateKeyPair();
+
+                epk.Add(CoseKeyParameterKeys.OKP_Curve, GeneralValues.Ed25519);
+                epk.Add(CoseKeyParameterKeys.OKP_X, ((X25519PublicKeyParameters) cs.Public).GetEncoded());
+                epk.Add(CoseKeyParameterKeys.OKP_D, ((X25519PrivateKeyParameters) cs.Private).GetEncoded());
+                break;
+            }
+
+            default:
+                throw new Exception("Bad parameter " + genParameters);
+            }
+
             if (algorithm != null) epk.Add(CoseKeyKeys.Algorithm, algorithm);
 
             return new OneKey(epk);
