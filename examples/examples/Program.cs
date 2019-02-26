@@ -66,6 +66,8 @@ namespace examples
 
             //  OneKey k1 = OneKey.GenerateKey(null, GeneralValues.KeyType_RSA, "2048");
 
+            HashSig.SelfTest();
+
             RunTestsInDirectory("rsa-pss-examples");
 
 
