@@ -57,7 +57,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;NETSTANDARD1_0</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NETSTANDARD1_0;FOR_EXAMPLES</DefineConstants>
   </PropertyGroup>
   
 

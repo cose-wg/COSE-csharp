@@ -1009,7 +1009,8 @@ namespace Com.AugustCellars.COSE
             OneKey secretKey = new OneKey();
 
             switch (m_key.GetKeyType()) {
-            case GeneralValuesInt.KeyType_OKP:
+#if false
+                case GeneralValuesInt.KeyType_OKP:
                 epk.Add(CoseKeyParameterKeys.OKP_Curve, m_key[CoseKeyParameterKeys.OKP_Curve]);
                 switch ((GeneralValuesInt) epk[CoseKeyParameterKeys.OKP_Curve].AsInt32()) {
                 case GeneralValuesInt.X25519: {
@@ -1050,7 +1051,7 @@ namespace Com.AugustCellars.COSE
                 }
 
                 break;
-
+#endif
                 case GeneralValuesInt.KeyType_EC2: {
                     X9ECParameters p = m_key.GetCurve();
                     ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
@@ -1128,7 +1129,8 @@ namespace Com.AugustCellars.COSE
             byte[] temp;
 
             switch ((GeneralValuesInt) key[CoseKeyKeys.KeyType].AsInt32()) {
-            case GeneralValuesInt.KeyType_OKP:
+#if false
+                case GeneralValuesInt.KeyType_OKP:
                 if (epk[CoseKeyParameterKeys.OKP_Curve].AsInt32() != key[CoseKeyParameterKeys.OKP_Curve].AsInt32()) throw new CoseException("Not a match of curves");
 
                 switch ((GeneralValuesInt) epk[CoseKeyParameterKeys.OKP_Curve].AsInt32()) {
@@ -1169,6 +1171,7 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Not a supported Curve");
                 }
                 break;
+#endif
 
             case GeneralValuesInt.KeyType_EC2: {
 

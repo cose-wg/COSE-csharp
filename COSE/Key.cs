@@ -354,6 +354,9 @@ namespace Com.AugustCellars.COSE
 
         private static OneKey GenerateEDKey(CBORObject algorithm, string genParameters)
         {
+#if true
+            throw new Exception("NYI");
+#else
             CBORObject epk = CBORObject.NewMap();
             epk.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_OKP);
             switch (genParameters) {
@@ -384,6 +387,7 @@ namespace Com.AugustCellars.COSE
             if (algorithm != null) epk.Add(CoseKeyKeys.Algorithm, algorithm);
 
             return new OneKey(epk);
+#endif
         }
 
         private static OneKey GenerateRsaKey(CBORObject algorithm, string parameters)

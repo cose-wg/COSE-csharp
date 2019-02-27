@@ -356,6 +356,7 @@ namespace Com.AugustCellars.COSE
                             return sigs;
                         }
 
+#if false
                     case AlgorithmValuesInt.EdDSA: {
                             ISigner eddsa;
                             if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
@@ -379,7 +380,7 @@ namespace Com.AugustCellars.COSE
 
                             return eddsa.GenerateSignature();
                         }
-
+#endif
                     default:
                         throw new CoseException("Unknown Algorithm");
                 }
@@ -479,6 +480,7 @@ namespace Com.AugustCellars.COSE
                             return ecdsa.VerifySignature(digestedMessage, r, s);
                         }
 
+#if false
                     case AlgorithmValuesInt.EdDSA: {
                             ISigner eddsa;
                             if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
@@ -500,6 +502,7 @@ namespace Com.AugustCellars.COSE
                             eddsa.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
                             return eddsa.VerifySignature(_rgbSignature);
                         }
+#endif
 
                     default:
                         throw new CoseException("Unknown Algorithm");
