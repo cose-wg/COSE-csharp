@@ -158,7 +158,7 @@ namespace Com.AugustCellars.COSE
             }
 
 
-            CBORObject signed = base.EncodeToCBORObject(cborBodyAttributes.GetByteString(), rgbBody);
+            CBORObject signed = base.EncodeToCBORObject(cborBodyAttributes.EncodeToBytes(), rgbBody);
             return signed[2];
         }
     }

@@ -170,8 +170,5 @@ namespace Com.AugustCellars.COSE
 
             throw new Exception("Signer is not for this message");
         }
-
     }
-
-
 }

@@ -56,6 +56,7 @@ namespace Com.AugustCellars.COSE
                 if (cbor[0].GetByteString().Length == 0) ProtectedMap = CBORObject.NewMap();
                 else ProtectedMap = CBORObject.DecodeFromBytes(cbor[0].GetByteString());
                 if (ProtectedMap.Type != CBORType.Map) throw new CoseException("Invalid Encrypt0 structure");
+                ProtectedBytes = cbor[0].GetByteString();
             }
             else
             {

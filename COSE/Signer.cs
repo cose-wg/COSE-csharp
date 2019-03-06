@@ -302,7 +302,7 @@ namespace Com.AugustCellars.COSE
                         throw new CoseException("Unknown signature algorith");
                 }
             }
-            else throw new CoseException("Algorthm incorrectly encoded");
+            else throw new CoseException("Algorithm incorrectly encoded");
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
