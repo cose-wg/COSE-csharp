@@ -1,19 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Text;
-using Org.BouncyCastle.Apache.Bzip2;
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Asn1.Esf;
-using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Agreement.JPake;
 using Org.BouncyCastle.Crypto.Digests;
-using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.IO;
-using Org.BouncyCastle.Crypto.Paddings;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Utilities.Encoders;
 
@@ -26,7 +17,7 @@ namespace Com.AugustCellars.COSE
             public int w;
             public int p;
             public int ls;
-            public int m;
+            public int Height;
 
             public Constants(int nIn, int wIn, int pIn, int lsIn)
             {
@@ -36,10 +27,10 @@ namespace Com.AugustCellars.COSE
                 ls = lsIn;
             }
 
-            public Constants(int hIn, int mIn)
+            public Constants(int mIn, int hIn)
             {
-                HashLength = hIn;
-                m = mIn;
+                HashLength = mIn;
+                Height = hIn;
             }
 
             static public Constants[] Values = new Constants[] {
@@ -228,8 +219,8 @@ BuildFromSeed(seed);
                     offsetNew = buildSigningPath(leafNumber, signature, offset, depth + 1);
                 }
 
-                int i = ((int) Math.Pow(2, (depth + 1))) + ((leafNumber & (1 << depth)) != 0 ? 0 : 1);
-                Array.Copy(ComputePubPart(i, (int) Math.Pow(2, H)), 0, signature, offset, 32);
+                int i = (1 << (depth+1)) + (leafNumber >> (this.H-1 - depth)) ^ 1;
+                Array.Copy(ComputePubPart(i, (int) Math.Pow(2, H)), 0, signature, offsetNew, 32);
                 return offsetNew + 32;
             }
 
@@ -289,7 +280,7 @@ BuildFromSeed(seed);
 
                 }
 
-                byte[] lmotsSignature = null;
+                byte[] lmotsSignature = SignOnce(message);
 
                 byte[] signature = new byte[4 + lmotsSignature.Length + 4 + this.H * this.M];
 
@@ -297,6 +288,7 @@ BuildFromSeed(seed);
                 Array.Copy(lmotsSignature, 0, signature, 4, lmotsSignature.Length);
                 Array.Copy(u32str((Int32) this.lmsType), 0, signature, 4 + lmotsSignature.Length, 4);
                 buildSigningPath(this.LeafNumber, signature, 8 + lmotsSignature.Length, 0);
+                LeafNumber += 1;
                 return signature;
             }
 
@@ -341,7 +333,7 @@ BuildFromSeed(seed);
                 }
 
                 hashLength = Constants.Values[sigtype].HashLength;
-                int h = Constants.Values[sigtype].m;
+                int h = Constants.Values[sigtype].Height;
 
                 if ((q >= (UInt32)(1 << h)) || (signature.Length != (12 + n * (p + 1) + hashLength * h))) {
                     return false;
@@ -449,7 +441,7 @@ BuildFromSeed(seed);
                 int cb = LmsotSignatureLength(buffer, offset + 4);
                 UInt32 type = strTou32(buffer, offset+4+cb);
                 int h = Constants.Values[type].HashLength;
-                int m = Constants.Values[type].m;
+                int m = Constants.Values[type].Height;
 
                 return 8 + cb + h * m;
             }
@@ -490,6 +482,13 @@ BuildFromSeed(seed);
                 int w = c.w;
                 byte[] C = new byte[n];
                 Message.GetPRNG().NextBytes(C);
+                C = new byte[] {
+                    0x91, 0x29, 0x1d, 0xe7,
+                    0x6c, 0xe6, 0xe2, 0x4d, 0x1e, 0x2a, 0x9b, 0x60,
+                    0x26, 0x65, 0x19, 0xbc, 0x8c, 0xe8, 0x89, 0xf8,
+                    0x14, 0xde, 0xb0, 0xfc, 0x00, 0xed, 0xd3, 0x12,
+                    0x9d, 0xe3, 0xab, 0x9b
+                };
 
                 byte[][] y = new byte[p][];
                 byte[] Q = ComputeHash(new Sha256Digest(),
@@ -501,11 +500,13 @@ BuildFromSeed(seed);
 
                 byte[] QNew = new byte[Q.Length + 2];
                 Array.Copy(Q, QNew, Q.Length);
+                byte[] privateKey = this.x[this.LeafNumber];
+                byte[] tmp = new byte[n];
 
                 for (int i = 0; i < p; i++) {
                     Array.Copy(u16str(checksum(Q, w, lmotsType)), 0, QNew, Q.Length, 2);
                     int a = coef(QNew, i, w);
-                    byte[] tmp = this.x[i];
+                    Array.Copy(privateKey, i*n, tmp, 0, n);
                     for (int j = 0; j < a; j++) {
                         tmp = ComputeHash(new Sha256Digest(), new byte[][]{ this.Identifier, u32str(this.LeafNumber), u16str((UInt16) i), new byte[] {(byte) j}, tmp});
                     }
@@ -525,6 +526,100 @@ BuildFromSeed(seed);
 
                 return bytes;
             }
+
+            public static string PrintSignature(byte[] signatureBytes, ref int offset)
+            {
+                UInt32 q = strTou32(signatureBytes, offset);
+                offset += 4;
+
+                string result = $"LMS signature\nq           {q}\n------------------------\n";
+
+                result += PrintOneSignature(signatureBytes, ref offset);
+
+                UInt32 lmsType = strTou32(signatureBytes, offset);
+                Constants c = Constants.Values[lmsType];
+
+                result += $"------------------------------\n";
+                result += PrintBytes("LMS type", signatureBytes, ref offset, 4);
+                for (int i = 0; i < c.Height; i++) {
+                    result += PrintBytes($"path[{i}]", signatureBytes, ref offset, 32);
+                }
+
+                return result;
+            }
+
+            public static string PrintOneSignature(byte[] signatureBytes, ref int offset)
+            {
+                UInt32 lmotsType = strTou32(signatureBytes, offset);
+                Constants c = Constants.Values[lmotsType];
+                offset += 4;
+
+                string result = $"LMOTS signature\nLMOTS type  {lmotsType}\n";
+                result += PrintBytes("C", signatureBytes, ref offset, 32);
+
+                for (int i = 0; i < c.p; i++) {
+                    result += PrintBytes($"Y[{i}]", signatureBytes, ref offset, 32);
+                }
+
+                return result;
+            }
+
+            public static string PrintPublicKey(byte[] signatureBytes, ref int offset)
+            {
+                string result = "LMS public key\n";
+                UInt32 lmsType = strTou32(signatureBytes, 4);
+                UInt32 lmotsType = strTou32(signatureBytes, offset + 4);
+
+                result += PrintBytes("LMS type", signatureBytes, ref offset, 4);
+                result += PrintBytes("LMOTS type", signatureBytes, ref offset, 4);
+                result += PrintBytes("I", signatureBytes, ref offset, 16);
+                result += PrintBytes("K", signatureBytes, ref offset, 32);
+
+                return result;
+            }
+
+            private static readonly char[] hex = new[] {
+                '0', '1', '2', '3', '4', '5', '6', '7',
+                '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+            };
+
+            private static string PrintBytes(string tag, byte[] signatureBytes, ref int offset, int count)
+            {
+                string result = "";
+                char[] x = new char[32];
+                for (int i = 0; i < count / 16; i++) {
+                    for (int j = 0; j < 16; j++) {
+                        x[j * 2] = hex[signatureBytes[offset] >> 4];
+                        x[j * 2 + 1] = hex[signatureBytes[offset] & 0xf];
+                        offset += 1;
+                    }
+
+                    if (i == 0) {
+                        result += string.Format("{0,-11}{1}\n", tag, new string(x));
+                    }
+                    else {
+                        result += string.Format("           {0}\n", new string(x));
+                    }
+                }
+
+                if (count % 16 != 0) {
+                    x = new char[(count%16)*2];
+                    for (int j = 0; j < count % 16; j++) {
+                        x[j * 2] = hex[signatureBytes[offset] >> 4];
+                        x[j * 2 + 1] = hex[signatureBytes[offset] & 0xf];
+                        offset += 1;
+                    }
+
+                    if (count < 16) {
+                        result += string.Format("{0,-11}{1}\n", tag, new string(x));
+                    }
+                    else {
+                        result += string.Format("           {0}\n", new string(x));
+                    }
+                }
+
+                return result;
+            }
         }
 
         class HssNode
@@ -542,6 +637,11 @@ BuildFromSeed(seed);
             }
 
             public byte[] PublicKey => privateKey.PublicKey;
+
+            public byte[] Sign(byte[] message)
+            {
+                return privateKey.Sign(message);
+            }
         }
 
         public enum LmotsAlgorithmType {
@@ -598,6 +698,34 @@ BuildFromSeed(seed);
                 Array.Copy(rootKey, 0, pubKey, 4, rootKey.Length);
                 return pubKey;
             }
+        }
+
+        public byte[] Sign(byte[] message)
+        {
+            int depth = HssTree.Length;
+            byte[][] allsigs = new byte[depth*2+2][];
+            int cb = 4;
+
+            allsigs[0] = u32str(depth-1);
+            for (int i = 0; i < depth-1; i++) {
+                allsigs[2*i + 1] = HssTree[i].Sign(HssTree[i + 1].PublicKey);
+                cb += allsigs[i + 1].Length;
+                allsigs[2 * i + 2] = HssTree[i + 1].PublicKey;
+                cb += allsigs[2 * i + 2].Length;
+            }
+
+            allsigs[depth*2+1] = HssTree[depth - 1].Sign(message);
+            cb += allsigs[depth*2+1].Length;
+
+            byte[] signatureBytes = new byte[cb];
+            cb = 0;
+            foreach (byte[] val in allsigs) {
+                if (val == null) continue;
+                Array.Copy(val, 0, signatureBytes, cb, val.Length);
+                cb += val.Length;
+            }
+
+            return signatureBytes;
         }
 
         public static bool Validate(byte[] message, byte[] publicKey, byte[] signatureBytes)
@@ -668,26 +796,71 @@ BuildFromSeed(seed);
                 "The enumeration in the Constitution, of certain rights, shall not be construed to deny or disparage others retained by the people.\n");
             if (!Validate(Test2Message, Test2PublicKey, Test2Signature)) throw new Exception("Self test fail 2");
 
+            byte[] test3PublicKey =
+                StringToByteArray(
+                    "000000010000000600000003d08fabd4a2091ff0a8cb4ed834e7453432a58885cd9ba0431235466bff9651c6c92124404d45fa53cf161c28f1ad5a8e");
             string Test3PrivateKey =
+                    "1|" + // Two Levels
+                    "6|3|" + // First Level - LM_SHA256_MD32_H10 + LMOTS_SHA256_N32_W4
+                    // "D41073216E3A81162F7C32C987006518E2FFAF0F34EEE089FD9870D8F148B750|" +
+                    "558B8966C48AE9CB898B423C83443AAE014A72F1B1AB5CC85CF1D892903B5439|" +
+                    //                    "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f|" + // SEED Level 1
+                    "0|" + // q=2
+                    "d08fabd4a2091ff0a8cb4ed834e74534" // Identifier Level 1
+                ;
+            HashSig hashKey = new HashSig(Test3PrivateKey);
+            byte[] mySignature = hashKey.Sign(Test2Message);
+            string foo = PrintSignature(mySignature);
+
+            if (!Validate(Test2Message, test3PublicKey, mySignature)) {
+                throw new Exception("Verify of signature failed");
+            }
+
+            test3PublicKey = StringToByteArray(
+                "000000020000000600000003d08fabd4a2091ff0a8cb4ed834e7453432a58885cd9ba0431235466bff9651c6c92124404d45fa53cf161c28f1ad5a8e");
+            Test3PrivateKey =
                     "2|" + // Two Levels
                     "6|3|" + // First Level - LM_SHA256_MD32_H10 + LMOTS_SHA256_N32_W4
                     "558B8966C48AE9CB898B423C83443AAE014A72F1B1AB5CC85CF1D892903B5439|" +
 //                    "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f|" + // SEED Level 1
                     "2|" + // q=2
                     "d08fabd4a2091ff0a8cb4ed834e74534|" + // Identifier Level 1
-                    "6|4|" + // Second Level - LM_HA256_M32_H5
+                    "5|4|" + // Second Level - LM_SHA256_M32_H5 + LM_SHA256_N32_W8
                     "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f00|" + // SEED Level 2
                     "3|" + // q=3
                     "215f83b7ccb9acbcd08db97b0d04dc2b" // Identifier Level 2
                 ;
 
-            HashSig hashKey = new HashSig(Test3PrivateKey);
-            byte[] test3PublicKey =
-                StringToByteArray(
-                    "000000020000000600000003d08fabd4a2091ff0a8cb4ed834e7453432a58885cd9ba0431235466bff9651c6c92124404d45fa53cf161c28f1ad5a8e");
+            hashKey = new HashSig(Test3PrivateKey);
             if (!test3PublicKey.SequenceEqual(hashKey.PublicKey)) {
                 throw new Exception("Public Key did not match");
             }
+
+            mySignature = hashKey.Sign(Test2Message);
+
+            foo = PrintSignature(mySignature);
+
+            if (!Validate(Test2Message, test3PublicKey, mySignature)) {
+                throw new Exception("Verify of signature failed");
+            }
+        }
+
+        public static string PrintSignature(byte[] signatureBytes)
+        {
+            UInt32 nspk = strTou32(signatureBytes, 0);
+            string result = "";
+            int offset = 4;
+
+            for (uint i = 0; i < nspk; i++) {
+                result += LmsKey.PrintSignature(signatureBytes, ref offset);
+                result += LmsKey.PrintPublicKey(signatureBytes, ref offset);
+            }
+
+            result +=
+                "------------------------------------------------\nfinal signature:\n-----------------------------------";
+            result += LmsKey.PrintSignature(signatureBytes, ref offset);
+
+            return result;
         }
 
         public static byte[] StringToByteArray(string hex)
