@@ -246,6 +246,9 @@ namespace Com.AugustCellars.COSE
                     digest2 = new Sha384Digest();
                     break;
 
+                case "HSS-LMS":
+                    break;
+
                 default:
                     throw new CoseException("Unknown Algorithm Specified");
                 }
@@ -277,10 +280,17 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Unknown Algorithm Specified");
                 }
             }
-            else throw new CoseException("Algorthm incorrectly encoded");
+            else throw new CoseException("Algorithm incorrectly encoded");
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
+                case "HSS-LMS":
+                    HashSig sig = new HashSig(_keyToSign[CoseKeyParameterKeys.Lms_Private].AsString());
+                    byte[] signBytes = sig.Sign(bytesToBeSigned);
+                    
+                    _keyToSign.Replace(CoseKeyParameterKeys.Lms_Private, CBORObject.FromObject(sig.PrivateKey));
+                    return signBytes;
+
                 default:
                     throw new CoseException("Unknown Algorithm Specified");
                 }
@@ -391,6 +401,9 @@ namespace Com.AugustCellars.COSE
                     digest2 = new Sha384Digest();
                     break;
 
+                case "HSS-LMS":
+                    break;
+
                 default:
                     throw new CoseException("Unknown signature algorithm");
                 }
@@ -426,6 +439,10 @@ namespace Com.AugustCellars.COSE
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
+                case "HSS-LMS":
+                    return HashSig.Validate(bytesToBeSigned,
+                                            signerKey[CoseKeyParameterKeys.Lms_Public].GetByteString(),
+                                            _rgbSignature);
 
                 default:
                     throw new CoseException("Unknown Algorithm");
@@ -438,7 +455,7 @@ namespace Com.AugustCellars.COSE
                 case AlgorithmValuesInt.RSA_PSS_512: {
                         PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
 
-                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(_keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
+                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(signerKey.AsBigInteger(CoseKeyParameterKeys.RSA_n), signerKey.AsBigInteger(CoseKeyParameterKeys.RSA_e), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
                         ParametersWithRandom param = new ParametersWithRandom(prv, GetPRNG());
 
                         signer.Init(false, param);

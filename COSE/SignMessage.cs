@@ -379,6 +379,9 @@ namespace Com.AugustCellars.COSE
                     digest2 = new Sha384Digest();
                     break;
 
+                case "HSS-LMS":
+                    break;
+
                 default:
                     throw new Exception("Unknown signature algorithm");
                 }
@@ -407,13 +410,18 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new CoseException("Unknown signature algorith");
+                    throw new CoseException("Unknown signature algorithm");
                 }
             }
-            else throw new CoseException("Algorthm incorrectly encoded");
+            else throw new CoseException("Algorithm incorrectly encoded");
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
+                case "HSS-LMS":
+                    HashSig sig = new HashSig(_keyToSign[CoseKeyParameterKeys.Lms_Private].AsString());
+                    byte[] signBytes = sig.Sign(bytesToBeSigned);
+                    _keyToSign.Replace(CoseKeyParameterKeys.Lms_Private, CBORObject.FromObject(sig.PrivateKey));
+                    return signBytes;
 
                 default:
                     throw new CoseException("Unknown Algorithm");
@@ -506,6 +514,9 @@ namespace Com.AugustCellars.COSE
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
+                case "HSS-LMS":
+                    break;
+
                 default:
                     throw new Exception("Unknown signature algorithm");
                 }
@@ -541,7 +552,10 @@ namespace Com.AugustCellars.COSE
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
-
+                    case "HSS-LMS":
+                        return HashSig.Validate(bytesToBeSigned,
+                                                  _keyToSign[CoseKeyParameterKeys.Lms_Public].GetByteString(),
+                                                  _rgbSignature);
                 default:
                     throw new CoseException("Unknown Algorithm");
                 }
