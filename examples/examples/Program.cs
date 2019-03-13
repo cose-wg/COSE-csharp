@@ -61,12 +61,15 @@ namespace examples
 
         static void RunCoseExamples()
         { 
-            EdDSA25517.SelfTest();
-            EdDSA448.SelfTest();
+            // EdDSA25517.SelfTest();
+            // EdDSA448.SelfTest();
 
             //  OneKey k1 = OneKey.GenerateKey(null, GeneralValues.KeyType_RSA, "2048");
 
-            RunTestsInDirectory("rsa-pss-examples");
+            // HashSig.SelfTest();
+
+            RunTestsInDirectory("hashsig");
+
 
 
             RunTestsInDirectory("RFC8152");
@@ -106,6 +109,7 @@ namespace examples
             RunTestsInDirectory("sign-tests");
             RunTestsInDirectory("sign1-tests");
             RunTestsInDirectory("rsa-oaep-examples");
+            RunTestsInDirectory("rsa-pss-examples");
         }
 
         static void RunTestsInDirectory(string strDirectory)
@@ -1075,6 +1079,7 @@ namespace examples
                     case "EC": newValue = GeneralValues.KeyType_EC; goto NewValue;
                     case "RSA": newValue = GeneralValues.KeyType_RSA; goto NewValue;
                     case "oct": newValue = GeneralValues.KeyType_Octet; goto NewValue;
+                    case "HSS-LMS": newValue = GeneralValues.KeyType_HSS_LMS; goto NewValue;
                     default:
                         break;
                     }
@@ -1205,9 +1210,13 @@ namespace examples
                 case "dq_hex": newKey = CoseKeyParameterKeys.RSA_dQ; goto HexValue;
                 case "qi": newKey = CoseKeyParameterKeys.RSA_qInv; goto BinaryValue;
                 case "qi_hex": newKey = CoseKeyParameterKeys.RSA_qInv; goto HexValue;
-
+                case "public": newKey = CoseKeyParameterKeys.Lms_Public; goto HexValue;
+                case "private": newKey = CoseKeyParameterKeys.Lms_Private; goto TextValue;
                     default:
                     throw new Exception("Unrecognized field name " + item + " in key object");
+
+                case "comment":
+                    break;
                 }
             }
 
@@ -1357,6 +1366,7 @@ namespace examples
             case "RSA-PSS-256": return AlgorithmValues.RSA_PSS_256;
             case "RSA-PSS-384": return AlgorithmValues.RSA_PSS_384;
             case "RSA-PSS-512": return AlgorithmValues.RSA_PSS_512;
+                case "HSS-LSM": return AlgorithmValues.HSS_LMS_HASH;
             default: return old;
             }
         }
