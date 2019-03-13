@@ -71,6 +71,11 @@ namespace Com.AugustCellars.COSE
             _map.Add(name, value);
         }
 
+        internal void Replace(CBORObject key, CBORObject value)
+        {
+            _map[key] = value;
+        }
+
         /// <summary>
         /// See if a field in two keys is the same
         /// </summary>
@@ -105,12 +110,26 @@ namespace Com.AugustCellars.COSE
             if (!CompareField(key2, CoseKeyKeys.Algorithm))
                 return false;
 
-            switch ((GeneralValuesInt) _map[CoseKeyKeys.KeyType].AsInt32()) {
+            if (_map[CoseKeyKeys.KeyType].Type == CBORType.TextString) {
+                switch (_map[CoseKeyKeys.KeyType].AsString()) {
+                case "HSS-LMS":
+                    if (!CompareField(key2, CoseKeyParameterKeys.Lms_Public)) {
+                        return false;
+                    }
+                    break;
+
+                default:
+                    return true;
+                }
+            }
+            else {
+                switch ((GeneralValuesInt) _map[CoseKeyKeys.KeyType].AsInt32()) {
                 case GeneralValuesInt.KeyType_RSA:
                     if (!CompareField(key2, CoseKeyParameterKeys.RSA_e) ||
                         !CompareField(key2, CoseKeyParameterKeys.RSA_n)) {
                         return false;
                     }
+
                     break;
 
                 case GeneralValuesInt.KeyType_EC2:
@@ -119,6 +138,7 @@ namespace Com.AugustCellars.COSE
                         !CompareField(key2, CoseKeyParameterKeys.EC_Y)) {
                         return false;
                     }
+
                     break;
 
                 case GeneralValuesInt.KeyType_Octet:
@@ -128,7 +148,9 @@ namespace Com.AugustCellars.COSE
 
                 default:
                     return true;
+                }
             }
+
             return true;
         }
 
@@ -264,29 +286,38 @@ namespace Com.AugustCellars.COSE
         public OneKey PublicKey()
         {
             OneKey newKey = new OneKey();
-            switch ((GeneralValuesInt)_map[CoseKeyKeys.KeyType].AsInt16())
-            {
-            case GeneralValuesInt.KeyType_Octet:
-                return null;
+            if (_map[CoseKeyKeys.KeyType].Type == CBORType.TextString) {
+                if (_map[CoseKeyKeys.KeyType].AsString() == "HSS-LMS") {
+                    newKey.Add(CoseKeyParameterKeys.Lms_Public, _map[CoseKeyParameterKeys.Lms_Public]);
+                }
+                else {
+                    throw new CoseException("Key type unrecognized");
+                }
+            }
+            else {
+                switch ((GeneralValuesInt) _map[CoseKeyKeys.KeyType].AsInt16()) {
+                case GeneralValuesInt.KeyType_Octet:
+                    return null;
 
-            case GeneralValuesInt.KeyType_RSA:
-                newKey.Add(CoseKeyParameterKeys.RSA_n, _map[CoseKeyParameterKeys.RSA_n]);
-                newKey.Add(CoseKeyParameterKeys.RSA_e, _map[CoseKeyParameterKeys.RSA_e]);
-                break;
+                case GeneralValuesInt.KeyType_RSA:
+                    newKey.Add(CoseKeyParameterKeys.RSA_n, _map[CoseKeyParameterKeys.RSA_n]);
+                    newKey.Add(CoseKeyParameterKeys.RSA_e, _map[CoseKeyParameterKeys.RSA_e]);
+                    break;
 
-            case GeneralValuesInt.KeyType_EC2:
-                newKey.Add(CoseKeyParameterKeys.EC_Curve, _map[CoseKeyParameterKeys.EC_Curve]);
-                newKey.Add(CoseKeyParameterKeys.EC_X, _map[CoseKeyParameterKeys.EC_X]);
-                newKey.Add(CoseKeyParameterKeys.EC_Y, _map[CoseKeyParameterKeys.EC_Y]);
-                break;
+                case GeneralValuesInt.KeyType_EC2:
+                    newKey.Add(CoseKeyParameterKeys.EC_Curve, _map[CoseKeyParameterKeys.EC_Curve]);
+                    newKey.Add(CoseKeyParameterKeys.EC_X, _map[CoseKeyParameterKeys.EC_X]);
+                    newKey.Add(CoseKeyParameterKeys.EC_Y, _map[CoseKeyParameterKeys.EC_Y]);
+                    break;
 
-            case GeneralValuesInt.KeyType_OKP:
-                newKey.Add(CoseKeyParameterKeys.EC_Curve, _map[CoseKeyParameterKeys.EC_Curve]);
-                newKey.Add(CoseKeyParameterKeys.EC_X, _map[CoseKeyParameterKeys.EC_X]);
-                break;
+                case GeneralValuesInt.KeyType_OKP:
+                    newKey.Add(CoseKeyParameterKeys.EC_Curve, _map[CoseKeyParameterKeys.EC_Curve]);
+                    newKey.Add(CoseKeyParameterKeys.EC_X, _map[CoseKeyParameterKeys.EC_X]);
+                    break;
 
-            default:
-                throw new CoseException("Key type unrecognized");
+                default:
+                    throw new CoseException("Key type unrecognized");
+                }
             }
 
             foreach (CBORObject obj in _map.Keys) {

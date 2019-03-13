@@ -58,6 +58,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;DEBUG;NETSTANDARD1_0;FOR_EXAMPLES</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NETSTANDARD1_0; FOR_EXAMPLES</DefineConstants>
   </PropertyGroup>
   
 
@@ -72,6 +73,7 @@
     <Compile Include="Encrypt0Mesage.cs" />
     <Compile Include="EncryptCommon.cs" />
     <Compile Include="EncryptMessage.cs" />
+    <Compile Include="HashSig.cs" />
     <Compile Include="Key.cs" />
     <Compile Include="KeySet.cs" />
     <Compile Include="MACMessage.cs" />

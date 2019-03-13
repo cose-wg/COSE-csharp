@@ -158,6 +158,8 @@ namespace Com.AugustCellars.COSE
         public static readonly CBORObject ECDH_SS_HKDF_256_AES_KW_128 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_128);
         public static readonly CBORObject ECDH_SS_HKDF_256_AES_KW_192 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_192);
         public static readonly CBORObject ECDH_SS_HKDF_256_AES_KW_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_256);
+
+        public static readonly CBORObject HSS_LMS_HASH = CBORObject.FromObject("HSS-LMS");
     }
 
     public class CoseKeyKeys
@@ -212,6 +214,8 @@ namespace Com.AugustCellars.COSE
         public static readonly CBORObject HKDF_SuppPub_Other = CBORObject.FromObject("HKDF Supp Public");
         public static readonly CBORObject HKDF_SuppPriv_Other = CBORObject.FromObject("HKDF Supp Private");
 
+        public static readonly CBORObject Lms_Public = CBORObject.FromObject(-1);
+        public static readonly CBORObject Lms_Private = CBORObject.FromObject(-2);
     }
 
     public enum GeneralValuesInt
@@ -226,6 +230,7 @@ namespace Com.AugustCellars.COSE
         public static readonly CBORObject KeyType_EC = CBORObject.FromObject(GeneralValuesInt.KeyType_EC2);
         public static readonly CBORObject KeyType_RSA = CBORObject.FromObject(GeneralValuesInt.KeyType_RSA);
         public static readonly CBORObject KeyType_Octet = CBORObject.FromObject(GeneralValuesInt.KeyType_Octet);
+        public static readonly CBORObject KeyType_HSS_LMS = CBORObject.FromObject("HSS-LMS");
         public static readonly CBORObject P256 = CBORObject.FromObject(GeneralValuesInt.P256);
         public static readonly CBORObject P384 = CBORObject.FromObject(GeneralValuesInt.P384);
         public static readonly CBORObject P521 = CBORObject.FromObject(GeneralValuesInt.P521);
