@@ -958,8 +958,17 @@ namespace Com.AugustCellars.COSE.Tests
                     cnKeyOut[CoseKeyParameterKeys.RSA_qInv] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
                     break;
 
+                case "public":
+                    cnKeyOut[CoseKeyParameterKeys.Lms_Public] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
+                    break;
+
+                case "private":
+                    cnKeyOut[CoseKeyParameterKeys.Lms_Private] = CBORObject.FromObject(cnValue.AsString());
+                    break;
+
                 case "kid":
                 case "use":
+                case "comment":
                     break;
 
                 default:
@@ -1038,7 +1047,7 @@ namespace Com.AugustCellars.COSE.Tests
                 case "ECDH-ES-A256KW": return AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_256;
                 case "ECDH-SS-A256KW": return AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_256;
                 case "EdDSA": return AlgorithmValues.EdDSA;
-
+                case "HSS-LMS": return AlgorithmValues.HSS_LMS_HASH;
                 default: return old;
             }
         }

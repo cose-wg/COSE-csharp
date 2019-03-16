@@ -391,7 +391,7 @@ namespace Com.AugustCellars.COSE
                     return sigs;
                 }
 
-#if false
+#if true
                 case AlgorithmValuesInt.EdDSA: {
                         ISigner eddsa;
                     if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
@@ -530,7 +530,7 @@ namespace Com.AugustCellars.COSE
                         return ecdsa.VerifySignature(digestedMessage, r, s);
                     }
 
-#if false
+#if true
                 case AlgorithmValuesInt.EdDSA: {
                     ISigner eddsa;
                     if (signerKey[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
