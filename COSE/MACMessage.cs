@@ -21,7 +21,13 @@ namespace Com.AugustCellars.COSE
             m_tag = Tags.MAC0;
         }
 
-        public void DecodeFromCBORObject(CBORObject obj)
+#region Decoders
+        public static SignMessage DecodeFromCBOR(CBORObject obj)
+        {
+            return (SignMessage)Message.DecodeFromCBOR(obj, Tags.MAC0);
+        }
+
+        protected override void InternalDecodeFromCBORObject(CBORObject obj)
         {
             if (obj.Count != 4) throw new CoseException("Invalid MAC0 structure");
 
@@ -54,17 +60,21 @@ namespace Com.AugustCellars.COSE
             if (obj[3].Type == CBORType.ByteString) RgbTag = obj[3].GetByteString();
             else throw new CoseException("Invalid MAC0 structure");
         }
+#endregion
 
         public override CBORObject Encode()
         {
             CBORObject obj;
 
             if (RgbTag == null) throw new CoseException("Must call Compute before encoding");
+            ProcessCounterSignatures();
 
             obj = CBORObject.NewArray();
 
             if (ProtectedMap.Count > 0) obj.Add(ProtectedMap.EncodeToBytes());
             else obj.Add(new byte[0]);
+
+            
 
             if (UnprotectedMap.Count > 0) obj.Add(UnprotectedMap); // Add unprotected attributes
             else obj.Add(CBORObject.NewMap());
@@ -121,6 +131,8 @@ namespace Com.AugustCellars.COSE
                 }
             }
             else throw new CoseException("Algorithm incorrectly encoded");
+
+            ProcessCounterSignatures();
         }
 
         public bool Validate(OneKey recipientReceiver)
@@ -245,7 +257,13 @@ namespace Com.AugustCellars.COSE
             _recipientList.Add(recipient);
         }
 
-        public void DecodeFromCBORObject(CBORObject obj)
+#region Decoders
+        public static SignMessage DecodeFromCBOR(CBORObject obj)
+        {
+            return (SignMessage)Message.DecodeFromCBOR(obj, Tags.MAC);
+        }
+
+        protected override void InternalDecodeFromCBORObject(CBORObject obj)
         {
 
             if (obj.Count != 5) throw new CoseException("Invalid MAC structure");
@@ -289,6 +307,8 @@ namespace Com.AugustCellars.COSE
             }
             else throw new CoseException("Invalid MAC structure");
         }
+#endregion
+
 
         public override CBORObject Encode()
         {
@@ -333,7 +353,7 @@ namespace Com.AugustCellars.COSE
 public virtual void Compute()
         {
             MAC();
-        } 
+        }
 
         public virtual void MAC()
         {
@@ -351,6 +371,7 @@ public virtual void Compute()
                 UnprotectedMap.Add(HeaderKeys.Algorithm, alg);
 
             }
+
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
                 case "AES-CMAC-128/64":
@@ -372,8 +393,12 @@ public virtual void Compute()
                     cbitKey = 256;
                     break;
 
-                case AlgorithmValuesInt.HMAC_SHA_384: cbitKey = 384; break;
-                case AlgorithmValuesInt.HMAC_SHA_512: cbitKey = 512; break;
+                case AlgorithmValuesInt.HMAC_SHA_384:
+                    cbitKey = 384;
+                    break;
+                case AlgorithmValuesInt.HMAC_SHA_512:
+                    cbitKey = 512;
+                    break;
 
                 case AlgorithmValuesInt.AES_CBC_MAC_128_64:
                 case AlgorithmValuesInt.AES_CBC_MAC_128_128:
@@ -400,7 +425,8 @@ public virtual void Compute()
                 switch (key.recipientType) {
                 case RecipientType.direct:
                 case RecipientType.keyAgreeDirect:
-                    if ((recipientTypes & 1) != 0) throw new CoseException("It is not legal to have two direct recipients in a message");
+                    if ((recipientTypes & 1) != 0)
+                        throw new CoseException("It is not legal to have two direct recipients in a message");
                     recipientTypes |= 1;
                     contentKey = key.GetKey(alg);
                     break;
@@ -411,7 +437,8 @@ public virtual void Compute()
                 }
             }
 
-            if (recipientTypes == 3) throw new CoseException("It is not legal to mix direct and indirect recipients in a message");
+            if (recipientTypes == 3)
+                throw new CoseException("It is not legal to mix direct and indirect recipients in a message");
             if (recipientTypes == 0) throw new CoseException("No recipients supplied");
 
             if (contentKey == null) {
@@ -461,6 +488,7 @@ public virtual void Compute()
 #if FOR_EXAMPLES
             m_cek = contentKey;
 #endif
+            ProcessCounterSignatures();
         }
 
         public bool Validate(Recipient recipientReceiver)

@@ -302,11 +302,13 @@ namespace JOSE
                     default:
                         throw new JOSE_Exception("Unknown curve");
                     }
+
                     break;
 
                 default:
                     throw new JOSE_Exception("Unknown or unsupported key type " + keyToSign.AsString("kty"));
                 }
+
                 objUnprotected.Add("alg", alg);
             }
 
@@ -353,46 +355,61 @@ namespace JOSE
             case "RS384":
             case "RS512": {
                 RsaDigestSigner signer = new RsaDigestSigner(digest);
-                RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(ConvertBigNum(keyToSign.AsBytes("n")), ConvertBigNum(keyToSign.AsBytes("e")), ConvertBigNum(keyToSign.AsBytes("d")), ConvertBigNum(keyToSign.AsBytes("p")), ConvertBigNum(keyToSign.AsBytes("q")), ConvertBigNum(keyToSign.AsBytes("dp")), ConvertBigNum(keyToSign.AsBytes("dq")), ConvertBigNum(keyToSign.AsBytes("qi")));
+                RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(ConvertBigNum(keyToSign.AsBytes("n")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("e")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("d")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("p")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("q")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("dp")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("dq")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("qi")));
 
                 signer.Init(true, prv);
                 signer.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
                 return signer.GenerateSignature();
-                }
+            }
 
             case "PS256":
             case "PS384":
             case "PS512": {
-                    PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetDigestSize());
+                PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetDigestSize());
 
-                    RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(ConvertBigNum(keyToSign.AsBytes("n")), ConvertBigNum(keyToSign.AsBytes("e")), ConvertBigNum(keyToSign.AsBytes("d")), ConvertBigNum(keyToSign.AsBytes("p")), ConvertBigNum(keyToSign.AsBytes("q")), ConvertBigNum(keyToSign.AsBytes("dp")), ConvertBigNum(keyToSign.AsBytes("dq")), ConvertBigNum(keyToSign.AsBytes("qi")));
-                    ParametersWithRandom rnd = new ParametersWithRandom(prv, Message.s_PRNG);
+                RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(ConvertBigNum(keyToSign.AsBytes("n")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("e")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("d")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("p")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("q")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("dp")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("dq")),
+                                                                      ConvertBigNum(keyToSign.AsBytes("qi")));
+                ParametersWithRandom rnd = new ParametersWithRandom(prv, Message.s_PRNG);
 
-                    signer.Init(true, rnd);
-                    signer.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
-                    return signer.GenerateSignature();
-                }
+                signer.Init(true, rnd);
+                signer.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
+                return signer.GenerateSignature();
+            }
 
             case "ES256":
             case "ES384":
             case "ES512": {
-                    X9ECParameters p = NistNamedCurves.GetByName(keyToSign.AsString("crv"));
-                    ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
-                    ECPrivateKeyParameters privKey = new ECPrivateKeyParameters("ECDSA", ConvertBigNum(keyToSign.AsBytes("d")), parameters);
-                    ParametersWithRandom param = new ParametersWithRandom(privKey, Message.s_PRNG);
+                X9ECParameters p = NistNamedCurves.GetByName(keyToSign.AsString("crv"));
+                ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
+                ECPrivateKeyParameters privKey =
+                    new ECPrivateKeyParameters("ECDSA", ConvertBigNum(keyToSign.AsBytes("d")), parameters);
+                ParametersWithRandom param = new ParametersWithRandom(privKey, Message.s_PRNG);
 
-                    ECDsaSigner ecdsa = new ECDsaSigner(new HMacDsaKCalculator(new Sha256Digest()));
-                    ecdsa.Init(true, param);
+                ECDsaSigner ecdsa = new ECDsaSigner(new HMacDsaKCalculator(new Sha256Digest()));
+                ecdsa.Init(true, param);
 
-                    BigInteger[] sig = ecdsa.GenerateSignature(bytesToBeSigned);
-                    byte[] r = sig[0].ToByteArrayUnsigned();
-                    byte[] s = sig[1].ToByteArrayUnsigned();
-                    byte[] sigs = new byte[r.Length + s.Length];
-                    Array.Copy(r, sigs, r.Length);
-                    Array.Copy(s, 0, sigs, r.Length, s.Length);
+                BigInteger[] sig = ecdsa.GenerateSignature(bytesToBeSigned);
+                byte[] r = sig[0].ToByteArrayUnsigned();
+                byte[] s = sig[1].ToByteArrayUnsigned();
+                byte[] sigs = new byte[r.Length + s.Length];
+                Array.Copy(r, sigs, r.Length);
+                Array.Copy(s, 0, sigs, r.Length, s.Length);
 
-                    return sigs;
-                }
+                return sigs;
+            }
 
             case "HS256":
             case "HS384":
@@ -407,25 +424,33 @@ namespace JOSE
                 hmac.DoFinal(resBuf, 0);
 
                 return resBuf;
-                }
-
-            case "EdDSA": {
-                    switch (keyToSign.AsString("crv")) {
-                    case "Ed25519":
-                        Com.AugustCellars.COSE.EdDSA25517 x = new Com.AugustCellars.COSE.EdDSA25517();
-                        return x.Sign(keyToSign.AsBytes("x"), keyToSign.AsBytes("d"), bytesToBeSigned);
-                    }
-                }
-                break;
-
             }
+
+            case "EdDSA":
+                switch (keyToSign.AsString("crv")) {
+                case "Ed25519": {
+                    ISigner eddsa;
+                    Ed25519PrivateKeyParameters privKey =
+                        new Ed25519PrivateKeyParameters(keyToSign.AsBytes("d"), 0);
+                    eddsa = new Ed25519Signer();
+                    eddsa.Init(true, privKey);
+
+
+                    eddsa.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
+
+                    return eddsa.GenerateSignature();
+                }
+                }
+
+                break;
+            }
+
             return null;
         }
 
         public void Verify(Key key, SignMessage msg)
         {
             string alg = FindAttr("alg", msg).AsString();
-            Com.AugustCellars.COSE.EdDSA eddsa;
 
             IDigest digest;
             IDigest digest2;
@@ -469,120 +494,125 @@ namespace JOSE
             switch (alg) {
             case "RS256":
             case "RS384":
-            case "RS512": 
-                {
-                    if (key.AsString("kty") != "RSA") throw new JOSE_Exception("Wrong Key");
-                    RsaDigestSigner signer = new RsaDigestSigner(digest);
-                    RsaKeyParameters pub = new RsaKeyParameters(false, key.AsBigInteger("n"), key.AsBigInteger("e"));
+            case "RS512": {
+                if (key.AsString("kty") != "RSA") throw new JOSE_Exception("Wrong Key");
+                RsaDigestSigner signer = new RsaDigestSigner(digest);
+                RsaKeyParameters pub = new RsaKeyParameters(false, key.AsBigInteger("n"), key.AsBigInteger("e"));
 
-                    signer.Init(false, pub);
-                    signer.BlockUpdate(protectedB64, 0, protectedB64.Length);
-                    signer.BlockUpdate(rgbDot, 0, 1);
-                    signer.BlockUpdate(msg.payloadB64, 0, msg.payloadB64.Length);
-                    if (!signer.VerifySignature(signature)) throw new JOSE_Exception("Message failed to verify");
+                signer.Init(false, pub);
+                signer.BlockUpdate(protectedB64, 0, protectedB64.Length);
+                signer.BlockUpdate(rgbDot, 0, 1);
+                signer.BlockUpdate(msg.payloadB64, 0, msg.payloadB64.Length);
+                if (!signer.VerifySignature(signature)) throw new JOSE_Exception("Message failed to verify");
 
-                }
+            }
                 break;
 
             case "PS256":
             case "PS384":
-            case "PS512": 
-                {
-                    PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetDigestSize());
-                    RsaKeyParameters pub = new RsaKeyParameters(false, key.AsBigInteger("n"), key.AsBigInteger("e"));
+            case "PS512": {
+                PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetDigestSize());
+                RsaKeyParameters pub = new RsaKeyParameters(false, key.AsBigInteger("n"), key.AsBigInteger("e"));
 
-                    signer.Init(false, pub);
-                    signer.BlockUpdate(protectedB64, 0, protectedB64.Length);
-                    signer.BlockUpdate(rgbDot, 0, 1);
-                    signer.BlockUpdate(msg.payloadB64, 0, msg.payloadB64.Length);
-                    if (!signer.VerifySignature(signature)) throw new JOSE_Exception("Message failed to verify");
-                }
+                signer.Init(false, pub);
+                signer.BlockUpdate(protectedB64, 0, protectedB64.Length);
+                signer.BlockUpdate(rgbDot, 0, 1);
+                signer.BlockUpdate(msg.payloadB64, 0, msg.payloadB64.Length);
+                if (!signer.VerifySignature(signature)) throw new JOSE_Exception("Message failed to verify");
+            }
 
                 break;
 
             case "ES256":
             case "ES384":
-            case "ES512":
-                {
-                    if (key.AsString("kty") != "EC") throw new JOSE_Exception("Wrong Key Type");
-                    X9ECParameters p = NistNamedCurves.GetByName(key.AsString("crv"));
-                    ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
-                    ECPoint point = p.Curve.CreatePoint(key.AsBigInteger("x"
-                        ), key.AsBigInteger("y")); 
-                    ECPublicKeyParameters pubKey = new ECPublicKeyParameters(point, parameters);
+            case "ES512": {
+                if (key.AsString("kty") != "EC") throw new JOSE_Exception("Wrong Key Type");
+                X9ECParameters p = NistNamedCurves.GetByName(key.AsString("crv"));
+                ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
+                ECPoint point = p.Curve.CreatePoint(key.AsBigInteger("x"
+                                                    ), key.AsBigInteger("y"));
+                ECPublicKeyParameters pubKey = new ECPublicKeyParameters(point, parameters);
 
-                    ECDsaSigner ecdsa = new ECDsaSigner();
-                    ecdsa.Init(false, pubKey);
+                ECDsaSigner ecdsa = new ECDsaSigner();
+                ecdsa.Init(false, pubKey);
 
-                    digest.BlockUpdate(protectedB64, 0, protectedB64.Length);
-                    digest.BlockUpdate(rgbDot, 0, rgbDot.Length);
-                    digest.BlockUpdate(msg.payloadB64, 0, msg.payloadB64.Length);
-                    byte[] o1 = new byte[digest.GetDigestSize()];
-                    digest.DoFinal(o1, 0);
-                    
-                    BigInteger r = new BigInteger(1, signature, 0, signature.Length / 2);
-                    BigInteger s = new BigInteger(1, signature, signature.Length / 2, signature.Length / 2);
+                digest.BlockUpdate(protectedB64, 0, protectedB64.Length);
+                digest.BlockUpdate(rgbDot, 0, rgbDot.Length);
+                digest.BlockUpdate(msg.payloadB64, 0, msg.payloadB64.Length);
+                byte[] o1 = new byte[digest.GetDigestSize()];
+                digest.DoFinal(o1, 0);
 
-                    if (!ecdsa.VerifySignature(o1, r, s)) throw new JOSE_Exception("Signature did not validate");
-                }
+                BigInteger r = new BigInteger(1, signature, 0, signature.Length / 2);
+                BigInteger s = new BigInteger(1, signature, signature.Length / 2, signature.Length / 2);
+
+                if (!ecdsa.VerifySignature(o1, r, s)) throw new JOSE_Exception("Signature did not validate");
+            }
                 break;
 
             case "HS256":
             case "HS384":
-            case "HS512": 
-                {
-                    HMac hmac = new HMac(digest);
-                    KeyParameter K = new KeyParameter(Message.base64urldecode(key.AsString("k")));
-                    hmac.Init(K);
-                    hmac.BlockUpdate(protectedB64, 0, protectedB64.Length);
-                    hmac.BlockUpdate(rgbDot, 0, rgbDot.Length);
-                    hmac.BlockUpdate(msg.payloadB64, 0, msg.payloadB64.Length);
+            case "HS512": {
+                HMac hmac = new HMac(digest);
+                KeyParameter K = new KeyParameter(Message.base64urldecode(key.AsString("k")));
+                hmac.Init(K);
+                hmac.BlockUpdate(protectedB64, 0, protectedB64.Length);
+                hmac.BlockUpdate(rgbDot, 0, rgbDot.Length);
+                hmac.BlockUpdate(msg.payloadB64, 0, msg.payloadB64.Length);
 
-                    byte[] resBuf = new byte[hmac.GetMacSize()];
-                    hmac.DoFinal(resBuf, 0);
+                byte[] resBuf = new byte[hmac.GetMacSize()];
+                hmac.DoFinal(resBuf, 0);
 
-                    bool fVerify = true;
-                    for (int i = 0; i < resBuf.Length; i++) if (resBuf[i] != signature[i]) fVerify = false;
+                bool fVerify = true;
+                for (int i = 0; i < resBuf.Length; i++)
+                    if (resBuf[i] != signature[i])
+                        fVerify = false;
 
-                    if (!fVerify) throw new JOSE_Exception("Signature did not validte");
-                }
+                if (!fVerify) throw new JOSE_Exception("Signature did not validte");
+            }
                 break;
 
-            case "EdDSA":
+            case "EdDSA": {
+                ISigner eddsa;
                 if (key.AsString("kty") != "OKP") throw new JOSE_Exception("Wrong Key Type");
                 switch (key.AsString("crv")) {
-                case "Ed25519":
-                    eddsa = new Com.AugustCellars.COSE.EdDSA25517();
+                case "Ed25519": {
+                    Ed25519PublicKeyParameters privKey =
+                        new Ed25519PublicKeyParameters(key.AsBytes("X"), 0);
+                    eddsa = new Ed25519Signer();
+                    eddsa.Init(false, privKey);
+
+                    byte[] toVerify = new byte[protectedB64.Length + rgbDot.Length + msg.payloadB64.Length];
+                    Array.Copy(protectedB64, 0, toVerify, 0, protectedB64.Length);
+                    Array.Copy(rgbDot, 0, toVerify, protectedB64.Length, rgbDot.Length);
+                    Array.Copy(msg.payloadB64, 0, toVerify, protectedB64.Length + rgbDot.Length, msg.payloadB64.Length);
+
+                    eddsa.BlockUpdate(toVerify, 0, toVerify.Length);
+                    if (!eddsa.VerifySignature(signature)) throw new JOSE_Exception("Signature did not validate");
+
                     break;
+                }
 
                 default:
-                    throw new JOSE_Exception("Unknown OKP curve");
+                    throw new JOSE_Exception("Unknown algorithm");
                 }
-                Com.AugustCellars.COSE.EdDSAPoint eddsaPoint = eddsa.DecodePoint(key.AsBytes("x"));
-
-                byte[] toVerify = new byte[protectedB64.Length + rgbDot.Length + msg.payloadB64.Length];
-                Array.Copy(protectedB64, 0, toVerify, 0, protectedB64.Length);
-                Array.Copy(rgbDot, 0, toVerify, protectedB64.Length, rgbDot.Length);
-                Array.Copy(msg.payloadB64, 0, toVerify, protectedB64.Length + rgbDot.Length, msg.payloadB64.Length);
-
-                if (!eddsa.Verify(key.AsBytes("x"), toVerify, signature)) throw new JOSE_Exception("Signature did not validate");
 
                 break;
-            
+            }
+
             default:
                 throw new JOSE_Exception("Unknown algorithm");
             }
         }
 
         private Org.BouncyCastle.Math.BigInteger ConvertBigNum(byte[] rgb)
-        {
-            byte[] rgb2 = new byte[rgb.Length + 2];
-            rgb2[0] = 0;
-            rgb2[1] = 0;
-            for (int i = 0; i < rgb.Length; i++) rgb2[i + 2] = rgb[i];
+                {
+                    byte[] rgb2 = new byte[rgb.Length + 2];
+                    rgb2[0] = 0;
+                    rgb2[1] = 0;
+                    for (int i = 0; i < rgb.Length; i++) rgb2[i + 2] = rgb[i];
 
-            return new Org.BouncyCastle.Math.BigInteger(rgb2);
-        }
+                    return new Org.BouncyCastle.Math.BigInteger(rgb2);
+                }
 
-    }
+            }
 }

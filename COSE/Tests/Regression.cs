@@ -12,6 +12,7 @@ namespace Com.AugustCellars.COSE.Tests
 {
 
     // @RunWith(Parameterized.class)
+    [TestClass]
     public class RegressionTest
     {
         //@Parameters(name = "{index}: {0})")
@@ -40,9 +41,11 @@ namespace Com.AugustCellars.COSE.Tests
 
         @Parameter // first data value (0) is default
 #endif
-        public /* NOT private */ String directoryName = "../Regressions";
+        public /* NOT private */ String directoryName = "..\\Regressions";
 
         public int CFails = 0;
+
+        public TestContext TestContext { get; set; }
 
         [TestMethod]
         public void ProcessDirectory()
@@ -53,7 +56,10 @@ namespace Com.AugustCellars.COSE.Tests
             try {
                 directory = new DirectoryInfo(directoryName);
                 if (!directory.Exists) {
-                    directory = new DirectoryInfo("d:\\Projects\\cose\\Examples");
+                    directory = new DirectoryInfo("..\\..\\..\\..\\" + directoryName);
+                    if (!directory.Exists) {
+                        directory = new DirectoryInfo("d:\\Projects\\cose\\Examples");
+                    }
                 }
             }
             catch (Exception) {
@@ -85,7 +91,7 @@ namespace Com.AugustCellars.COSE.Tests
         {
             CFails = 0;
 
-            Console.WriteLine("Test Directory " + dirName);
+            TestContext.WriteLine("Test Directory " + dirName);
             DirectoryInfo directory;
             directory = new DirectoryInfo(dirName);
   
@@ -120,13 +126,11 @@ namespace Com.AugustCellars.COSE.Tests
 
                 int x = ProcessJSON(foo);
                 if (fails != CFails) {
-                    Console.Write("Check: " + test);
-                    Console.Write("... FAIL\n");
+                    TestContext.WriteLine($"Check: {test}... FAIL");
                 }
             }
             catch (Exception e) {
-                Console.Write("Check: " + test);
-                Console.Write("... FAIL\nException " + e + "\n");
+                TestContext.WriteLine($"Check: {test}... FAIL\nException {e}");
                 CFails++;
             }
         }
@@ -174,8 +178,15 @@ namespace Com.AugustCellars.COSE.Tests
 
             msg.SetContent(GetContent(cnInput));
 
-
             SetSendingAttributes(msg, cnEncrypt, true);
+
+            if (cnEncrypt["countersign0"] != null) {
+                AddCounterSignature0(msg, cnEncrypt["countersign0"]);
+            }
+
+            if (cnEncrypt["countersign"] != null) {
+                AddCounterSignature(msg, cnEncrypt["countersign"]);
+            }
 
             CBORObject cnRecipients = cnEncrypt[ "recipients"];
             cnRecipients = cnRecipients[ 0];
@@ -231,11 +242,22 @@ namespace Com.AugustCellars.COSE.Tests
                     byte[] rgbContent = enc0.Decrypt(kk.GetByteString());
                     if ((cnFail != null) && !cnFail.AsBoolean()) CFails++;
                     byte[] oldContent = GetContent(cnInput);
-                    Assert.AreEqual(oldContent, (rgbContent));
+                    CollectionAssert.AreEqual(oldContent, (rgbContent));
                 }
                 catch (Exception) {
                     if (!fFailBody && ((cnFail == null) || !cnFail.AsBoolean())) CFails++;
                 }
+
+                CBORObject cnCounter = cnEncrypt["countersign0"];
+                if (cnCounter != null) {
+                    CheckCounterSignature0(msg, cnCounter);
+                }
+
+                cnCounter = cnEncrypt["countersign"];
+                if (cnCounter != null) {
+                    CheckCounterSignatures(msg, cnCounter);
+                }
+
             }
             catch (Exception) {
                 if (!fFailBody) CFails++;
@@ -259,8 +281,15 @@ namespace Com.AugustCellars.COSE.Tests
 
             hEncObj.SetContent(GetContent(cnInputs));
 
-
             SetSendingAttributes(hEncObj, cnEnveloped, true);
+
+            if (cnEnveloped["countersign0"] != null) {
+                AddCounterSignature0(hEncObj, cnEnveloped["countersign0"]);
+            }
+
+            if (cnEnveloped["countersign"] != null) {
+                AddCounterSignature(hEncObj, cnEnveloped["countersign"]);
+            }
 
             CBORObject cnRecipients = cnEnveloped[ "recipients"];
 
@@ -292,8 +321,15 @@ namespace Com.AugustCellars.COSE.Tests
 
             msg.SetContent(GetContent(cnInput));
 
-
             SetSendingAttributes(msg, cnEncrypt, true);
+
+            if (cnEncrypt["countersign0"] != null) {
+                AddCounterSignature0(msg, cnEncrypt["countersign0"]);
+            }
+
+            if (cnEncrypt["countersign"] != null) {
+                AddCounterSignature(msg, cnEncrypt["countersign"]);
+            }
 
             CBORObject cnRecipients = cnEncrypt[ "recipients"];
             cnRecipients = cnRecipients[ 0];
@@ -353,6 +389,15 @@ namespace Com.AugustCellars.COSE.Tests
                     if ((pFail != null) && !pFail.AsBoolean()) CFails++;
                 }
 
+                CBORObject cnCounter = cnMac["countersign0"];
+                if (cnCounter != null) {
+                    CheckCounterSignature0(msg, cnCounter);
+                }
+
+                cnCounter = cnMac["countersign"];
+                if (cnCounter != null) {
+                    CheckCounterSignatures(msg, cnCounter);
+                }
             }
             catch (Exception) {
                 if (!fFailBody) CFails++;
@@ -415,6 +460,16 @@ namespace Com.AugustCellars.COSE.Tests
                     CFails++;
                     return;
                 }
+
+                CBORObject cnCounter = cnMac["countersign0"];
+                if (cnCounter != null) {
+                    CheckCounterSignature0(msg, cnCounter);
+                }
+
+                cnCounter = cnMac["countersign"];
+                if (cnCounter != null) {
+                    CheckCounterSignatures(msg, cnCounter);
+                }
             }
             catch (Exception) {
                 CFails++;
@@ -445,7 +500,7 @@ namespace Com.AugustCellars.COSE.Tests
                 //  Set enveloped attributes
                 SetReceivingAttributes(hEnc, cnEnveloped);
 
-                //  Set attibutes on base recipient
+                //  Set attributes on base recipient
                 hRecip1 = hEnc.RecipientList[iRecipient1];
                 SetReceivingAttributes(hRecip1, cnRecipient1);
 
@@ -496,6 +551,17 @@ namespace Com.AugustCellars.COSE.Tests
                     if (!fFailBody) fRet = false;
                     else fRet = true;
                 }
+
+                CBORObject cnCounter = cnEnveloped["countersign0"];
+                if (cnCounter != null) {
+                    CheckCounterSignature0(msg, cnCounter);
+                }
+
+                cnCounter = cnEnveloped["countersign"];
+                if (cnCounter != null) {
+                    CheckCounterSignatures(msg, cnCounter);
+                }
+
             }
             catch (Exception) {
                 fRet = false;
@@ -530,6 +596,8 @@ namespace Com.AugustCellars.COSE.Tests
                     }
                 }
             }
+
+
             return 0;
         }
 
@@ -596,8 +664,15 @@ namespace Com.AugustCellars.COSE.Tests
 
             hEncObj.SetContent(GetContent(cnInputs));
 
-
             SetSendingAttributes(hEncObj, cnEnveloped, true);
+
+            if (cnEnveloped["countersign0"] != null) {
+                AddCounterSignature0(hEncObj, cnEnveloped["countersign0"]);
+            }
+
+            if (cnEnveloped["countersign"] != null) {
+                AddCounterSignature(hEncObj, cnEnveloped["countersign"]);
+            }
 
             CBORObject cnRecipients = cnEnveloped[ "recipients"];
 
@@ -883,8 +958,17 @@ namespace Com.AugustCellars.COSE.Tests
                     cnKeyOut[CoseKeyParameterKeys.RSA_qInv] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
                     break;
 
+                case "public":
+                    cnKeyOut[CoseKeyParameterKeys.Lms_Public] = CBORObject.FromObject(HexStringToByteArray(cnValue.AsString()));
+                    break;
+
+                case "private":
+                    cnKeyOut[CoseKeyParameterKeys.Lms_Private] = CBORObject.FromObject(cnValue.AsString());
+                    break;
+
                 case "kid":
                 case "use":
+                case "comment":
                     break;
 
                 default:
@@ -963,7 +1047,7 @@ namespace Com.AugustCellars.COSE.Tests
                 case "ECDH-ES-A256KW": return AlgorithmValues.ECDH_ES_HKDF_256_AES_KW_256;
                 case "ECDH-SS-A256KW": return AlgorithmValues.ECDH_SS_HKDF_256_AES_KW_256;
                 case "EdDSA": return AlgorithmValues.EdDSA;
-
+                case "HSS-LMS": return AlgorithmValues.HSS_LMS_HASH;
                 default: return old;
             }
         }
@@ -992,6 +1076,7 @@ namespace Com.AugustCellars.COSE.Tests
             SignMessage hSig = null;
             int iSigner;
             Boolean fFailBody;
+            CBORObject cnCounter;
 
             fFailBody = HasFailMarker(cnControl);
 
@@ -1030,16 +1115,29 @@ namespace Com.AugustCellars.COSE.Tests
                         if (!fFailBody && !fFailSigner) CFails++;
                     }
 
-#if false
-                    CBORObject cSignInfo = cnSign[ "countersign"];
-                    if (cSignInfo != null) {
-                        CheckCounterSignatures(hSig, cSignInfo);
+                    cnCounter = cnSigners[iSigner]["countersign0"];
+                    if (cnCounter != null) {
+                        CheckCounterSignature0(hSigner, cnCounter);
                     }
-#endif
+
+                    cnCounter = cnSigners[iSigner]["countersign"];
+                    if (cnCounter != null) {
+                        CheckCounterSignatures(hSigner, cnCounter);
+                    }
+                }
+
+                cnCounter = cnSign["countersign0"];
+                if (cnCounter != null) {
+                    CheckCounterSignature0(hSig, cnCounter);
+                }
+
+                cnCounter = cnSign["countersign"];
+                if (cnCounter != null) {
+                    CheckCounterSignatures(hSig, cnCounter);
                 }
             }
             catch (Exception e) {
-                Console.Write("... FAIL\nException " + e + "\n");
+                TestContext.WriteLine($"... FAIL\nException {e}");
                 CFails++;
             }
             return 0;
@@ -1074,6 +1172,14 @@ namespace Com.AugustCellars.COSE.Tests
 
                 SetSendingAttributes(hSignObj, cnSign, false);
 
+                if (cnSign["countersign0"] != null) {
+                    AddCounterSignature0(hSignObj, cnSign["countersign0"]);
+                }
+
+                if (cnSign["countersign"] != null) {
+                    AddCounterSignature(hSignObj, cnSign["countersign"]);
+                }
+
                 CBORObject cnSigners = cnSign[ "signers"];
 
                 for (iSigner = 0; iSigner < cnSigners.Count; iSigner++) {
@@ -1085,22 +1191,24 @@ namespace Com.AugustCellars.COSE.Tests
 
                     hSigner.SetKey(cnkey);
 
+                    if (cnSigners[iSigner]["countersign0"] != null) {
+                        AddCounterSignature0(hSigner, cnSigners[iSigner]["countersign0"]);
+                    }
+
+                    if (cnSigners[iSigner]["countersign"] != null) {
+                        AddCounterSignature(hSigner, cnSigners[iSigner]["countersign"]);
+                    }
+
                     hSignObj.AddSigner(hSigner);
 
                 }
 
                 // hSignObj.Sign();
 
-#if false
-                CBORObject cnCounterSign = cnSign[ "countersign"];
-                if (cnCounterSign != null) {
-                    CreateCounterSignatures(hSignObj, cnCounterSign);
-                }
-#endif
                 rgb = hSignObj.EncodeToBytes();
             }
             catch (Exception e) {
-                Console.Write("... Exception " + e + "\n");
+                TestContext.WriteLine($"... Exception {e}");
 
                 CFails++;
                 return 0;
@@ -1146,6 +1254,16 @@ namespace Com.AugustCellars.COSE.Tests
                 catch (Exception) {
                     if (!fFail && !fFailInput) CFails++;
                 }
+
+                CBORObject cnCounter = cnSign["countersign0"];
+                if (cnCounter != null) {
+                    CheckCounterSignature0(hSig, cnCounter);
+                }
+
+                cnCounter = cnSign["countersign"];
+                if (cnCounter != null) {
+                    CheckCounterSignatures(hSig, cnCounter);
+                }
             }
             catch (Exception) {
                 CFails++;
@@ -1178,6 +1296,14 @@ namespace Com.AugustCellars.COSE.Tests
 
                 hSignObj.SetContent(GetContent(cnInputs));
 
+                if (cnSign["countersign0"] != null) {
+                    AddCounterSignature0(hSignObj, cnSign["countersign0"]);
+                }
+
+                if (cnSign["countersign"] != null) {
+                    AddCounterSignature(hSignObj, cnSign["countersign"]);
+                }
+
                 SetSendingAttributes(hSignObj, cnSign, false);
 
                 OneKey cnkey = BuildKey(cnSign[ "key"], false);
@@ -1194,7 +1320,97 @@ namespace Com.AugustCellars.COSE.Tests
             int f = _ValidateSign0(cnControl, rgb);
             return 0;
         }
-#if false
+
+        void AddCounterSignature0(Message msg, CBORObject cSigInfo)
+        {
+            if (cSigInfo.Type == CBORType.Map) {
+                if ((!cSigInfo.ContainsKey("signers") || (cSigInfo["signers"].Type != CBORType.Array) ||
+                     (cSigInfo["signers"].Count != 1))) {
+                    throw new Exception("Invalid input file");
+                }
+
+                CBORObject cSigner = cSigInfo["signers"][0];
+                OneKey cnkey = BuildKey(cSigner["key"], false);
+
+                CounterSignature1 hSigner = new CounterSignature1();
+
+                SetSendingAttributes(hSigner, cSigner, false);
+
+                hSigner.SetKey(cnkey);
+
+                msg.CounterSigner1 = hSigner;
+            }
+            else {
+                throw new Exception("Invalid input file");
+            }
+        }
+
+        void AddCounterSignature0(Signer msg, CBORObject cSigInfo)
+        {
+            if (cSigInfo.Type == CBORType.Map) {
+                if ((!cSigInfo.ContainsKey("signers") || (cSigInfo["signers"].Type != CBORType.Array) ||
+                     (cSigInfo["signers"].Count != 1))) {
+                    throw new Exception("Invalid input file");
+                }
+
+                CBORObject cSigner = cSigInfo["signers"][0];
+                OneKey cnkey = BuildKey(cSigner["key"], false);
+
+                CounterSignature1 hSigner = new CounterSignature1();
+
+                SetSendingAttributes(hSigner, cSigner, false);
+
+                hSigner.SetKey(cnkey);
+
+                msg.CounterSigner1 = hSigner;
+            }
+            else {
+                throw new Exception("Invalid input file");
+            }
+        }
+
+        void AddCounterSignature(Message msg, CBORObject cSigInfo)
+        {
+            if ((cSigInfo.Type != CBORType.Map) || !cSigInfo.ContainsKey("signers") ||
+                (cSigInfo["signers"].Type != CBORType.Array)) {
+                throw new Exception("invalid input file");
+            }
+
+            foreach (CBORObject signer in cSigInfo["signers"].Values) {
+                OneKey cnKey = BuildKey(signer["key"], false);
+
+                CounterSignature hSigner = new CounterSignature();
+
+                SetSendingAttributes(hSigner, signer, false);
+
+                hSigner.SetKey(cnKey);
+
+                msg.AddCounterSignature(hSigner);
+
+            }
+        }
+
+        void AddCounterSignature(Signer msg, CBORObject cSigInfo)
+        {
+            if ((cSigInfo.Type != CBORType.Map) || !cSigInfo.ContainsKey("signers") ||
+                (cSigInfo["signers"].Type != CBORType.Array)) {
+                throw new Exception("invalid input file");
+            }
+
+            foreach (CBORObject signer in cSigInfo["signers"].Values) {
+                OneKey cnKey = BuildKey(signer["key"], false);
+
+                CounterSignature hSigner = new CounterSignature();
+
+                SetSendingAttributes(hSigner, signer, false);
+
+                hSigner.SetKey(cnKey);
+
+                msg.AddCounterSignature(hSigner);
+
+            }
+        }
+
         void CreateCounterSignatures(Message msg, CBORObject cSigInfo)
         {
             try {
@@ -1206,25 +1422,18 @@ namespace Com.AugustCellars.COSE.Tests
                 foreach (CBORObject csig in cSigConfig.Values) {
                     OneKey cnKey = BuildKey(csig[ "key"], false);
 
-                    CounterSignature sig = new CounterSignature();
+                    CounterSignature sig = new CounterSignature(cnKey);
 
                     SetSendingAttributes(sig, csig, false);
 
-                    sig.SetKey(cnKey);
-
-                    sig.Sign(msg);
-
-                    if (cSigConfig.Count == 1) cnResult = sig.EncodeToCBORObject();
-                    else cnResult.Add(sig.EncodeToBytes());
+                    msg.CounterSignerList.Add(sig);
                 }
-
-                msg.AddAttribute(HeaderKeys.CounterSignature, cnResult, Attributes.UNPROTECTED);
-
             }
             catch (Exception e) {
                 CFails++;
             }
         }
+
         void CheckCounterSignatures(Message msg, CBORObject cSigInfo)
         {
             try {
@@ -1240,29 +1449,23 @@ namespace Com.AugustCellars.COSE.Tests
                 }
 
                 CBORObject cSigConfig = cSigInfo[ "signers"];
-                if ((cSigConfig.Count > 1) && (cSigs.Count != cSigConfig.Count)) {
+                if ((cSigConfig.Count > 1) && (cSigs.Count != msg.CounterSignerList.Count)) {
                     CFails++;
                     return;
                 }
 
+
                 int iCSign;
                 for (iCSign = 0; iCSign < cSigConfig.Count; iCSign++) {
-                    CounterSignature sig;
-                    if (cSigs[ 0].Type != CBORType.Array) {
-                        sig = new CounterSignature();
-                        sig.DecodeFromCBORObject(cSigs);
-                    }
-                    else {
-                        sig = new CounterSignature(cSigs[ iCSign].GetByteString());
-                    }
+                    CounterSignature sig = msg.CounterSignerList[iCSign];
 
-                    OneKey cnKey = BuildKey(cSigConfig[ iCSign][ "key"], false);
+                    OneKey cnKey = BuildKey(cSigConfig[ iCSign][ "key"], true);
                     SetReceivingAttributes(sig, cSigConfig[ iCSign]);
 
                     sig.SetKey(cnKey);
 
                     try {
-                        Boolean f = sig.Validate(msg);
+                        Boolean f = msg.Validate(sig);
                         if (!f) CFails++;
                     }
                     catch (Exception e) {
@@ -1271,11 +1474,143 @@ namespace Com.AugustCellars.COSE.Tests
                 }
             }
             catch (Exception e) {
-                Console.Write("... FAIL\nException " + e + "\n");
+                TestContext.WriteLine($"... FAIL\nException {e}");
                 CFails++;
             }
         }
-#endif
+
+        void CheckCounterSignatures(Signer msg, CBORObject cSigInfo)
+        {
+            try {
+                CBORObject cSigs = msg.FindAttribute(HeaderKeys.CounterSignature);
+                if (cSigs == null) {
+                    CFails++;
+                    return;
+                }
+
+                if (cSigs.Type != CBORType.Array) {
+                    CFails++;
+                    return;
+                }
+
+                CBORObject cSigConfig = cSigInfo["signers"];
+                if ((cSigConfig.Count > 1) && (cSigs.Count != msg.CounterSignerList.Count)) {
+                    CFails++;
+                    return;
+                }
+
+
+                int iCSign;
+                for (iCSign = 0; iCSign < cSigConfig.Count; iCSign++) {
+                    CounterSignature sig = msg.CounterSignerList[iCSign];
+
+                    OneKey cnKey = BuildKey(cSigConfig[iCSign]["key"], true);
+                    SetReceivingAttributes(sig, cSigConfig[iCSign]);
+
+                    sig.SetKey(cnKey);
+
+                    try {
+                        Boolean f = msg.Validate(sig);
+                        if (!f) CFails++;
+                    }
+                    catch (Exception e) {
+                        CFails++;
+                    }
+                }
+            }
+            catch (Exception e) {
+                TestContext.WriteLine($"... FAIL\nException {e}");
+                CFails++;
+            }
+        }
+
+        void CheckCounterSignature0(Message msg, CBORObject cSigInfo)
+        {
+            try {
+                CBORObject cSigs = msg.FindAttribute(HeaderKeys.CounterSignature0);
+
+                if (cSigs == null) {
+                    CFails++;
+                    return;
+                }
+
+                if (cSigs.Type != CBORType.ByteString) {
+                    CFails++;
+                    return;
+                }
+
+                CBORObject cSigConfig = cSigInfo["signers"];
+                if (1 != cSigConfig.Count) {
+                    CFails++;
+                    return;
+                }
+
+                CounterSignature1 sig = msg.CounterSigner1;
+
+                SetReceivingAttributes(sig, cSigConfig[0]);
+
+                OneKey cnKey = BuildKey(cSigConfig[0]["key"], true);
+                sig.SetKey(cnKey);
+
+                try {
+                    Boolean f = msg.Validate(sig);
+                    if (!f) {
+                        throw new Exception("Failed countersignature validation");
+                    }
+                }
+                catch (Exception e) {
+                    throw new Exception("Failed countersignature validation");
+                }
+            }
+            catch (Exception e) {
+                TestContext.WriteLine($"... FAIL\nException {e}");
+                CFails++;
+            }
+        }
+
+        void CheckCounterSignature0(Signer msg, CBORObject cSigInfo)
+        {
+            try {
+                CBORObject cSigs = msg.FindAttribute(HeaderKeys.CounterSignature0);
+
+                if (cSigs == null) {
+                    CFails++;
+                    return;
+                }
+
+                if (cSigs.Type != CBORType.ByteString) {
+                    CFails++;
+                    return;
+                }
+
+                CBORObject cSigConfig = cSigInfo["signers"];
+                if (1 != cSigConfig.Count) {
+                    CFails++;
+                    return;
+                }
+
+                CounterSignature1 sig = msg.CounterSigner1;
+
+                SetReceivingAttributes(sig, cSigConfig[0]);
+
+                OneKey cnKey = BuildKey(cSigConfig[0]["key"], true);
+                sig.SetKey(cnKey);
+
+                try {
+                    Boolean f = msg.Validate(sig);
+                    if (!f) {
+                        throw new Exception("Failed countersignature validation");
+                    }
+                }
+                catch (Exception e) {
+                    throw new Exception("Failed countersignature validation");
+                }
+            }
+            catch (Exception e) {
+                TestContext.WriteLine($"... FAIL\nException {e}");
+                CFails++;
+            }
+        }
 
         byte[] GetContent(CBORObject cnInputs)
         {

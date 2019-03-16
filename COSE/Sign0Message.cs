@@ -50,7 +50,14 @@ namespace Com.AugustCellars.COSE
             return obj;
         }
 
-        virtual public void DecodeFromCBORObject(CBORObject messageObject)
+
+ #region Decoders
+        public static Sign1Message DecodeFromCBOR(CBORObject obj)
+        {
+            return (Sign1Message)Message.DecodeFromCBOR(obj, Tags.Sign1);
+        }
+
+        protected override void InternalDecodeFromCBORObject(CBORObject messageObject)
         {
             if (messageObject.Count != 4) throw new CoseException("Invalid Sign1 structure");
 
@@ -75,6 +82,7 @@ namespace Com.AugustCellars.COSE
             if (messageObject[3].Type == CBORType.ByteString) _rgbSignature = messageObject[3].GetByteString();
             else throw new CoseException("Invalid Sign1 structure");
         }
+        #endregion
 
         public override CBORObject Encode()
         {
@@ -86,6 +94,10 @@ namespace Com.AugustCellars.COSE
                 obj.Add(ProtectedMap.EncodeToBytes());
             }
             else obj.Add(new byte[0]);
+
+            ProtectedBytes = obj[0].GetByteString();
+
+            ProcessCounterSignatures();
 
             if ((UnprotectedMap == null) || (UnprotectedMap.Count == 0)) obj.Add(CBORObject.NewMap());
             else obj.Add(UnprotectedMap); // Add unprotected attributes
@@ -224,6 +236,32 @@ namespace Com.AugustCellars.COSE
                         else throw new CoseException("Curve is incorrectly encoded");
                         break;
 
+                    case GeneralValuesInt.KeyType_OKP:
+                        if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Type == CBORType.Number) {
+                            switch ((GeneralValuesInt)_keyToSign[CoseKeyParameterKeys.EC_Curve].AsInt32()) {
+                            case GeneralValuesInt.Ed25519:
+                                alg = AlgorithmValues.EdDSA;
+                                break;
+
+                            case GeneralValuesInt.Ed448:
+                                alg = AlgorithmValues.EdDSA;
+                                break;
+
+                            default:
+                                throw new CoseException("Unknown curve");
+                            }
+                        }
+                        else if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Type == CBORType.TextString) {
+                            switch (_keyToSign[CoseKeyParameterKeys.EC_Curve].AsString()) {
+                            default:
+                                throw new CoseException("Unknown curve");
+                            }
+                        }
+                        else
+                            throw new CoseException("Curve is incorrectly encoded");
+
+                        break;
+
                     default:
                         throw new CoseException("Unknown or unsupported key type " + _keyToSign.AsString("kty"));
                     }
@@ -353,23 +391,31 @@ namespace Com.AugustCellars.COSE
                     return sigs;
                 }
 
+#if true
                 case AlgorithmValuesInt.EdDSA: {
-                    EdDSA eddsa;
+                        ISigner eddsa;
                     if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
-                        eddsa = new EdDSA25517();
+                        Ed25519PrivateKeyParameters privKey =
+                            new Ed25519PrivateKeyParameters(_keyToSign[CoseKeyParameterKeys.OKP_D].GetByteString(), 0);
+                        eddsa = new Ed25519Signer();
+                        eddsa.Init(true, privKey);
                     }
                     else if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed448)) {
-                        eddsa = new EdDSA448();
+                        Ed448PrivateKeyParameters privKey =
+                            new Ed448PrivateKeyParameters(_keyToSign[CoseKeyParameterKeys.OKP_D].GetByteString(), 0);
+                        eddsa = new Ed448Signer(new byte[0]);
+                        eddsa.Init(true, privKey);
                     }
                     else {
                         throw new CoseException("Unrecognized curve");
                     }
 
-                    EdDSAPoint publicKey = eddsa.DecodePoint(_keyToSign[CoseKeyParameterKeys.OKP_X].GetByteString());
-                    byte[] sig = eddsa.Sign(publicKey, _keyToSign[CoseKeyParameterKeys.OKP_D].GetByteString(),
-                                            bytesToBeSigned);
-                    return sig;
+
+                    eddsa.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
+
+                    return eddsa.GenerateSignature();
                 }
+#endif
 
                 default:
                     throw new CoseException("Unknown Algorithm Specified");
@@ -484,20 +530,29 @@ namespace Com.AugustCellars.COSE
                         return ecdsa.VerifySignature(digestedMessage, r, s);
                     }
 
+#if true
                 case AlgorithmValuesInt.EdDSA: {
-                    EdDSA eddsa;
+                    ISigner eddsa;
                     if (signerKey[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
-                        eddsa = new EdDSA25517();
+                        Ed25519PublicKeyParameters privKey =
+                            new Ed25519PublicKeyParameters(signerKey[CoseKeyParameterKeys.OKP_X].GetByteString(), 0);
+                        eddsa = new Ed25519Signer();
+                        eddsa.Init(false, privKey);
                     }
                     else if (signerKey[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed448)) {
-                        eddsa = new EdDSA448();
+                        Ed448PublicKeyParameters privKey =
+                            new Ed448PublicKeyParameters(signerKey[CoseKeyParameterKeys.OKP_X].GetByteString(), 0);
+                        eddsa = new Ed448Signer(new byte[0]);
+                        eddsa.Init(false, privKey);
                     }
                     else {
                         throw new CoseException("Unrecognized curve");
                     }
-                    byte[] publicKey = signerKey[CoseKeyParameterKeys.OKP_X].GetByteString();
-                    return eddsa.Verify(publicKey, bytesToBeSigned, _rgbSignature);
+
+                    eddsa.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
+                    return eddsa.VerifySignature(_rgbSignature);
                 }
+#endif
 
                 default:
                     throw new CoseException("Unknown Algorithm");
