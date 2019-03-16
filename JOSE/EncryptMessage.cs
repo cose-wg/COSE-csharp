@@ -1197,8 +1197,18 @@ namespace JOSE
             }
             else {
                 switch (epk.AsString("crv")) {
-                case "X25519":
-                    return Com.AugustCellars.COSE.X25519.CalculateAgreement(epk.AsBytes("x"), key.AsBytes("d"));
+                case "X25519": {
+                    X25519PublicKeyParameters pub =
+                        new X25519PublicKeyParameters(epk.AsBytes("x"), 0);
+                    X25519PrivateKeyParameters priv =
+                        new X25519PrivateKeyParameters(key.AsBytes("d"), 0);
+
+                    X25519Agreement agree = new X25519Agreement();
+                    agree.Init(priv);
+                    byte[] secret = new byte[32];
+                    agree.CalculateAgreement(pub, secret, 0);
+                    return secret;
+                }
 
                 default:
                     throw new JOSE_Exception("Unsupported curve");
@@ -1230,11 +1240,16 @@ namespace JOSE
             else if (m_key.AsString("kty") == "OKP") {
                 switch (m_key.AsString("crv")) {
                 case "X25519":
-                    Com.AugustCellars.COSE.X25519KeyPair item = Com.AugustCellars.COSE.X25519.GenerateKeyPair();
+                    Ed25519KeyPairGenerator pGen = new Ed25519KeyPairGenerator();
+                    Ed25519KeyGenerationParameters genParam = new Ed25519KeyGenerationParameters(s_PRNG);
+                    pGen.Init(genParam);
+
+                    AsymmetricCipherKeyPair p1 = pGen.GenerateKeyPair();
+                    Ed25519PublicKeyParameters pub = (Ed25519PublicKeyParameters)p1.Public;
 
                     epk.Add("kty", "OKP");
                     epk.Add("crv", "X25519");
-                    epk.Add("x", item.Public);
+                    epk.Add("x", pub.GetEncoded());
                     break;
 
                 default:
@@ -1287,8 +1302,18 @@ namespace JOSE
             }
             else {
                 switch (epk.AsString("crv")) {
-                case "X25519":
-                    return Com.AugustCellars.COSE.X25519.CalculateAgreement(epk.AsBytes("x"), key.AsBytes("d"));
+                case "X25519": {
+                    X25519PublicKeyParameters pub =
+                        new X25519PublicKeyParameters(epk.AsBytes("x"), 0);
+                    X25519PrivateKeyParameters priv =
+                        new X25519PrivateKeyParameters(key.AsBytes("d"), 0);
+
+                    X25519Agreement agree = new X25519Agreement();
+                    agree.Init(priv);
+                    byte[] secret = new byte[32];
+                    agree.CalculateAgreement(pub, secret, 0);
+                    return secret;
+                }
 
                 default:
                     throw new JOSE_Exception("Unsupported curve");

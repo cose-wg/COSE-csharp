@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
-
+using Org.BouncyCastle.Cms;
 using Org.BouncyCastle.Security;
 
 using PeterO.Cbor;
@@ -58,6 +59,7 @@ namespace Com.AugustCellars.COSE
         public static readonly CBORObject PartialIV = CBORObject.FromObject(6);
         public static readonly CBORObject CounterSignature = CBORObject.FromObject(7);
         public static readonly CBORObject OperationTime = CBORObject.FromObject(8);
+        public static readonly CBORObject CounterSignature0 = CBORObject.FromObject(9);
     }
 
     public enum AlgorithmValuesInt
@@ -241,7 +243,6 @@ namespace Com.AugustCellars.COSE
     public abstract class Message : Attributes
     {
         protected bool m_forceArray = true;
-        protected List<CounterSignature> m_counterSignerList = new List<CounterSignature>();
         protected static SecureRandom s_PRNG = new SecureRandom();
         protected bool m_emitTag = true;
         protected bool m_emitContent;
@@ -265,6 +266,7 @@ namespace Com.AugustCellars.COSE
         }
 
 
+#region DecodeCode
         /// <summary>
         /// Given a byte array, decode and return the correct COSE message object.
         /// Message type can be provided explicitly or inferred from the CBOR tag element.
@@ -279,6 +281,8 @@ namespace Com.AugustCellars.COSE
 
             return DecodeFromCBOR(messageObject, defaultTag);
         }
+
+        protected abstract void InternalDecodeFromCBORObject(CBORObject cbor);
 
         /// <summary>
         /// Given a CBOR tree, decode and return the correct COSE message object.
@@ -303,46 +307,91 @@ namespace Com.AugustCellars.COSE
                 }
             }
 
+            Message returnObject;
+
             switch (defaultTag) {
             case Tags.Unknown:
                 throw new CoseException("Message was not tagged and no default tagging option given");
 
             case Tags.Signed:
                 SignMessage sig = new SignMessage();
-                sig.DecodeFromCBORObject(messageObject);
-                return sig;
+                sig.InternalDecodeFromCBORObject(messageObject);
+                returnObject = sig;
+                break;
 
             case Tags.Sign1:
                 Sign1Message sig0 = new Sign1Message();
-                sig0.DecodeFromCBORObject(messageObject);
-                return sig0;
-            
-            case Tags.MAC: {
-                    MACMessage mac = new MACMessage();
-                    mac.DecodeFromCBORObject(messageObject);
-                    return mac;
-                }
+                sig0.InternalDecodeFromCBORObject(messageObject);
+                returnObject = sig0;
+                break;
+
+            case Tags.MAC:
+                MACMessage mac = new MACMessage();
+                mac.InternalDecodeFromCBORObject(messageObject);
+                returnObject = mac;
+                break;
 
             case Tags.MAC0:
                 MAC0Message mac0 = new MAC0Message();
-                mac0.DecodeFromCBORObject(messageObject);
-                return mac0;
+                mac0.InternalDecodeFromCBORObject(messageObject);
+                returnObject = mac0;
+                break;
 
-            case Tags.Encrypt:         // It is an encrytion message
+            case Tags.Encrypt: // It is an encrytion message
                 EncryptMessage enc = new EncryptMessage();
 
-                enc.DecodeFromCBORObject(messageObject);
-                return enc;
+                enc.InternalDecodeFromCBORObject(messageObject);
+                returnObject = enc;
+                break;
 
             case Tags.Encrypt0:
                 Encrypt0Message enc0 = new Encrypt0Message();
-                enc0.DecodeFromCBORObject(messageObject);
-                return enc0;
+                enc0.InternalDecodeFromCBORObject(messageObject);
+                returnObject = enc0;
+                break;
 
             default:
                 throw new CoseException("Message is not recognized as a COSE security message.");
             }
+
+            //  Check for counter signatures
+
+            CBORObject csig = returnObject.FindAttribute(HeaderKeys.CounterSignature, UNPROTECTED);
+            if (csig != null) {
+                if (csig.Type != CBORType.Array || csig.Count == 0) {
+                    throw new CoseException("Invalid counter signature attribute");
+                }
+
+                if (csig[0].Type == CBORType.Array) {
+                    foreach (CBORObject cbor in csig.Values) {
+                        if (cbor.Type != CBORType.Array) {
+                            throw new CoseException("Invalid Counter signature attribute");
+                        }
+
+                        CounterSignature cs = new CounterSignature(cbor);
+                        cs.SetObject(returnObject);
+                        returnObject.CounterSignerList.Add(cs);
+                    }
+                }
+                else {
+                    CounterSignature cs = new CounterSignature(csig);
+                    cs.SetObject(returnObject);
+                    returnObject.CounterSignerList.Add(cs);
+                }
+            }
+
+            csig = returnObject.FindAttribute(HeaderKeys.CounterSignature0, UNPROTECTED);
+            if (csig != null) {
+                if (csig.Type != CBORType.ByteString) throw new CoseException("Invalid CounterSignature0 attribute");
+                CounterSignature1 cs = new CounterSignature1(csig.GetByteString());
+                cs.SetObject(returnObject);
+                returnObject.CounterSigner1 = cs;
+            }
+
+            return returnObject;
         }
+
+#endregion
 
         public byte[] EncodeToBytes()
         {
@@ -364,13 +413,6 @@ namespace Com.AugustCellars.COSE
             get { return m_emitTag; }
             set { m_emitTag = value; }
         }
-
-        public void AddCounterSignature(Signer signer)
-        {
-            m_counterSignerList.Add((CounterSignature)signer);
-        }
-
-        public List<CounterSignature> CounterSignerList {  get { return m_counterSignerList; } }
 
         /// <summary>
         /// Generate a new CBOR Object based on the message.
@@ -406,6 +448,53 @@ namespace Com.AugustCellars.COSE
         {
             rgbContent = Encoding.UTF8.GetBytes(contentString);
         }
+
+#region CounterSignatures
+        public CounterSignature1 CounterSigner1 = null;
+
+        public List<CounterSignature> CounterSignerList { get; } = new List<CounterSignature>();
+
+        public void AddCounterSignature(CounterSignature signer)
+        {
+            CounterSignerList.Add((CounterSignature)signer);
+        }
+
+        public void AddCounterSignature(CounterSignature1 signer)
+        {
+            CounterSigner1 = signer;
+        }
+
+        protected void ProcessCounterSignatures()
+        {
+            if (CounterSignerList.Count() != 0) {
+                if (CounterSignerList.Count() == 1) {
+                    AddAttribute(HeaderKeys.CounterSignature, CounterSignerList[0].EncodeToCBORObject(ProtectedBytes, rgbContent), UNPROTECTED);
+                }
+                else {
+                    CBORObject list = CBORObject.NewArray();
+                    foreach (CounterSignature sig in CounterSignerList) {
+                        list.Add(sig.EncodeToCBORObject(ProtectedBytes, rgbContent));
+                    }
+                    AddAttribute(HeaderKeys.CounterSignature, list, UNPROTECTED);
+                }
+            }
+
+            if (CounterSigner1 != null) {
+                
+                AddAttribute(HeaderKeys.CounterSignature0, CounterSigner1.EncodeToCBORObject(ProtectedBytes, rgbContent), UNPROTECTED);
+            }
+        }
+
+        public virtual bool Validate(CounterSignature counterSignature)
+        {
+            return counterSignature.Validate(rgbContent, ProtectedBytes);
+        }
+
+        public virtual bool Validate(CounterSignature1 counterSignature)
+        {
+            return counterSignature.Validate(rgbContent, ProtectedBytes);
+        }
+#endregion
     }
 
     public class CoseException : Exception

@@ -10,6 +10,7 @@ using Org.BouncyCastle.Asn1.X9;
 
 using Org.BouncyCastle.Crypto.Digests;
 
+#if false
 namespace Com.AugustCellars.COSE
 {
 #if false
@@ -443,7 +444,7 @@ namespace Com.AugustCellars.COSE
         readonly static BigInteger p = new BigInteger("2").Pow(255).Subtract(new BigInteger("19"));
         readonly static BigInteger d = new BigInteger("37095705934669439343138083508754565189542113879843219016388785533085940283555");
 
-#endif 
+#endif
         public EdDSAPoint448(BigInteger xIn, BigInteger yIn)
         {
             X = xIn;
@@ -976,3 +977,4 @@ namespace Com.AugustCellars.COSE
 
     }
 }
+#endif

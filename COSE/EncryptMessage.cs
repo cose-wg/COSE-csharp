@@ -242,6 +242,16 @@ namespace Com.AugustCellars.COSE
             _recipientList.Add(recipient);
         }
 
+
+
+        #region Decoders
+
+
+        protected override void InternalDecodeFromCBORObject(CBORObject obj)
+        {
+            throw new CoseException("Internal Error - Recipient.InternalDecodeFromObject should never be called.");
+        }
+
         public void DecodeFromCBORObject(CBORObject obj)
         {
             if ((obj.Count != 3) && (obj.Count != 4)) throw new CoseException("Invalid Encrypt structure");
@@ -279,6 +289,7 @@ namespace Com.AugustCellars.COSE
                 else throw new CoseException("Invalid Encrypt structure");
             }
         }
+#endregion
 
         public byte[] Decrypt(int cbitCEK, CBORObject algCEK, Recipient recipientIn)
         {
@@ -409,19 +420,6 @@ namespace Com.AugustCellars.COSE
 
             if (RgbEncrypted == null) Encrypt();
 
-            if (m_counterSignerList.Count() != 0) {
-                byte[] rgbProtected;
-                if (ProtectedMap.Count > 0) rgbProtected = ProtectedMap.EncodeToBytes();
-                else rgbProtected = new byte[0];
-                if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtected, RgbEncrypted), UNPROTECTED);
-                }
-                else {
-                    foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(rgbProtected, RgbEncrypted);
-                    }
-                }
-            }
 
             obj = CBORObject.NewArray();
 
@@ -669,6 +667,28 @@ namespace Com.AugustCellars.COSE
                 key.SetContent(rgbKey);
                 key.Encrypt();
             }
+
+            if (CounterSignerList.Count() != 0) {
+                byte[] rgbProtected;
+                if (ProtectedMap.Count > 0) rgbProtected = ProtectedMap.EncodeToBytes();
+                else rgbProtected = new byte[0];
+                if (CounterSignerList.Count() == 1) {
+                    AddAttribute(HeaderKeys.CounterSignature, CounterSignerList[0].EncodeToCBORObject(rgbProtected, RgbEncrypted), UNPROTECTED);
+                }
+                else {
+                    foreach (CounterSignature sig in CounterSignerList) {
+                        sig.EncodeToCBORObject(rgbProtected, RgbEncrypted);
+                    }
+                }
+            }
+
+            if (CounterSigner1 != null) {
+                byte[] rgbProtected;
+                if (ProtectedMap.Count > 0) rgbProtected = ProtectedMap.EncodeToBytes();
+                else rgbProtected = new byte[0];
+                AddAttribute(HeaderKeys.CounterSignature0, CounterSigner1.EncodeToCBORObject(rgbProtected, RgbEncrypted), UNPROTECTED);
+            }
+
         }
 
         public byte[] GetKey(CBORObject alg)
@@ -989,55 +1009,88 @@ namespace Com.AugustCellars.COSE
             OneKey secretKey = new OneKey();
 
             switch (m_key.GetKeyType()) {
-            case GeneralValuesInt.KeyType_OKP:
+#if false
+                case GeneralValuesInt.KeyType_OKP:
                 epk.Add(CoseKeyParameterKeys.OKP_Curve, m_key[CoseKeyParameterKeys.OKP_Curve]);
                 switch ((GeneralValuesInt) epk[CoseKeyParameterKeys.OKP_Curve].AsInt32()) {
-                case GeneralValuesInt.X25519:
-                    X25519KeyPair keyPair = X25519.GenerateKeyPair();
-                    epk.Add(CoseKeyParameterKeys.OKP_X, keyPair.Public);
+                case GeneralValuesInt.X25519: {
+                    Ed25519KeyPairGenerator pGen = new Ed25519KeyPairGenerator();
+                    Ed25519KeyGenerationParameters genParam = new Ed25519KeyGenerationParameters(s_PRNG);
+                    pGen.Init(genParam);
+
+                    AsymmetricCipherKeyPair p1 = pGen.GenerateKeyPair();
+                    Ed25519PublicKeyParameters pub = (Ed25519PublicKeyParameters) p1.Public;
+
+                    epk.Add(CoseKeyParameterKeys.EC_Curve, m_key[CoseKeyParameterKeys.EC_Curve]);
+                    epk.Add(CoseKeyParameterKeys.EC_X, pub.GetEncoded());
 
                     secretKey.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_OKP);
                     secretKey.Add(CoseKeyParameterKeys.OKP_Curve, m_key[CoseKeyParameterKeys.OKP_Curve]);
-                    secretKey.Add(CoseKeyParameterKeys.OKP_D, CBORObject.FromObject(keyPair.Private));
+                    secretKey.Add(CoseKeyParameterKeys.OKP_D, CBORObject.FromObject(((Ed25519PrivateKeyParameters) p1.Private).GetEncoded()));
                     m_senderKey = secretKey;
                     break;
                 }
-                break;
 
-            case GeneralValuesInt.KeyType_EC2:
-                X9ECParameters p = m_key.GetCurve();
-                ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
+                case GeneralValuesInt.Ed448: {
+                    Ed448KeyPairGenerator pGen = new Ed448KeyPairGenerator();
+                    Ed448KeyGenerationParameters genParam = new Ed448KeyGenerationParameters(s_PRNG);
+                    pGen.Init(genParam);
 
-                ECKeyPairGenerator pGen = new ECKeyPairGenerator();
-                ECKeyGenerationParameters genParam = new ECKeyGenerationParameters(parameters, s_PRNG);
-                pGen.Init(genParam);
+                    AsymmetricCipherKeyPair p1 = pGen.GenerateKeyPair();
+                    Ed448PublicKeyParameters pub = (Ed448PublicKeyParameters) p1.Public;
 
-                AsymmetricCipherKeyPair p1 = pGen.GenerateKeyPair();
+                    epk.Add(CoseKeyParameterKeys.EC_Curve, m_key[CoseKeyParameterKeys.EC_Curve]);
+                    epk.Add(CoseKeyParameterKeys.EC_X, pub.GetEncoded());
 
-                ECPublicKeyParameters priv = (ECPublicKeyParameters) p1.Public;
-
-                epk.Add(CoseKeyParameterKeys.EC_Curve, m_key[CoseKeyParameterKeys.EC_Curve]);
-                if (FUseCompressed) {
-                    byte[] rgbEncoded = priv.Q.Normalize().GetEncoded(true);
-                    byte[] X = new byte[rgbEncoded.Length - 1];
-                    Array.Copy(rgbEncoded, 1, X, 0, X.Length);
-                    epk.Add(CoseKeyParameterKeys.EC_X, CBORObject.FromObject(X));
-                    epk.Add(CoseKeyParameterKeys.EC_Y, CBORObject.FromObject((rgbEncoded[0] & 1) == 1));
+                    secretKey.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_OKP);
+                    secretKey.Add(CoseKeyParameterKeys.OKP_Curve, m_key[CoseKeyParameterKeys.OKP_Curve]);
+                    secretKey.Add(CoseKeyParameterKeys.OKP_D, CBORObject.FromObject(((Ed448PrivateKeyParameters)p1.Private).GetEncoded()));
+                    m_senderKey = secretKey;
+                    break;
                 }
-                else {
-                    epk.Add(CoseKeyParameterKeys.EC_X, PadBytes(priv.Q.Normalize().XCoord.ToBigInteger().ToByteArrayUnsigned(), p.Curve.FieldSize));
-                    epk.Add(CoseKeyParameterKeys.EC_Y, PadBytes(priv.Q.Normalize().YCoord.ToBigInteger().ToByteArrayUnsigned(), p.Curve.FieldSize));
                 }
 
-                secretKey.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_EC);
-                secretKey.Add(CoseKeyParameterKeys.EC_Curve, m_key[CoseKeyParameterKeys.EC_Curve]);
-                secretKey.Add(CoseKeyParameterKeys.EC_X, epk[CoseKeyParameterKeys.EC_X]);
-                secretKey.Add(CoseKeyParameterKeys.EC_Y, epk[CoseKeyParameterKeys.EC_Y]);
-                ECPrivateKeyParameters priv1 = (ECPrivateKeyParameters)p1.Private;
-                secretKey.Add(CoseKeyParameterKeys.EC_D, CBORObject.FromObject(priv1.D.ToByteArrayUnsigned()));
-                m_senderKey = secretKey;
                 break;
-            }
+#endif
+                case GeneralValuesInt.KeyType_EC2: {
+                    X9ECParameters p = m_key.GetCurve();
+                    ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
+
+                    ECKeyPairGenerator pGen = new ECKeyPairGenerator();
+                    ECKeyGenerationParameters genParam = new ECKeyGenerationParameters(parameters, s_PRNG);
+                    pGen.Init(genParam);
+
+                    AsymmetricCipherKeyPair p1 = pGen.GenerateKeyPair();
+
+                    ECPublicKeyParameters priv = (ECPublicKeyParameters) p1.Public;
+
+                    epk.Add(CoseKeyParameterKeys.EC_Curve, m_key[CoseKeyParameterKeys.EC_Curve]);
+                    if (FUseCompressed) {
+                        byte[] rgbEncoded = priv.Q.Normalize().GetEncoded(true);
+                        byte[] X = new byte[rgbEncoded.Length - 1];
+                        Array.Copy(rgbEncoded, 1, X, 0, X.Length);
+                        epk.Add(CoseKeyParameterKeys.EC_X, CBORObject.FromObject(X));
+                        epk.Add(CoseKeyParameterKeys.EC_Y, CBORObject.FromObject((rgbEncoded[0] & 1) == 1));
+                    }
+                    else {
+                        epk.Add(CoseKeyParameterKeys.EC_X,
+                                PadBytes(priv.Q.Normalize().XCoord.ToBigInteger().ToByteArrayUnsigned(),
+                                         p.Curve.FieldSize));
+                        epk.Add(CoseKeyParameterKeys.EC_Y,
+                                PadBytes(priv.Q.Normalize().YCoord.ToBigInteger().ToByteArrayUnsigned(),
+                                         p.Curve.FieldSize));
+                    }
+
+                    secretKey.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_EC);
+                    secretKey.Add(CoseKeyParameterKeys.EC_Curve, m_key[CoseKeyParameterKeys.EC_Curve]);
+                    secretKey.Add(CoseKeyParameterKeys.EC_X, epk[CoseKeyParameterKeys.EC_X]);
+                    secretKey.Add(CoseKeyParameterKeys.EC_Y, epk[CoseKeyParameterKeys.EC_Y]);
+                    ECPrivateKeyParameters priv1 = (ECPrivateKeyParameters) p1.Private;
+                    secretKey.Add(CoseKeyParameterKeys.EC_D, CBORObject.FromObject(priv1.D.ToByteArrayUnsigned()));
+                    m_senderKey = secretKey;
+                    break;
+                }
+                }
 
             AddAttribute(HeaderKeys.EphemeralKey, epk, UNPROTECTED);
         }
@@ -1076,25 +1129,54 @@ namespace Com.AugustCellars.COSE
             byte[] temp;
 
             switch ((GeneralValuesInt) key[CoseKeyKeys.KeyType].AsInt32()) {
-            case GeneralValuesInt.KeyType_OKP:
+#if false
+                case GeneralValuesInt.KeyType_OKP:
                 if (epk[CoseKeyParameterKeys.OKP_Curve].AsInt32() != key[CoseKeyParameterKeys.OKP_Curve].AsInt32()) throw new CoseException("Not a match of curves");
 
                 switch ((GeneralValuesInt) epk[CoseKeyParameterKeys.OKP_Curve].AsInt32()) {
-                case GeneralValuesInt.X25519:
-                    temp = X25519.CalculateAgreement(epk.AsBytes(CoseKeyParameterKeys.OKP_X), key.AsBytes(CoseKeyParameterKeys.OKP_D));
-                    break;
+                case GeneralValuesInt.X25519: {
+                    X25519PublicKeyParameters pub =
+                        new X25519PublicKeyParameters(epk.AsBytes(CoseKeyParameterKeys.OKP_X), 0);
+                    X25519PrivateKeyParameters priv =
+                        new X25519PrivateKeyParameters(key.AsBytes(CoseKeyParameterKeys.OKP_D), 0);
+
+                    X25519Agreement agree = new X25519Agreement();
+                    agree.Init(priv);
+                    byte[] secret = new byte[32];
+                    agree.CalculateAgreement(pub, secret, 0);
+#if FOR_EXAMPLES
+                    m_secret = secret;
+#endif
+                    return secret;
+                }
+
+                case GeneralValuesInt.X448: {
+                    X448PublicKeyParameters pub =
+                        new X448PublicKeyParameters(epk.AsBytes(CoseKeyParameterKeys.OKP_X), 0);
+                    X448PrivateKeyParameters priv =
+                        new X448PrivateKeyParameters(key.AsBytes(CoseKeyParameterKeys.OKP_D), 0);
+
+                    X25519Agreement agree = new X25519Agreement();
+                    agree.Init(priv);
+                    byte[] secret = new byte[agree.AgreementSize];
+                    agree.CalculateAgreement(pub, secret, 0);
+#if FOR_EXAMPLES
+                    m_secret = secret;
+#endif
+                    return secret;
+
+                }
 
                 default:
                     throw new CoseException("Not a supported Curve");
                 }
-#if FOR_EXAMPLES
-                m_secret = temp;
+                break;
 #endif
-                return temp;
 
-            case GeneralValuesInt.KeyType_EC2:
+            case GeneralValuesInt.KeyType_EC2: {
 
-                if (epk[CoseKeyParameterKeys.EC_Curve].AsInt32() != key[CoseKeyParameterKeys.EC_Curve].AsInt32()) throw new CoseException("not a match of curves");
+                if (epk[CoseKeyParameterKeys.EC_Curve].AsInt32() != key[CoseKeyParameterKeys.EC_Curve].AsInt32())
+                    throw new CoseException("not a match of curves");
 
                 //  Get the curve
 
@@ -1105,7 +1187,8 @@ namespace Com.AugustCellars.COSE
 
                 ECPublicKeyParameters pub = new ECPublicKeyParameters(pubPoint, parameters);
 
-                ECPrivateKeyParameters priv = new ECPrivateKeyParameters(key.AsBigInteger(CoseKeyParameterKeys.EC_D), parameters);
+                ECPrivateKeyParameters priv =
+                    new ECPrivateKeyParameters(key.AsBigInteger(CoseKeyParameterKeys.EC_D), parameters);
 
                 IBasicAgreement e1 = new ECDHBasicAgreement();
                 e1.Init(priv);
@@ -1117,6 +1200,7 @@ namespace Com.AugustCellars.COSE
 #endif
 
                 return PadBytes(k1.ToByteArrayUnsigned(), p.Curve.FieldSize);
+            }
 
             default:
                 throw new CoseException("Not an EC Key");
@@ -1467,14 +1551,40 @@ namespace Com.AugustCellars.COSE
             get => _recipientList;
         }
 
-        public virtual void DecodeFromCBORObject(CBORObject obj)
+#region Decoders
+        /// <summary>
+        /// Given a byte array, decode and return the correct COSE message object.
+        /// Message type can be provided explicitly or inferred from the CBOR tag element.
+        /// If the explicit and inferred elements provide different answers, then it fails.
+        /// </summary>
+        /// <param name="messageData"></param>
+        /// <param name="defaultTag"></param>
+        /// <returns></returns>
+        public static EncryptMessage DecodeFromBytes(byte[] messageData)
+        {
+            CBORObject messageObject = CBORObject.DecodeFromBytes(messageData);
+
+            return (EncryptMessage)DecodeFromCBOR(messageObject, Tags.Encrypt);
+        }
+
+        public static EncryptMessage DecodeFromCBOR(CBORObject obj)
+        {
+            return (EncryptMessage)Message.DecodeFromCBOR(obj, Tags.Encrypt);
+        }
+
+        protected override void InternalDecodeFromCBORObject(CBORObject obj)
         {
             if (obj.Count != 4) throw new CoseException("Invalid Encrypt structure");
 
             //  Protected values.
             if (obj[0].Type == CBORType.ByteString) {
-                if (obj[0].GetByteString().Length == 0) ProtectedMap = CBORObject.NewMap();
-                else ProtectedMap = CBORObject.DecodeFromBytes(obj[0].GetByteString());
+                ProtectedBytes = obj[0].GetByteString();
+                if (obj[0].GetByteString().Length == 0) {
+                    ProtectedMap = CBORObject.NewMap();
+                }
+                else {
+                    ProtectedMap = CBORObject.DecodeFromBytes(obj[0].GetByteString());
+                }
                 if (ProtectedMap.Type != CBORType.Map) throw new CoseException("Invalid Encrypt structure");
             }
             else {
@@ -1502,6 +1612,7 @@ namespace Com.AugustCellars.COSE
             }
             else throw new CoseException("Invalid Encrypt structure");
         }
+#endregion
 
         public override CBORObject Encode()
         {
@@ -1520,17 +1631,7 @@ namespace Com.AugustCellars.COSE
             }
             obj.Add(rgbProtect);
 
-            if (m_counterSignerList.Count() != 0) {
-                if (m_counterSignerList.Count() == 1) {
-                    AddAttribute(HeaderKeys.CounterSignature, m_counterSignerList[0].EncodeToCBORObject(rgbProtect, RgbEncrypted), UNPROTECTED);
-                }
-                else {
-                    foreach (CounterSignature sig in m_counterSignerList) {
-                        sig.EncodeToCBORObject(rgbProtect, RgbEncrypted);
-                    }
-                }
-            }
-
+            ProcessCounterSignatures();
 
             obj.Add(UnprotectedMap); // Add unprotected attributes
 
@@ -1649,6 +1750,8 @@ namespace Com.AugustCellars.COSE
                 key.SetContent(ContentKey);
                 key.Encrypt();
             }
+
+            ProcessCounterSignatures();
         }
     }
 
