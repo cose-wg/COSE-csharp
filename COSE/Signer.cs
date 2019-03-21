@@ -326,7 +326,7 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.RSA_PSS_512: {
                             PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
 
-                            RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(_keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
+                            ICipherParameters prv =_keyToSign.AsPrivateKey();
                             ParametersWithRandom param = new ParametersWithRandom(prv, Message.GetPRNG());
 
                             signer.Init(true, param);
@@ -343,9 +343,9 @@ namespace Com.AugustCellars.COSE
                             byte[] digestedMessage = new byte[digest.GetDigestSize()];
                             digest.DoFinal(digestedMessage, 0);
 
+                            ICipherParameters privKey = _keyToSign.AsPrivateKey();
                             X9ECParameters p = _keyToSign.GetCurve();
-                            ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
-                            ECPrivateKeyParameters privKey = new ECPrivateKeyParameters("ECDSA", ConvertBigNum(_keyToSign[CoseKeyParameterKeys.EC_D]), parameters);
+
                             ParametersWithRandom param = new ParametersWithRandom(privKey, random);
 
                             ECDsaSigner ecdsa = new ECDsaSigner(new HMacDsaKCalculator(new Sha256Digest()));
@@ -368,14 +368,12 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.EdDSA: {
                             ISigner eddsa;
                             if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
-                                Ed25519PrivateKeyParameters privKey =
-                                    new Ed25519PrivateKeyParameters(_keyToSign[CoseKeyParameterKeys.OKP_D].GetByteString(), 0);
+                                ICipherParameters privKey = _keyToSign.AsPrivateKey();
                                 eddsa = new Ed25519Signer();
                                 eddsa.Init(true, privKey);
                             }
                             else if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed448)) {
-                                Ed448PrivateKeyParameters privKey =
-                                    new Ed448PrivateKeyParameters(_keyToSign[CoseKeyParameterKeys.OKP_D].GetByteString(), 0);
+                                ICipherParameters privKey = _keyToSign.AsPrivateKey();
                                 eddsa = new Ed448Signer(new byte[0]);
                                 eddsa.Init(true, privKey);
                             }
@@ -466,8 +464,8 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.RSA_PSS_384:
                     case AlgorithmValuesInt.RSA_PSS_512: {
                             PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
+                            ICipherParameters prv = _keyToSign.AsPublicKey();
 
-                            RsaKeyParameters prv = new RsaKeyParameters(false, _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_n), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_e));
                             ParametersWithRandom param = new ParametersWithRandom(prv, Message.GetPRNG());
 
                             signer.Init(false, param);
@@ -478,14 +476,15 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.ECDSA_256:
                     case AlgorithmValuesInt.ECDSA_384:
                     case AlgorithmValuesInt.ECDSA_512: {
+                            if (_keyToSign.GetKeyType() != GeneralValuesInt.KeyType_EC2) {
+                                throw new CoseException("Key is not correctly constructed.");
+                            }
+
                             digest.BlockUpdate(bytesToBeSigned, 0, bytesToBeSigned.Length);
                             byte[] digestedMessage = new byte[digest.GetDigestSize()];
                             digest.DoFinal(digestedMessage, 0);
 
-                            X9ECParameters p = _keyToSign.GetCurve();
-                            ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
-                            ECPoint point = _keyToSign.GetPoint();
-                            ECPublicKeyParameters param = new ECPublicKeyParameters(point, parameters);
+                            ICipherParameters param = _keyToSign.AsPublicKey();
 
                             ECDsaSigner ecdsa = new ECDsaSigner();
                             ecdsa.Init(false, param);
@@ -499,8 +498,7 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.EdDSA: {
                             ISigner eddsa;
                             if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Equals(GeneralValues.Ed25519)) {
-                                Ed25519PublicKeyParameters privKey =
-                                    new Ed25519PublicKeyParameters(_keyToSign[CoseKeyParameterKeys.OKP_X].GetByteString(), 0);
+                                ICipherParameters privKey = _keyToSign.AsPublicKey();
                                 eddsa = new Ed25519Signer();
                                 eddsa.Init(false, privKey);
                             }

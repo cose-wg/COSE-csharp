@@ -59,6 +59,10 @@ namespace Com.AugustCellars.COSE.Tests
                     directory = new DirectoryInfo("..\\..\\..\\..\\" + directoryName);
                     if (!directory.Exists) {
                         directory = new DirectoryInfo("d:\\Projects\\cose\\Examples");
+                        if (!directory.Exists)
+                        {
+                            directory = new DirectoryInfo("c:\\github\\Examples");
+                        }
                     }
                 }
             }
@@ -847,6 +851,10 @@ namespace Com.AugustCellars.COSE.Tests
                         case "OKP":
                         cnKeyOut[CBORObject.FromObject(1)] = GeneralValues.KeyType_OKP;
                         break;
+
+                            case "RSA":
+                                cnKeyOut[CBORObject.FromObject(1)] = GeneralValues.KeyType_RSA;
+                                    break;
                     }
                     break;
 

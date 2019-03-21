@@ -186,6 +186,99 @@ namespace Com.AugustCellars.COSE
         {
             return _map[name].AsString();
         }
+        private AsymmetricKeyParameter _privateKey { get; set; }
+
+        public AsymmetricKeyParameter AsPrivateKey()
+        {
+            if (_privateKey != null) {
+                return _privateKey;
+            }
+
+            switch (GetKeyType()) {
+                case GeneralValuesInt.KeyType_EC2:
+                    X9ECParameters p = GetCurve();
+                    ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
+                    ECPrivateKeyParameters privKey = new ECPrivateKeyParameters("ECDSA", ConvertBigNum(this[CoseKeyParameterKeys.EC_D]), parameters);
+                    _privateKey = privKey;
+                    break;
+
+                case GeneralValuesInt.KeyType_RSA:
+                    RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(AsBigInteger(CoseKeyParameterKeys.RSA_n), AsBigInteger(CoseKeyParameterKeys.RSA_e), AsBigInteger(CoseKeyParameterKeys.RSA_d), AsBigInteger(CoseKeyParameterKeys.RSA_p), AsBigInteger(CoseKeyParameterKeys.RSA_q), AsBigInteger(CoseKeyParameterKeys.RSA_dP), AsBigInteger(CoseKeyParameterKeys.RSA_dQ), AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
+                    _privateKey = prv;
+                    break;
+
+                case GeneralValuesInt.KeyType_OKP:
+                    switch ((GeneralValuesInt) this[CoseKeyParameterKeys.EC_Curve].AsInt32()) {
+                        case GeneralValuesInt.Ed25519:
+                            Ed25519PrivateKeyParameters privKeyEd25519 =
+                                new Ed25519PrivateKeyParameters(this[CoseKeyParameterKeys.OKP_D].GetByteString(), 0);
+                            _privateKey = privKeyEd25519;
+                            break;
+
+                        case GeneralValuesInt.Ed448:
+                            Ed448PrivateKeyParameters privKeyEd448 =
+                                new Ed448PrivateKeyParameters(this[CoseKeyParameterKeys.OKP_D].GetByteString(), 0);
+                            _privateKey = privKeyEd448;
+                            break;
+
+                        default:
+                            throw new CoseException("Unrecognaized curve for OKP key type");
+                    }
+                    break;
+
+                default:
+                    throw new CoseException("Unable to get the private key.");
+            }
+            return _privateKey;
+        }
+
+        private AsymmetricKeyParameter _publicKey { get; set;  }
+
+        public AsymmetricKeyParameter AsPublicKey()
+        {
+            switch (GetKeyType())
+            {
+                case GeneralValuesInt.KeyType_EC2:
+                    X9ECParameters p = GetCurve();
+                    ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
+                    ECPoint point = GetPoint();
+                    ECPublicKeyParameters param = new ECPublicKeyParameters(point, parameters);
+                    _publicKey = param;
+                    break;
+
+                case GeneralValuesInt.KeyType_RSA:
+                    RsaKeyParameters prv = new RsaKeyParameters(false, AsBigInteger(CoseKeyParameterKeys.RSA_n), AsBigInteger(CoseKeyParameterKeys.RSA_e));
+                    _publicKey = prv;
+                    break;
+
+                case GeneralValuesInt.KeyType_OKP:
+                    switch ((GeneralValuesInt)this[CoseKeyParameterKeys.EC_Curve].AsInt32())
+                    {
+                        case GeneralValuesInt.Ed25519:
+                            Ed25519PublicKeyParameters privKeyEd25519 =
+                                new Ed25519PublicKeyParameters(this[CoseKeyParameterKeys.OKP_X].GetByteString(), 0);
+                            _publicKey = privKeyEd25519;
+
+                            break;
+
+                        case GeneralValuesInt.Ed448:
+                            Ed448PublicKeyParameters privKeyEd448 =
+                                new Ed448PublicKeyParameters(this[CoseKeyParameterKeys.OKP_X].GetByteString(), 0);
+                            _publicKey = privKeyEd448;
+
+                            break;
+
+                        default:
+                            throw new CoseException("Unrecognaized curve for OKP key type");
+                    }
+                    break;
+
+                default:
+                    throw new CoseException("Unable to get the public key.");
+            }
+
+            return _publicKey;
+        }
 
         public Boolean ContainsName(string name)
         {
@@ -534,6 +627,18 @@ namespace Com.AugustCellars.COSE
         /// Location to store user defined data that is associated with a key.
         /// </summary>
         public object UserData { get; set; }
+
+        private static BigInteger ConvertBigNum(CBORObject cbor)
+        {
+            byte[] rgb = cbor.GetByteString();
+            byte[] rgb2 = new byte[rgb.Length + 2];
+            rgb2[0] = 0;
+            rgb2[1] = 0;
+            for (int i = 0; i < rgb.Length; i++) rgb2[i + 2] = rgb[i];
+
+            return new BigInteger(rgb2);
+        }
+
     }
 
     /// <summary>
