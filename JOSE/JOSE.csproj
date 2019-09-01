@@ -1,55 +1,37 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E46041C9-99E8-4BCA-8850-D62A34E2D6E5}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>JOSE</RootNamespace>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <PackageId>Com.AugustCellars.JOSE</PackageId>
+    <Id>Com.AugustCellars.JOSE</Id>
+    <PackageVersion>1.2.0</PackageVersion>
+    <Version>1.2.0</Version>
+    <Authors>Jim Schaad</Authors>
+    <Description>An implementation of the CBOR Object Signing and Encryption standards.</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright @2016-7 Jim Schaad</Copyright>
+    <PackageTags>COSE CBOR</PackageTags>
+    
+    <PackageReleaseNotes>
+    Don't release me
+    </PackageReleaseNotes>
+    
+    <Configurations>Debug;Release</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <EnableDefaultItems>false</EnableDefaultItems>
     <AssemblyName>JOSE</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <RootNamespace>Com.AugustCellars.JOSE</RootNamespace>
+    <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;NETSTANDARD1_0</DefineConstants>
+    <IntermediateOutputPath>obj\dev\Debug</IntermediateOutputPath>
+    <OutputPath>bin\dev\Debug\</OutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="BouncyCastle.Crypto, Version=1.8.4.0, Culture=neutral, PublicKeyToken=0e99375e54769942, processorArchitecture=MSIL">
-      <HintPath>..\examples\packages\Portable.BouncyCastle.1.8.4\lib\net40\BouncyCastle.Crypto.dll</HintPath>
-    </Reference>
-    <Reference Include="CBOR, Version=3.0.3.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
-      <HintPath>..\examples\packages\PeterO.Cbor.3.0.3\lib\netstandard1.0\CBOR.dll</HintPath>
-    </Reference>
-    <Reference Include="Numbers, Version=1.0.2.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
-      <HintPath>..\examples\packages\PeterO.Numbers.1.0.2\lib\netstandard1.0\Numbers.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
+  
+
   <ItemGroup>
     <Compile Include="EncryptMessage.cs" />
     <Compile Include="JSON.cs" />
@@ -58,22 +40,14 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SignMessage.cs" />
   </ItemGroup>
+  
+
   <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
+    <PackageReference Include="PeterO.Cbor" Version="3.0.3" />
   </ItemGroup>
+  
+
   <ItemGroup>
-    <ProjectReference Include="..\COSE\COSE.Std10.csproj">
-      <Project>{90ee0d6d-3050-4263-9a04-2b6aefef4b76}</Project>
-      <Name>COSE.Std10</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\..\..\Bouncy-Castle\bc-csharp\crypto\crypto.csproj" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

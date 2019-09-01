@@ -348,7 +348,7 @@ namespace Com.AugustCellars.COSE
                 case AlgorithmValuesInt.RSA_PSS_256:
                 case AlgorithmValuesInt.RSA_PSS_384:
                 case AlgorithmValuesInt.RSA_PSS_512: {
-                    PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
+                    PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetDigestSize());
 
                     ICipherParameters prv = keyToSign.AsPrivateKey();
                     ParametersWithRandom param = new ParametersWithRandom(prv, Message.GetPRNG());
@@ -496,7 +496,7 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.RSA_PSS_256:
                     case AlgorithmValuesInt.RSA_PSS_384:
                     case AlgorithmValuesInt.RSA_PSS_512: {
-                            PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
+                            PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetDigestSize());
                             ICipherParameters prv = signKey.AsPublicKey();
 
                             ParametersWithRandom param = new ParametersWithRandom(prv, Message.GetPRNG());
