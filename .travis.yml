@@ -3,7 +3,7 @@ solution: COSE.Std10.sln
 
 matrix:
   include:
-    - dotnet
+    - dotnet: 2.2
       mono: none
       env:
         - SLN=COSE.Std10.sln
