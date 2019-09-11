@@ -56,7 +56,7 @@ namespace Com.AugustCellars.COSE.Tests
             try {
                 directory = new DirectoryInfo(directoryName);
                 if (!directory.Exists) {
-                    directory = new DirectoryInfo(Path.Combine("..", "..", "..", "..", directoryName);
+                    directory = new DirectoryInfo(Path.Combine("..", "..", "..", "..", directoryName));
                     if (!directory.Exists && Path.VolumeSeparatorChar == ":") {
                         directory = new DirectoryInfo("d:\\Projects\\cose\\Examples");
                         if (!directory.Exists)
