@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  bulid:
+  build:
     docker:
       - image: microsoft/dotnet:2-sdk
 
