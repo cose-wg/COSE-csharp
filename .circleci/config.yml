@@ -15,4 +15,8 @@ jobs:
 
        - run:
            name: Unit Tests
-           command: dotnet cose\COSE.Std10.sln
+           command: |
+              ls
+              cd COSE
+              dotnet build --framework=netcoreapp2.0 COSE.Std10.sln
+              dotnet test --framework=netcoreapp2.0 COSE.Std10.sln
