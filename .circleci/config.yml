@@ -10,5 +10,13 @@ jobs:
        - checkout
 
        - run:
-         name: Unit Tests
-         command: dotnet cose\COSE.Std10.sln
+           name: Get Examples
+           command: git clone --depth 1 https://github.com/cose-wg/Examples Regressions
+
+       - run:
+           name: Unit Tests
+           command: |
+              ls
+              cd COSE
+              dotnet build --framework=netcoreapp2.0 COSE.Std10.sln
+              dotnet test --framework=netcoreapp2.0 COSE.Std10.sln

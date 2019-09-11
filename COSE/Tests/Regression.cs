@@ -41,7 +41,7 @@ namespace Com.AugustCellars.COSE.Tests
 
         @Parameter // first data value (0) is default
 #endif
-        public /* NOT private */ String directoryName = "..\\Regressions";
+        public /* NOT private */ String directoryName = Path.Combine("..", "Regressions");
 
         public int CFails = 0;
 
@@ -56,8 +56,8 @@ namespace Com.AugustCellars.COSE.Tests
             try {
                 directory = new DirectoryInfo(directoryName);
                 if (!directory.Exists) {
-                    directory = new DirectoryInfo("..\\..\\..\\..\\" + directoryName);
-                    if (!directory.Exists) {
+                    directory = new DirectoryInfo(Path.Combine("..", "..", "..", "..", directoryName));
+                    if (!directory.Exists && Path.VolumeSeparatorChar == ':') {
                         directory = new DirectoryInfo("d:\\Projects\\cose\\Examples");
                         if (!directory.Exists)
                         {

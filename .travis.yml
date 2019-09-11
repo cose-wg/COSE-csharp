@@ -10,35 +10,15 @@ matrix:
           TARGET=Std10
           VERSION=Release
           NUGET=dotnet
+      os: osx
+    - dotnet: 2.2
+      mono: none
+      env:
+        - SLN=COSE.Std10.sln
+          TARGET=Std10
+          VERSION=Release
+          NUGET=dotnet
       os: linux
-#    - mono: latest
-#      env:
-#        - SLN=COSE.Std10.sln
-#          TARGET=Std10
-#          VERSION=Release
-#          NUGET=../nuget.exe
-#      os: linux
-#    - mono: latest
-#      env:
-#        - SLN=COSE.Std10.sln
-#          TARGET=Std10
-#          VERSION=Debug
-#          NUGET=../nuget.exe
-#      os: linux
-#    - mono: 5.14.0
-#      env:
-##        - SLN=COSE.Std10.sln
-#          TARGET=Std10
-#          VERSION=Debug
-#          NUGET=../nuget.exe
-#      os: linux
-#    - mono: latest
-#      env:
-#        - SLN=COSE.Std10.sln
-#          TARGET=Std10
-#          VERSION=Release
-#          NUGET=../nuget.exe
-#      os: osx
 
 install:
 #   - curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
