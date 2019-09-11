@@ -18,4 +18,4 @@ jobs:
            command: |
               ls
               cd COSE
-              dotnet build COSE.Std10.sln
+              dotnet build --framework=netcoreapp2.0 COSE.Std10.sln
