@@ -16,5 +16,6 @@ jobs:
        - run:
            name: Unit Tests
            command: |
+              ls
               cd cose
               dotnet build COSE.Std10.sln
