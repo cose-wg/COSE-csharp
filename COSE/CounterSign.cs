@@ -99,7 +99,7 @@ namespace Com.AugustCellars.COSE
         public CounterSignature1(byte[] rgBytes)
         {
             context = "CounterSignature0";
-            _rgbSignature = rgBytes;
+            rgbSignature = rgBytes;
             ProtectedBytes = new byte[0];
         }
 
@@ -116,7 +116,7 @@ namespace Com.AugustCellars.COSE
         public new void DecodeFromCBORObject(CBORObject cbor)
         {
             if (cbor.Type != CBORType.ByteString) throw new CoseException("Invalid format for CounterSignature0");
-            _rgbSignature = cbor.GetByteString();
+            rgbSignature = cbor.GetByteString();
             ProtectedBytes = new byte[0];
         }
 

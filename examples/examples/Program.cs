@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-
 using PeterO.Cbor;
 using Com.AugustCellars.COSE;
-using Org.BouncyCastle.Crypto.Generators;
+
+// ReSharper disable All
 
 namespace examples
 {
@@ -77,9 +77,10 @@ namespace examples
 
             // HashSig.SelfTest();
 
+            RunTestsInDirectory("anima");
+            RunTestsInDirectory("X509");
             RunTestsInDirectory("hashsig");
 
-            RunTestsInDirectory("eddsa-examples");
 
             RunTestsInDirectory("RFC8152");
             {
@@ -100,27 +101,28 @@ namespace examples
 
             Recipient.FUseCompressed = false;
 
-            RunTestsInDirectory("hmac-examples");
+            RunTestsInDirectory("aes-wrap-examples");
             RunTestsInDirectory("cbc-mac-examples");
             RunTestsInDirectory("aes-ccm-examples");
             RunTestsInDirectory("aes-gcm-examples");
             RunTestsInDirectory("chacha-poly-examples");
             RunTestsInDirectory("countersign");
             RunTestsInDirectory("countersign0");
-            RunTestsInDirectory("ecdsa-examples");
-            RunTestsInDirectory("hkdf-hmac-sha-examples");
-            RunTestsInDirectory("hkdf-aes-examples");
-            RunTestsInDirectory("aes-wrap-examples");
             RunTestsInDirectory("ecdh-direct-examples");
             RunTestsInDirectory("ecdh-wrap-examples");
+            RunTestsInDirectory("ecdsa-examples");
+            RunTestsInDirectory("eddsa-examples");
+            RunTestsInDirectory("encrypted-tests");
+            RunTestsInDirectory("enveloped-tests");
+            RunTestsInDirectory("hkdf-hmac-sha-examples");
+            RunTestsInDirectory("hkdf-aes-examples");
+            RunTestsInDirectory("hmac-examples");
             RunTestsInDirectory("mac-tests");
             RunTestsInDirectory("mac0-tests");
-            RunTestsInDirectory("enveloped-tests");
-            RunTestsInDirectory("encrypted-tests");
-            RunTestsInDirectory("sign-tests");
-            RunTestsInDirectory("sign1-tests");
             RunTestsInDirectory("rsa-oaep-examples");
             RunTestsInDirectory("rsa-pss-examples");
+            RunTestsInDirectory("sign-tests");
+            RunTestsInDirectory("sign1-tests");
         }
 
         static void RunTestsInDirectory(string strDirectory)
@@ -237,7 +239,7 @@ namespace examples
                 bw.Close();
 
                 if (control["output"].ContainsKey("cbor_diag")) {
-                    string strSource = control["output"]["cbor_diag"].ToString();
+                    string strSource = control["output"]["cbor_diag"].AsString();
                     string strThis = result.ToString();
 
                     if (strSource != strThis) {
@@ -524,7 +526,6 @@ namespace examples
         static bool ValidateEncrypted(CBORObject control)
         {
             CBORObject cnInput = control["input"];
-            Boolean fFail = false;
             Boolean fFailBody = false;
 
             CBORObject cnFail = control["fail"];
@@ -907,6 +908,10 @@ namespace examples
                     cborValue = CBORObject.FromObject(FromHex(cborValue.AsString()));
                 }
 
+                if (cborKey.AsString() == "comment") {
+                    continue;
+                }
+
                 switch (cborKey.AsString()) {
                 case "alg":
                     cborKey = HeaderKeys.Algorithm;
@@ -917,7 +922,7 @@ namespace examples
                     cborKey = HeaderKeys.KeyId;
                     binFromText:
                     if (cborValue.Type == CBORType.TextString)
-                        cborValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(cborValue.AsString()));
+                        cborValue = CBORObject.FromObject(Encoding.UTF8.GetBytes(cborValue.AsString()));
                     break;
 
                 case "epk":
@@ -996,7 +1001,54 @@ namespace examples
                     cborKey = HeaderKeys.ContentType;
                     break;
 
-                default:
+                    case "x5bag_b64":
+                        cborKey = CBORObject.FromObject("x5bag");
+                        x509Certs:
+                        if (cborValue.Type == CBORType.Array) {
+                            CBORObject obj = CBORObject.NewArray();
+                            foreach (CBORObject o in cborValue.Values) {
+                                obj.Add(CBORObject.FromObject(base64urldecode(o.AsString())));
+                            }
+
+                            cborValue = obj;
+                        }
+                        else if (cborValue.Type == CBORType.TextString) {
+                            cborValue = CBORObject.FromObject(base64urldecode(cborValue.AsString()));
+                        }
+                        break;
+
+                case "x5Chain_b64":
+                    cborKey = CBORObject.FromObject("x5chain");
+                    goto x509Certs;
+
+                case "x5c-sender_b64":
+                    cborKey = CBORObject.FromObject("x5chain-sender");
+                    goto x509Certs;
+
+                    case "x5t-sender":
+                {
+                    CBORObject obj = CBORObject.NewArray();
+                    obj.Add(AlgorithmMap(cborValue[0]));
+                    obj.Add(FromHex(cborValue[1].AsString()));
+                    cborValue = obj;
+                }
+                    break;
+
+                    case "x5t": {
+                    CBORObject obj = CBORObject.NewArray();
+                    obj.Add(AlgorithmMap(cborValue[0]));
+                    obj.Add(FromHex(cborValue[1].AsString()));
+                    cborValue = obj;
+                }
+                        break;
+
+                    case "x5u":
+                        break;
+
+                case "x5u-sender":
+                    break;
+
+                    default:
                     break;
                 }
 
@@ -1235,9 +1287,13 @@ namespace examples
             OneKey key = new OneKey();
             CBORObject newKey;
             CBORObject newValue;
-            string type = control["kty"].AsString();
+            string type = "";
             int oFix = 0;
             List<string> keys = new List<string>();
+
+            if (control.ContainsKey("kty")) {
+                type = control["kty"].AsString();
+            }
 
             foreach (CBORObject item in control.Keys) keys.Add(item.AsString());
 
@@ -1246,11 +1302,21 @@ namespace examples
                 case "kty":
                     newKey = CoseKeyKeys.KeyType;
                     switch (control[item].AsString()) {
-                    case "OKP": newValue = GeneralValues.KeyType_OKP; goto NewValue;
-                    case "EC": newValue = GeneralValues.KeyType_EC; goto NewValue;
-                    case "RSA": newValue = GeneralValues.KeyType_RSA; goto NewValue;
-                    case "oct": newValue = GeneralValues.KeyType_Octet; goto NewValue;
-                    case "HSS-LMS": newValue = GeneralValues.KeyType_HSS_LMS; goto NewValue;
+                    case "OKP":
+                        newValue = GeneralValues.KeyType_OKP;
+                        goto NewValue;
+                    case "EC":
+                        newValue = GeneralValues.KeyType_EC;
+                        goto NewValue;
+                    case "RSA":
+                        newValue = GeneralValues.KeyType_RSA;
+                        goto NewValue;
+                    case "oct":
+                        newValue = GeneralValues.KeyType_Octet;
+                        goto NewValue;
+                    case "HSS-LMS":
+                        newValue = GeneralValues.KeyType_HSS_LMS;
+                        goto NewValue;
                     default:
                         break;
                     }
@@ -1261,7 +1327,7 @@ namespace examples
 
                 case "kid":
                     newKey = CoseKeyKeys.KeyIdentifier;
-                    newValue = CBORObject.FromObject(UTF8Encoding.UTF8.GetBytes(control[item].AsString()));
+                    newValue = CBORObject.FromObject(Encoding.UTF8.GetBytes(control[item].AsString()));
                     goto NewValue;
 
                 case "kid_b64":
@@ -1412,16 +1478,61 @@ namespace examples
                     newKey = CoseKeyParameterKeys.RSA_dQ;
                     goto BinaryValue;
                 case "dQ_hex":
-                case "dq_hex": newKey = CoseKeyParameterKeys.RSA_dQ; goto HexValue;
-                case "qi": newKey = CoseKeyParameterKeys.RSA_qInv; goto BinaryValue;
-                case "qi_hex": newKey = CoseKeyParameterKeys.RSA_qInv; goto HexValue;
-                case "public": newKey = CoseKeyParameterKeys.Lms_Public; goto HexValue;
-                case "private": newKey = CoseKeyParameterKeys.Lms_Private; goto TextValue;
-                    default:
+                case "dq_hex":
+                    newKey = CoseKeyParameterKeys.RSA_dQ;
+                    goto HexValue;
+                case "qi":
+                    newKey = CoseKeyParameterKeys.RSA_qInv;
+                    goto BinaryValue;
+                case "qi_hex":
+                    newKey = CoseKeyParameterKeys.RSA_qInv;
+                    goto HexValue;
+                case "public":
+                    newKey = CoseKeyParameterKeys.Lms_Public;
+                    goto HexValue;
+                case "private":
+                    newKey = CoseKeyParameterKeys.Lms_Private;
+                    goto TextValue;
+                default:
                     throw new Exception("Unrecognized field name " + item + " in key object");
 
                 case "comment":
                     break;
+
+                case "x509_b64": {
+                    byte[] cert = base64urldecode(control[item].AsString());
+                    OneKey keyNew = OneKey.FromX509(cert);
+
+                    foreach (CBORObject keyX in keyNew.Keys) {
+                        if (key.ContainsName(keyX)) {
+                            if (!keyNew[keyX].Equals(key[keyX])) {
+                                throw new Exception($"Mismatch in element {keyX}");
+                            }
+                        }
+                        else {
+                            key.Add(keyX, keyNew[keyX]);
+                        }
+                    }
+                    break;
+                }
+
+                case "pkcs8_b64": {
+                    byte[] pkcs8 = base64urldecode(control[item].AsString());
+                    OneKey keyNew = OneKey.FromPkcs8(pkcs8);
+                    foreach (CBORObject keyX in keyNew.Keys) {
+                        if (key.ContainsName(keyX)) {
+                            if (!keyNew[keyX].Equals(key[keyX])) {
+                                throw new Exception($"Mismatch in element {keyX}");
+
+                            }
+                        }
+                        else {
+                            key.Add(keyX, keyNew[keyX]);
+                        }
+                    }
+
+                    break;
+                }
                 }
             }
 
@@ -1759,7 +1870,7 @@ namespace examples
                     msg.Decrypt(recipX);
 
                 }
-                catch (Exception e) {
+                catch (Exception) {
                     if (fFail || fFailRecipient) return true;
                     return false;
                 }
@@ -1989,7 +2100,7 @@ namespace examples
                         throw new Exception("Failed countersignature validation");
                     }
                 }
-                catch (Exception e) {
+                catch (Exception) {
                     throw new Exception("Failed countersignature validation");
                 }
             }
@@ -2024,7 +2135,7 @@ namespace examples
                         throw new Exception("Failed countersignature validation");
                     }
                 }
-                catch (Exception e) {
+                catch (Exception) {
                     throw new Exception("Failed countersignature validation");
                 }
             }
@@ -2056,7 +2167,7 @@ namespace examples
                     throw new Exception("Failed countersignature validation");
                 }
             }
-            catch (Exception e) {
+            catch (Exception) {
                 throw new Exception("Failed countersignature validation");
             }
         }
@@ -2088,7 +2199,7 @@ namespace examples
                     throw new Exception("Failed countersignature validation");
                 }
             }
-            catch (Exception e) {
+            catch (Exception) {
                 throw new Exception("Failed countersignature validation");
             }
         }
