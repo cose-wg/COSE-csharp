@@ -11,6 +11,14 @@ matrix:
           VERSION=Release
           NUGET=dotnet
       os: osx
+    - dotnet: 2.2
+      mono: none
+      env:
+        - SLN=COSE.Std10.sln
+          TARGET=Std10
+          VERSION=Release
+          NUGET=dotnet
+      os: linux
 
 install:
 #   - curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
