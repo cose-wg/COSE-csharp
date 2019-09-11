@@ -60,6 +60,7 @@ namespace Com.AugustCellars.COSE
         public static readonly CBORObject CounterSignature = CBORObject.FromObject(7);
         public static readonly CBORObject OperationTime = CBORObject.FromObject(8);
         public static readonly CBORObject CounterSignature0 = CBORObject.FromObject(9);
+        public static readonly CBORObject KidContext = CBORObject.FromObject(10);
     }
 
     public enum AlgorithmValuesInt

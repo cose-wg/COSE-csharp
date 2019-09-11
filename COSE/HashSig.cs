@@ -37,10 +37,10 @@ namespace Com.AugustCellars.COSE
                 new Constants(32, 4, 67, 4),  // LMOTS_SHA256_N32_W4 (3)
                 new Constants(32, 8, 34, 0),  // LMOTS_SHA256_N32_W8 (4)
                 new Constants(32, 5),  // LMS_SHA256_M32_H5 (5)
-                new Constants(32, 10), // LMS_SHA256_M32_H5 (6)
-                new Constants(32, 15), // LMS_SHA256_M32_H5 (7)
-                new Constants(32, 20), // LMS_SHA256_M32_H5 (8)
-                new Constants(32, 25), // LMS_SHA256_M32_H5 (9)
+                new Constants(32, 10), // LMS_SHA256_M32_H10 (6)
+                new Constants(32, 15), // LMS_SHA256_M32_H15 (7)
+                new Constants(32, 20), // LMS_SHA256_M32_H20 (8)
+                new Constants(32, 25), // LMS_SHA256_M32_H25 (9)
             };
 
             public int HashLength { get; }

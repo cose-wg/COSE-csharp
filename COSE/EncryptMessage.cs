@@ -1009,42 +1009,40 @@ namespace Com.AugustCellars.COSE
             OneKey secretKey = new OneKey();
 
             switch (m_key.GetKeyType()) {
-#if false
+#if true
                 case GeneralValuesInt.KeyType_OKP:
                 epk.Add(CoseKeyParameterKeys.OKP_Curve, m_key[CoseKeyParameterKeys.OKP_Curve]);
+                secretKey.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_OKP);
                 switch ((GeneralValuesInt) epk[CoseKeyParameterKeys.OKP_Curve].AsInt32()) {
                 case GeneralValuesInt.X25519: {
-                    Ed25519KeyPairGenerator pGen = new Ed25519KeyPairGenerator();
-                    Ed25519KeyGenerationParameters genParam = new Ed25519KeyGenerationParameters(s_PRNG);
+                    X25519KeyPairGenerator pGen = new X25519KeyPairGenerator();
+                    X25519KeyGenerationParameters genParam = new X25519KeyGenerationParameters(s_PRNG);
                     pGen.Init(genParam);
 
                     AsymmetricCipherKeyPair p1 = pGen.GenerateKeyPair();
-                    Ed25519PublicKeyParameters pub = (Ed25519PublicKeyParameters) p1.Public;
+                    X25519PublicKeyParameters pub = (X25519PublicKeyParameters) p1.Public;
 
-                    epk.Add(CoseKeyParameterKeys.EC_Curve, m_key[CoseKeyParameterKeys.EC_Curve]);
                     epk.Add(CoseKeyParameterKeys.EC_X, pub.GetEncoded());
 
-                    secretKey.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_OKP);
                     secretKey.Add(CoseKeyParameterKeys.OKP_Curve, m_key[CoseKeyParameterKeys.OKP_Curve]);
-                    secretKey.Add(CoseKeyParameterKeys.OKP_D, CBORObject.FromObject(((Ed25519PrivateKeyParameters) p1.Private).GetEncoded()));
+                    secretKey.Add(CoseKeyParameterKeys.OKP_D, CBORObject.FromObject(((X25519PrivateKeyParameters) p1.Private).GetEncoded()));
                     m_senderKey = secretKey;
                     break;
                 }
 
-                case GeneralValuesInt.Ed448: {
-                    Ed448KeyPairGenerator pGen = new Ed448KeyPairGenerator();
-                    Ed448KeyGenerationParameters genParam = new Ed448KeyGenerationParameters(s_PRNG);
+                case GeneralValuesInt.X448: {
+                    X448KeyPairGenerator pGen = new X448KeyPairGenerator();
+                    X448KeyGenerationParameters genParam = new X448KeyGenerationParameters(s_PRNG);
                     pGen.Init(genParam);
 
                     AsymmetricCipherKeyPair p1 = pGen.GenerateKeyPair();
-                    Ed448PublicKeyParameters pub = (Ed448PublicKeyParameters) p1.Public;
+                    X448PublicKeyParameters pub = (X448PublicKeyParameters) p1.Public;
 
-                    epk.Add(CoseKeyParameterKeys.EC_Curve, m_key[CoseKeyParameterKeys.EC_Curve]);
                     epk.Add(CoseKeyParameterKeys.EC_X, pub.GetEncoded());
 
                     secretKey.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_OKP);
                     secretKey.Add(CoseKeyParameterKeys.OKP_Curve, m_key[CoseKeyParameterKeys.OKP_Curve]);
-                    secretKey.Add(CoseKeyParameterKeys.OKP_D, CBORObject.FromObject(((Ed448PrivateKeyParameters)p1.Private).GetEncoded()));
+                    secretKey.Add(CoseKeyParameterKeys.OKP_D, CBORObject.FromObject(((X448PrivateKeyParameters)p1.Private).GetEncoded()));
                     m_senderKey = secretKey;
                     break;
                 }
@@ -1126,10 +1124,8 @@ namespace Com.AugustCellars.COSE
                 }
             }
 
-            byte[] temp;
-
             switch ((GeneralValuesInt) key[CoseKeyKeys.KeyType].AsInt32()) {
-#if false
+#if true
                 case GeneralValuesInt.KeyType_OKP:
                 if (epk[CoseKeyParameterKeys.OKP_Curve].AsInt32() != key[CoseKeyParameterKeys.OKP_Curve].AsInt32()) throw new CoseException("Not a match of curves");
 
