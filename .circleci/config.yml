@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  bulid:
+  build:
     docker:
       - image: microsoft/dotnet:2-sdk
 
@@ -8,6 +8,10 @@ jobs:
 
     steps:
        - checkout
+
+       - run:
+         name: Get Examples
+         command: git clone --depth 1 https://github.com/cose-wg/Examples Regressions
 
        - run:
          name: Unit Tests
