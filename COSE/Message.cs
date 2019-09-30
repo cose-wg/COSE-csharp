@@ -298,7 +298,7 @@ namespace Com.AugustCellars.COSE
             if (messageObject.Type != CBORType.Array) throw new CoseException("Message is not a COSE security message.");
 
             if (messageObject.IsTagged) {
-                if (messageObject.GetTags().Count() != 1) throw new CoseException("Malformed message - too many tags");
+                if (messageObject.GetAllTags().Count() != 1) throw new CoseException("Malformed message - too many tags");
 
                 if (defaultTag == Tags.Unknown) {
                     defaultTag = (Tags) messageObject.MostOuterTag.ToInt32Checked();

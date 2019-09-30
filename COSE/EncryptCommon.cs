@@ -53,7 +53,7 @@ namespace Com.AugustCellars.COSE
             if (alg.Type == CBORType.TextString) {
                 throw new CoseException("Algorithm not supported " + alg.AsString());
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                     case AlgorithmValuesInt.AES_GCM_128:
                     case AlgorithmValuesInt.AES_GCM_192:
@@ -114,7 +114,7 @@ namespace Com.AugustCellars.COSE
                         throw new CoseException("Content encryption algorithm is not recognized");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                     case AlgorithmValuesInt.AES_GCM_128:
                     case AlgorithmValuesInt.AES_GCM_192:
@@ -180,7 +180,7 @@ namespace Com.AugustCellars.COSE
             if (alg.Type == CBORType.TextString) {
                 throw new CoseException("Unknown Algorithm Specified");
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                     case AlgorithmValuesInt.AES_GCM_128:
                     case AlgorithmValuesInt.AES_CCM_16_64_128:
@@ -315,7 +315,7 @@ namespace Com.AugustCellars.COSE
 
             //  Figure out what the correct internal parameters to use are
 
-            Debug.Assert(alg.Type == CBORType.Number);
+            Debug.Assert(alg.Type == CBORType.Integer);
             switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.AES_CCM_16_64_128:
                 case AlgorithmValuesInt.AES_CCM_64_64_128:
@@ -414,7 +414,7 @@ namespace Com.AugustCellars.COSE
 
             //  Figure out what the correct internal parameters to use are
 
-            Debug.Assert(alg.Type == CBORType.Number);
+            Debug.Assert(alg.Type == CBORType.Integer);
             switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.AES_CCM_16_64_128:
                 case AlgorithmValuesInt.AES_CCM_64_64_128:
