@@ -10,6 +10,7 @@ matrix:
           TARGET=Std10
           VERSION=Release
           NUGET=dotnet
+          FRAMEWORK=netcoreapp2.0
       os: osx
     - dotnet: 2.2
       mono: none
@@ -18,6 +19,7 @@ matrix:
           TARGET=Std10
           VERSION=Release
           NUGET=dotnet
+          FRAMEWORK=netcoreapp2.0
       os: linux
 
 install:
