@@ -56,7 +56,7 @@ namespace Com.AugustCellars.COSE
                         throw new CoseException("Unrecognized recipient algorithm");
                     }
                 }
-                else if (algorithm.Type == CBORType.Number) {
+                else if (algorithm.Type == CBORType.Integer) {
                     switch ((AlgorithmValuesInt) algorithm.AsInt32()) {
                     case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_256:
                     case AlgorithmValuesInt.Direct_HKDF_HMAC_SHA_512:
@@ -124,7 +124,7 @@ namespace Com.AugustCellars.COSE
                 AddAttribute(HeaderKeys.Algorithm, algorithm, UNPROTECTED);
             }
             else {
-                if (key[CoseKeyKeys.KeyType].Type == CBORType.Number) {
+                if (key[CoseKeyKeys.KeyType].Type == CBORType.Integer) {
                     switch ((GeneralValuesInt) key[CoseKeyKeys.KeyType].AsInt32()) {
                     case GeneralValuesInt.KeyType_Octet:
                         switch (key.AsBytes(CoseKeyParameterKeys.Octet_k).Length) {
@@ -350,7 +350,7 @@ namespace Com.AugustCellars.COSE
 
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.DIRECT:
                     if (key[CoseKeyKeys.KeyType].AsInt32() != (int) GeneralValuesInt.KeyType_Octet) return null;
@@ -561,7 +561,7 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Unknown or unsupported algorithm: " + alg);
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.DIRECT:
                 case AlgorithmValuesInt.Direct_HKDF_AES_128:
@@ -717,7 +717,7 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Unknown Algorithm Specified");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.AES_GCM_128:
                 case AlgorithmValuesInt.AES_CCM_16_64_128:
@@ -764,7 +764,7 @@ namespace Com.AugustCellars.COSE
             else throw new CoseException("Algorithm incorrectly encoded");
 
             CBORObject keyManagement = FindAttribute(HeaderKeys.Algorithm);
-            if (keyManagement.Type == CBORType.Number) {
+            if (keyManagement.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) keyManagement.AsInt32()) {
                 case AlgorithmValuesInt.DIRECT:
                     if (!m_key[CoseKeyKeys.KeyType].Equals(GeneralValues.KeyType_Octet)) throw new CoseException("Key and key managment algorithm don't match");
@@ -864,7 +864,7 @@ namespace Com.AugustCellars.COSE
         {
             if (rgbKey == null) {
                 CBORObject cborKeyType = m_key[CoseKeyKeys.KeyType];
-                if ((cborKeyType == null) || (cborKeyType.Type != CBORType.Number) ||
+                if ((cborKeyType == null) || (cborKeyType.Type != CBORType.Integer) ||
                     (cborKeyType.AsInt32() != (int) GeneralValuesInt.KeyType_Octet)) throw new CoseException("Key is not correct type");
 
                 rgbKey = m_key.AsBytes(CoseKeyParameterKeys.Octet_k);
@@ -881,7 +881,7 @@ namespace Com.AugustCellars.COSE
         {
             if (keyObject != null) {
                 CBORObject cborKeyType = m_key[CoseKeyKeys.KeyType];
-                if ((cborKeyType == null) || (cborKeyType.Type != CBORType.Number) ||
+                if ((cborKeyType == null) || (cborKeyType.Type != CBORType.Integer) ||
                     (cborKeyType.AsInt32() != (int) GeneralValuesInt.KeyType_Octet)) throw new CoseException("Key is not correct type");
 
                 rgbKey = keyObject.AsBytes(CoseKeyParameterKeys.Octet_k);
@@ -1106,7 +1106,7 @@ namespace Com.AugustCellars.COSE
         {
             OneKey epk;
 
-            if (key[CoseKeyKeys.KeyType].Type != CBORType.Number) throw new CoseException("Not an EC Key");
+            if (key[CoseKeyKeys.KeyType].Type != CBORType.Integer) throw new CoseException("Not an EC Key");
 
             if (m_senderKey != null) {
                 epk = key;

@@ -202,14 +202,14 @@ namespace Com.AugustCellars.COSE
             alg = FindAttribute(HeaderKeys.Algorithm);
 
             if (alg == null) {
-                if (_keyToSign[CoseKeyKeys.KeyType].Type == CBORType.Number) {
+                if (_keyToSign[CoseKeyKeys.KeyType].Type == CBORType.Integer) {
                     switch ((GeneralValuesInt) _keyToSign[CoseKeyKeys.KeyType].AsInt32()) {
                     case GeneralValuesInt.KeyType_RSA:
                         alg = AlgorithmValues.RSA_PSS_256;
                         break;
 
                     case GeneralValuesInt.KeyType_EC2:
-                        if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Type == CBORType.Number) {
+                        if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Type == CBORType.Integer) {
                             switch ((GeneralValuesInt) _keyToSign[CoseKeyParameterKeys.EC_Curve].AsInt32()) {
                             case GeneralValuesInt.P256:
                                 alg = AlgorithmValues.ECDSA_256;
@@ -237,7 +237,7 @@ namespace Com.AugustCellars.COSE
                         break;
 
                     case GeneralValuesInt.KeyType_OKP:
-                        if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Type == CBORType.Number) {
+                        if (_keyToSign[CoseKeyParameterKeys.EC_Curve].Type == CBORType.Integer) {
                             switch ((GeneralValuesInt)_keyToSign[CoseKeyParameterKeys.EC_Curve].AsInt32()) {
                             case GeneralValuesInt.Ed25519:
                                 alg = AlgorithmValues.EdDSA;
@@ -291,7 +291,7 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Unknown Algorithm Specified");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.ECDSA_256:
                 case AlgorithmValuesInt.RSA_PSS_256:
@@ -333,7 +333,7 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Unknown Algorithm Specified");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.RSA_PSS_256:
                 case AlgorithmValuesInt.RSA_PSS_384:
@@ -454,7 +454,7 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Unknown signature algorithm");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.ECDSA_256:
                 case AlgorithmValuesInt.RSA_PSS_256:
@@ -494,7 +494,7 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Unknown Algorithm");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.RSA_PSS_256:
                 case AlgorithmValuesInt.RSA_PSS_384:

@@ -57,7 +57,7 @@ namespace Com.AugustCellars.COSE
                 strOut += "'";
                 break;
 
-            case CBORType.Number:
+            case CBORType.Integer:
                 strOut = obj.AsInt32().ToString();
                 break;
 

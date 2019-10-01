@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net462;netcoreapp2.0</TargetFrameworks>
     <PackageId>Com.AugustCellars.COSE</PackageId>
     <Id>Com.AugustCellars.COSE</Id>
-    <PackageVersion>1.5.0</PackageVersion>
-    <Version>1.5.0</Version>
+    <PackageVersion>1.6.0</PackageVersion>
+    <Version>1.6.0</Version>
     <Authors>Jim Schaad</Authors>
     <Description>An implementation of the CBOR Object Signing and Encryption standards.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -13,6 +13,9 @@
     <PackageTags>COSE CBOR</PackageTags>
     
     <PackageReleaseNotes>
+1.6.0
+  - Update to use CBOR version 4.0 due to a security parsing problem.
+  - Update to 1.8.5 of BouncyCastle
 1.5.0
   - Add NetStandard2.0 as a new target
   - Internal changes to make clr compliant
@@ -73,8 +76,8 @@
   
 
   <ItemGroup>
-    <PackageReference Include="PeterO.Cbor" Version="3.0.3" />
-    <PackageReference Include="Portable.BouncyCastle" Version="1.8.4" />
+    <PackageReference Include="PeterO.Cbor" Version="4.0.0" />
+    <PackageReference Include="Portable.BouncyCastle" Version="1.8.5" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attributes.cs" />

@@ -110,7 +110,7 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Unknown Algorithm Specified");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.HMAC_SHA_256:
                 case AlgorithmValuesInt.HMAC_SHA_384:
@@ -163,10 +163,10 @@ namespace Com.AugustCellars.COSE
                     break;
 
                 default:
-                    throw new CoseException("Unknown Algoirthm Specified");
+                    throw new CoseException("Unknown Algorithm Specified");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.HMAC_SHA_256_64:
                 case AlgorithmValuesInt.HMAC_SHA_256:
@@ -209,7 +209,7 @@ namespace Com.AugustCellars.COSE
                     throw new CoseException("Unknown Algorithm Specified");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.HMAC_SHA_256:
                 case AlgorithmValuesInt.HMAC_SHA_384:
@@ -386,7 +386,7 @@ public virtual void Compute()
                     throw new CoseException("Unknown Algorithm Specified");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.HMAC_SHA_256_64:
                 case AlgorithmValuesInt.HMAC_SHA_256:
@@ -457,7 +457,7 @@ public virtual void Compute()
                     throw new CoseException("Unknown Algorithm Specified");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.HMAC_SHA_256:
                 case AlgorithmValuesInt.HMAC_SHA_384:
@@ -511,7 +511,7 @@ public virtual void Compute()
                     throw new CoseException("Unknown Algorithm Specified");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.HMAC_SHA_256_64:
                 case AlgorithmValuesInt.HMAC_SHA_256:
@@ -570,7 +570,7 @@ public virtual void Compute()
                     throw new CoseException("Unknown Algorithm Specified");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.HMAC_SHA_256:
                 case AlgorithmValuesInt.HMAC_SHA_384:
@@ -653,7 +653,7 @@ public virtual void Compute()
             //  key sizes are 128, 192 and 256 bits
             //  Authentication tag sizes are 64 and 128 bits
 
-            Debug.Assert(alg.Type == CBORType.Number);
+            Debug.Assert(alg.Type == CBORType.Integer);
             switch ((AlgorithmValuesInt) alg.AsInt32()) {
             case AlgorithmValuesInt.AES_CBC_MAC_128_64:
                 cbitKey = 128;
@@ -762,7 +762,7 @@ public virtual void Compute()
                     throw new CoseException("Unrecognized algorithm");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.HMAC_SHA_256:
                     cbResult = 256 / 8;
