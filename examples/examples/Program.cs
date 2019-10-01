@@ -77,6 +77,15 @@ namespace examples
 
             // HashSig.SelfTest();
 
+            string x = CBORObject.True.ToString();
+            CBORObject xx = CBORObject.NewMap();
+            xx.Add(1, CBORObject.True);
+            x = xx.ToString();
+            byte[] bb = xx.EncodeToBytes();
+            xx = CBORObject.DecodeFromBytes(bb);
+            x = xx.ToString();
+
+
             RunTestsInDirectory("anima");
             RunTestsInDirectory("X509");
             RunTestsInDirectory("hashsig");
@@ -123,6 +132,7 @@ namespace examples
             RunTestsInDirectory("rsa-pss-examples");
             RunTestsInDirectory("sign-tests");
             RunTestsInDirectory("sign1-tests");
+            RunTestsInDirectory("X25519-tests");
         }
 
         static void RunTestsInDirectory(string strDirectory)
@@ -1630,7 +1640,7 @@ namespace examples
 
         static CBORObject AlgorithmMap(CBORObject old)
         {
-            if (old.Type == CBORType.Number) {
+            if (old.Type == CBORType.Integer) {
                 return old;
             }
 
@@ -1719,7 +1729,7 @@ namespace examples
                     throw new Exception("NYI");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.AES_GCM_128:
                 case AlgorithmValuesInt.AES_CCM_16_64_128:

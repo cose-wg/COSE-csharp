@@ -11,6 +11,7 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Copyright>Copyright @2016-9 Jim Schaad</Copyright>
     <PackageTags>COSE CBOR</PackageTags>
+    <PackageLicenseExpression>EPL-2.0</PackageLicenseExpression>
     
     <PackageReleaseNotes>
 1.6.0

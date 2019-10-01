@@ -35,17 +35,21 @@
   <ItemGroup>
     <Compile Include="JWT.cs" />
     <Compile Include="JwtException.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   
 
   <ItemGroup>
-    <PackageReference Include="PeterO.Cbor" Version="3.0.3" />
+    <PackageReference Include="PeterO.Cbor" Version="4.0.0" />
   </ItemGroup>
   
 
   <ItemGroup>
     <ProjectReference Include="..\JOSE\JOSE.csproj" />
+  </ItemGroup>
+  
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
   
 
