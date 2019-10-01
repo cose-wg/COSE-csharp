@@ -360,13 +360,13 @@ namespace Com.AugustCellars.COSE
                 throw new CoseException("Malformed key struture");
             }
 
-            if ((cborKeyType.Type != CBORType.Number) &&
+            if ((cborKeyType.Type != CBORType.Integer) &&
                 !((cborKeyType.Equals(GeneralValues.KeyType_EC)) || (cborKeyType.Equals(GeneralValues.KeyType_OKP)))) {
                 throw new CoseException("Not an EC key");
             }
 
             CBORObject cborCurve = _map[CoseKeyParameterKeys.EC_Curve];
-            if (cborCurve.Type == CBORType.Number) {
+            if (cborCurve.Type == CBORType.Integer) {
                 switch ((GeneralValuesInt) cborCurve.AsInt32()) {
                     case GeneralValuesInt.P256:
                         return NistNamedCurves.GetByName("P-256");
@@ -466,7 +466,7 @@ namespace Com.AugustCellars.COSE
 
             foreach (CBORObject obj in _map.Keys) {
                 switch (obj.Type) {
-                    case CBORType.Number:
+                    case CBORType.Integer:
                         if (obj.AsInt32() > 0) {
                             newKey.Add(obj, _map[obj]);
                         }

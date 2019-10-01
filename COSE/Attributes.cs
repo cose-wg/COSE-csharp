@@ -98,7 +98,7 @@ namespace Com.AugustCellars.COSE
         /// <param name="bucket">Which bucket is the attribute placed in?</param>
         public void AddAttribute(CBORObject label, CBORObject value, int bucket)
         { 
-            if ((label.Type != CBORType.Number) && (label.Type != CBORType.TextString))
+            if ((label.Type != CBORType.Integer) && (label.Type != CBORType.TextString))
             {
                 throw new CoseException("Labels must be integers or strings");
             }
