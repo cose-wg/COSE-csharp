@@ -43,7 +43,7 @@ namespace Com.AugustCellars.COSE
             _map = objKey;
         }
 
-        public OneKey(AsymmetricKeyParameter publicKey, AsymmetricKeyParameter privateKey)
+        public OneKey(AsymmetricKeyParameter publicKey, AsymmetricKeyParameter privateKey) : this()
         {
             if (publicKey != null) {
                 FromKey(publicKey);
