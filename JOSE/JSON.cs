@@ -3,9 +3,69 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using PeterO.Cbor;
 
-namespace JOSE
+namespace Com.AugustCellars.JOSE
 {
+    public class JSON
+    {
+        public static string ToJsonString(CBORObject json)
+        {
+            return ToStringBuilder(json).ToString();
+        }
+
+        private static StringBuilder ToStringBuilder(CBORObject json)
+        {
+            StringBuilder result = new StringBuilder();
+            bool first = true;
+
+            switch (json.Type) {
+            case CBORType.TextString:
+            case CBORType.Integer:
+            case CBORType.Boolean:
+                result.Append(json.ToJSONString());
+                break;
+
+
+            case CBORType.Map:
+                result.Append("{");
+                foreach (CBORObject key in json.Keys) {
+                    if (!first) {
+                        result.Append(",");
+                    }
+
+                    result.Append(key.ToJSONString());
+                    result.Append(":");
+                    result.Append(ToStringBuilder(json[key]));
+                    first = false;
+                }
+
+                result.Append("}");
+                break;
+
+            case CBORType.Array:
+                result.Append("[");
+                foreach (CBORObject value in json.Values) {
+                    if (!first) {
+                        result.Append(",");
+                    }
+
+                    result.Append(ToStringBuilder(value));
+                    first = false;
+                }
+
+                result.Append("]");
+                break;
+
+
+            default:
+                throw new Exception("Internal Error");
+            }
+
+            return result;
+        }
+    }
+#if false
     public enum JsonType
     {
         unknown = -1, map = 1, text = 2, array = 3, number = 4, boolean = 5
@@ -532,4 +592,5 @@ namespace JOSE
             return tmp;
         }
     }
+#endif
 }

@@ -76,8 +76,9 @@ namespace Com.AugustCellars.COSE.Tests
 #if !CHACHA20
                     if (di.Name == "chacha-poly-examples") continue;
 #endif
-                    if (di.Name == "X25519-tests") continue;
                     if (di.Name == ".git") continue;
+                    if (di.Name == "anima") continue;
+                    if (di.Name == "x509") continue;
                     ProcessDirectory(Path.Combine(directory.FullName, di.Name));
                 }
             }
@@ -819,6 +820,11 @@ namespace Com.AugustCellars.COSE.Tests
                     cnValue = null;
                     break;
 
+                    case "compressed":
+                        cnKey = null;
+                        cnValue = null;
+                        break;
+
                     default:
                     throw new Exception("Attribute " + attr.AsString() + " is not part of SetAttributes");
                 }
@@ -998,7 +1004,7 @@ namespace Com.AugustCellars.COSE.Tests
 
         static CBORObject AlgorithmMap(CBORObject old)
         {
-            if (old.Type == CBORType.Number) {
+            if (old.Type == CBORType.Integer) {
                 return old;
             }
 

@@ -134,6 +134,10 @@ namespace Com.AugustCellars.COSE
                 }
             }
 
+            if (CounterSigner1 != null) {
+                AddAttribute(HeaderKeys.CounterSignature0, CounterSigner1.EncodeToCBORObject(rgbProtected, rgbContent), UNPROTECTED);
+            }
+
             if ((UnprotectedMap == null) || (UnprotectedMap.Count == 0)) obj.Add(CBORObject.NewMap());
             else obj.Add(UnprotectedMap); // Add unprotected attributes
 

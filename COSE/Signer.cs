@@ -180,6 +180,10 @@ namespace Com.AugustCellars.COSE
                 cborProtected = CBORObject.FromObject(rgb);
             }
 
+            if (rgbContent == null) {
+                rgbContent = new byte[0];
+            }
+
             CBORObject signObj = CBORObject.NewArray();
             signObj.Add(context);
             signObj.Add(bodyAttributes);
@@ -293,9 +297,6 @@ namespace Com.AugustCellars.COSE
                     digest2 = new Sha384Digest();
                     break;
 
-                case "HSS-LMS":
-                    break;
-
                 default:
                     throw new Exception("Unknown signature algorithm");
                 }
@@ -323,6 +324,9 @@ namespace Com.AugustCellars.COSE
                 case AlgorithmValuesInt.EdDSA:
                     break;
 
+                case AlgorithmValuesInt.HSS_LMS:
+                    break;
+
                 default:
                     throw new CoseException("Unknown signature algorithm");
                 }
@@ -333,12 +337,6 @@ namespace Com.AugustCellars.COSE
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
-                case "HSS-LMS":
-                    HashSig sig = new HashSig(keyToSign[CoseKeyParameterKeys.Lms_Private].AsString());
-                    byte[] signBytes = sig.Sign(toBeSigned);
-                    keyToSign.Replace(CoseKeyParameterKeys.Lms_Private, CBORObject.FromObject(sig.PrivateKey));
-                    return signBytes;
-
                 default:
                     throw new CoseException("Unknown Algorithm");
                 }
@@ -410,6 +408,12 @@ namespace Com.AugustCellars.COSE
                     return eddsa.GenerateSignature();
                 }
 
+                case AlgorithmValuesInt.HSS_LMS:
+                    HashSig sigHash = new HashSig(keyToSign[CoseKeyParameterKeys.Lms_Private].AsString());
+                    byte[] signBytes = sigHash.Sign(toBeSigned);
+                    keyToSign.Replace(CoseKeyParameterKeys.Lms_Private, CBORObject.FromObject(sigHash.PrivateKey));
+                    return signBytes;
+
                 default:
                     throw new CoseException("Unknown Algorithm");
                 }
@@ -442,9 +446,6 @@ namespace Com.AugustCellars.COSE
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
-                case "HSS-LMS":
-                    break;
-
                     default:
                         throw new Exception("Unknown signature algorithm");
                 }
@@ -472,6 +473,9 @@ namespace Com.AugustCellars.COSE
                     case AlgorithmValuesInt.EdDSA:
                         break;
 
+                    case AlgorithmValuesInt.HSS_LMS:
+                        break;
+
                     default:
                         throw new CoseException("Unknown signature algorith");
                 }
@@ -482,11 +486,6 @@ namespace Com.AugustCellars.COSE
 
             if (alg.Type == CBORType.TextString) {
                 switch (alg.AsString()) {
-                    case "HSS-LMS":
-                        return HashSig.Validate(content,
-                                                  signKey[CoseKeyParameterKeys.Lms_Public].GetByteString(),
-                                                  rgbSignature);
-
                     default:
                         throw new CoseException("Unknown Algorithm");
                 }
@@ -549,6 +548,11 @@ namespace Com.AugustCellars.COSE
                             return eddsa.VerifySignature(rgbSignature);
                         }
 #endif
+
+                    case AlgorithmValuesInt.HSS_LMS:
+                        return HashSig.Validate(content,
+                            signKey[CoseKeyParameterKeys.Lms_Public].GetByteString(),
+                            rgbSignature);
 
                     default:
                         throw new CoseException("Unknown Algorithm");

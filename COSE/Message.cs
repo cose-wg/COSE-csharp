@@ -90,6 +90,8 @@ namespace Com.AugustCellars.COSE
 
         ECDH_ES_HKDF_256_AES_KW_128 = -29, ECDH_ES_HKDF_256_AES_KW_192 = -30, ECDH_ES_HKDF_256_AES_KW_256 = -31,
         ECDH_SS_HKDF_256_AES_KW_128 = -32, ECDH_SS_HKDF_256_AES_KW_192 = -33, ECDH_SS_HKDF_256_AES_KW_256 = -34,
+
+        HSS_LMS = -46,
     }
 
     public class AlgorithmValues
@@ -160,7 +162,7 @@ namespace Com.AugustCellars.COSE
         public static readonly CBORObject ECDH_SS_HKDF_256_AES_KW_192 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_192);
         public static readonly CBORObject ECDH_SS_HKDF_256_AES_KW_256 = CBORObject.FromObject(AlgorithmValuesInt.ECDH_SS_HKDF_256_AES_KW_256);
 
-        public static readonly CBORObject HSS_LMS_HASH = CBORObject.FromObject("HSS-LMS");
+        public static readonly CBORObject HSS_LMS_HASH = CBORObject.FromObject(AlgorithmValuesInt.HSS_LMS);
     }
 
     public class CoseKeyKeys
@@ -221,7 +223,7 @@ namespace Com.AugustCellars.COSE
 
     public enum GeneralValuesInt
     {
-        KeyType_OKP = 1, KeyType_EC2=2, KeyType_RSA=3, KeyType_Octet = 4,
+        KeyType_OKP = 1, KeyType_EC2=2, KeyType_RSA=3, KeyType_Octet = 4, KeyType_HssLms = 5,
         P256=1, P384=2, P521=3, X25519=4, X448=5, Ed25519=6, Ed448=7
     }
 
@@ -231,7 +233,7 @@ namespace Com.AugustCellars.COSE
         public static readonly CBORObject KeyType_EC = CBORObject.FromObject(GeneralValuesInt.KeyType_EC2);
         public static readonly CBORObject KeyType_RSA = CBORObject.FromObject(GeneralValuesInt.KeyType_RSA);
         public static readonly CBORObject KeyType_Octet = CBORObject.FromObject(GeneralValuesInt.KeyType_Octet);
-        public static readonly CBORObject KeyType_HSS_LMS = CBORObject.FromObject("HSS-LMS");
+        public static readonly CBORObject KeyType_HSS_LMS = CBORObject.FromObject(GeneralValuesInt.KeyType_HssLms);
         public static readonly CBORObject P256 = CBORObject.FromObject(GeneralValuesInt.P256);
         public static readonly CBORObject P384 = CBORObject.FromObject(GeneralValuesInt.P384);
         public static readonly CBORObject P521 = CBORObject.FromObject(GeneralValuesInt.P521);

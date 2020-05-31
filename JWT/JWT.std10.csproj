@@ -7,10 +7,10 @@
     <PackageVersion>1.2.0</PackageVersion>
     <Version>1.2.0</Version>
     <Authors>Jim Schaad</Authors>
-    <Description>An implementation of the CBOR Object Signing and Encryption standards.</Description>
+    <Description>An implementation of the JWT.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Copyright>Copyright @2016-7 Jim Schaad</Copyright>
-    <PackageTags>COSE CBOR</PackageTags>
+    <Copyright>Copyright @2016-9 Jim Schaad</Copyright>
+    <PackageTags>COSE JWT</PackageTags>
     
     <PackageReleaseNotes>
     Don't release me
@@ -27,8 +27,6 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;DEBUG;NETSTANDARD1_0</DefineConstants>
-    <IntermediateOutputPath>obj\dev\Debug</IntermediateOutputPath>
-    <OutputPath>bin\dev\Debug\</OutputPath>
   </PropertyGroup>
   
 
@@ -49,8 +47,7 @@
   
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Bouncy-Castle\bc-csharp\crypto\crypto.csproj" />
-    <ProjectReference Include="..\JOSE\JOSE.dev.csproj" />
+    <ProjectReference Include="..\..\..\Bouncy-Castle\std\crypto\src\crypto.my.csproj" />
   </ItemGroup>
   
 

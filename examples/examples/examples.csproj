@@ -24,7 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Bouncy-Castle\bc-csharp\crypto\crypto.csproj" />
     <ProjectReference Include="..\..\COSE\COSE.dev.csproj" />
-    <ProjectReference Include="..\..\JOSE\JOSE.csproj" />
+    <ProjectReference Include="..\..\JOSE\JOSE.dev.csproj" />
     <ProjectReference Include="..\..\JWT\JWT.csproj" />
   </ItemGroup>
 
