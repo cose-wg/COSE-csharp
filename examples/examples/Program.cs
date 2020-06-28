@@ -5,6 +5,12 @@ using System.Text;
 using System.IO;
 using PeterO.Cbor;
 using Com.AugustCellars.COSE;
+using Attributes = Com.AugustCellars.COSE.Attributes;
+using EncryptMessage = Com.AugustCellars.COSE.EncryptMessage;
+using Message = Com.AugustCellars.COSE.Message;
+using Recipient = Com.AugustCellars.COSE.Recipient;
+using Signer = Com.AugustCellars.COSE.Signer;
+using SignMessage = Com.AugustCellars.COSE.SignMessage;
 
 // ReSharper disable All
 
@@ -35,7 +41,9 @@ namespace examples
         {
             if (args.Count() == 0) {
                 RunCoseExamples();
-                // JoseExamples.RunTestsInDirectory(@"c:\Projects\JOSE\cookbook");
+                JoseExamples.RunTestsInDirectory("rsa");
+                JoseExamples.RunTestsInDirectory("ecdsa");
+                JoseExamples.RunTestsInDirectory("keywrap");
                 return;
             }
 
@@ -77,9 +85,19 @@ namespace examples
 
             // HashSig.SelfTest();
 
-            RunTestsInDirectory("anima");
+            string x = CBORObject.True.ToString();
+            CBORObject xx = CBORObject.NewMap();
+            xx.Add(1, CBORObject.True);
+            x = xx.ToString();
+            byte[] bb = xx.EncodeToBytes();
+            xx = CBORObject.DecodeFromBytes(bb);
+            x = xx.ToString();
+
+
+            RunTestsInDirectory("X25519-tests");
+            //            RunTestsInDirectory("anima");
             RunTestsInDirectory("X509");
-            RunTestsInDirectory("hashsig");
+            //          RunTestsInDirectory("hashsig");
 
 
             RunTestsInDirectory("RFC8152");
@@ -107,7 +125,7 @@ namespace examples
             RunTestsInDirectory("aes-gcm-examples");
             RunTestsInDirectory("chacha-poly-examples");
             RunTestsInDirectory("countersign");
-            RunTestsInDirectory("countersign0");
+            RunTestsInDirectory("countersign1");
             RunTestsInDirectory("ecdh-direct-examples");
             RunTestsInDirectory("ecdh-wrap-examples");
             RunTestsInDirectory("ecdsa-examples");
@@ -123,6 +141,7 @@ namespace examples
             RunTestsInDirectory("rsa-pss-examples");
             RunTestsInDirectory("sign-tests");
             RunTestsInDirectory("sign1-tests");
+            RunTestsInDirectory("X25519-tests");
         }
 
         static void RunTestsInDirectory(string strDirectory)
@@ -163,7 +182,7 @@ namespace examples
 #if FOR_EXAMPLES
                 if (ProcessJSON(control, RootDir + "\\new\\" + dir + "\\" + fileName.Replace(".json", ".bin"))) {
                     fileText = control.ToJSONString();
-                    JOSE.JSON j = JOSE.JSON.Parse(fileText);
+                    JSON j = JSON.Parse(fileText);
                     fileText = j.Serialize(0);
                     StreamWriter file2 = File.CreateText(RootDir + "\\new\\" + dir + "\\" + fileName);
                     file2.Write(fileText);
@@ -201,7 +220,6 @@ namespace examples
             }
 
             Message.SetPRNG(prng);
-            JOSE.Message.SetPRNG(prng);
 
             prng.Reset();
 
@@ -254,9 +272,9 @@ namespace examples
 
 
                 if (prng.IsDirty) {
-                    if (prng.buffer != null) {
-                        if (control["input"].ContainsKey("rng_stream")) control["input"]["rng_stream"] = prng.buffer;
-                        else control["input"].Add("rng_stream", prng.buffer);
+                    if (prng.Buffer != null) {
+                        if (control["input"].ContainsKey("rng_stream")) control["input"]["rng_stream"] = prng.Buffer;
+                        else control["input"].Add("rng_stream", prng.Buffer);
                     }
                     else {
                         if (control["input"].ContainsKey("rng_stream"))
@@ -269,7 +287,7 @@ namespace examples
             catch (CoseException e) {
                 Console.WriteLine(String.Format("COSE threw an error '{0}'.", e.ToString()));
             }
-            catch (JOSE.JOSE_Exception e) {
+            catch (Com.AugustCellars.JOSE.JoseException e) {
                 Console.WriteLine(String.Format("COSE threw an error '{0}'.", e.ToString()));
             }
 
@@ -1074,12 +1092,12 @@ namespace examples
             _AddAttributes(null, obj, items, 4);
         }
 
-        static void AddAttributes(JOSE.Attributes msg, CBORObject items, bool fProtected)
+        static void AddAttributes(Com.AugustCellars.JOSE.Attributes msg, CBORObject items, bool fProtected)
         {
             foreach (CBORObject key in items.Keys) {
                 if ((key.AsString().Length > 4) && (key.AsString().Substring(key.AsString().Length - 4, 4) == "_hex")) {
                     msg.AddAttribute(key.AsString().Substring(0, key.AsString().Length - 4),
-                                     JOSE.Message.base64urlencode(FromHex(items[key].AsString())), fProtected);
+                        Com.AugustCellars.JOSE.Message.base64urlencode(FromHex(items[key].AsString())), fProtected);
                 }
                 else msg.AddAttribute(key.AsString(), items[key].AsString(), fProtected);
             }
@@ -1169,7 +1187,7 @@ namespace examples
             if (control.ContainsKey("unsent")) AddAttributes(recipient, control["unsent"], 2);
             if (control.ContainsKey("external")) AddExternalData(recipient, control["external"]);
             if (control.ContainsKey("countersign")) AddCounterSignature(recipient, control["countersign"]);
-            if (control.ContainsKey("countersign0")) AddCounterSignature(recipient, control["countersign0"]);
+            if (control.ContainsKey("countersign0")) AddCounterSignature0(recipient, control["countersign0"]);
 
             if (control.ContainsKey("recipients")) {
                 if ((!control.ContainsKey("recipients")) || (control["recipients"].Type != CBORType.Array))
@@ -1195,23 +1213,23 @@ namespace examples
             return recipient;
         }
 
-        static JOSE.Recipient GetRecipientJOSE(CBORObject control)
+        static Com.AugustCellars.JOSE.Recipient GetRecipientJOSE(CBORObject control)
         {
-            JOSE.Key key;
+            Com.AugustCellars.JOSE.JWK key;
 
             if (!control.ContainsKey("alg")) throw new Exception("Recipient missing alg field");
 
             if (control.ContainsKey("key")) {
-                key = new JOSE.Key(JOSE.JSON.Parse(control["key"].ToJSONString()));
+                key = new Com.AugustCellars.JOSE.JWK(control["key"]);
             }
             else if (control.ContainsKey("pwd")) {
-                key = new JOSE.Key();
+                key = new Com.AugustCellars.JOSE.JWK();
                 key.Add("kty", "oct");
-                key.Add("k", JOSE.Message.base64urlencode(UTF8Encoding.UTF8.GetBytes(control["pwd"].AsString())));
+                key.Add("k", Com.AugustCellars.JOSE.Message.base64urlencode(UTF8Encoding.UTF8.GetBytes(control["pwd"].AsString())));
             }
             else throw new Exception("No key defined for a recipient");
 
-            JOSE.Recipient recipient = new JOSE.Recipient(key, control["alg"].AsString());
+            Com.AugustCellars.JOSE.Recipient recipient = new Com.AugustCellars.JOSE.Recipient(key, control["alg"].AsString());
 
             //  Double check that alg is the same as in the attributes
 
@@ -1222,7 +1240,7 @@ namespace examples
             if (control.ContainsKey("unprotected_jose")) AddAttributes(recipient, control["unprotected_jose"], false);
 
             if (control.ContainsKey("sender_key")) {
-                JOSE.Key myKey = new JOSE.Key(JOSE.JSON.Parse(control["sender_key"].ToJSONString()));
+                Com.AugustCellars.JOSE.JWK myKey = new Com.AugustCellars.JOSE.JWK(control["sender_key"]);
                 recipient.SetSenderKey(myKey);
             }
 
@@ -1268,13 +1286,14 @@ namespace examples
         }
 
 
-        static JOSE.Signer GetSignerJOSE(CBORObject control)
+        static Com.AugustCellars.JOSE.Signer GetSignerJOSE(CBORObject control)
         {
+
             if (!control.ContainsKey("alg")) throw new Exception("Signer missing alg field");
 
-            JOSE.Key key = new JOSE.Key(JOSE.JSON.Parse(control["key"].ToJSONString()));
+            Com.AugustCellars.JOSE.JWK key = new Com.AugustCellars.JOSE.JWK(control["key"]);
 
-            JOSE.Signer signer = new JOSE.Signer(key, control["alg"].AsString());
+            Com.AugustCellars.JOSE.Signer signer = new Com.AugustCellars.JOSE.Signer(key, control["alg"].AsString());
 
             if (control.ContainsKey("protected_jose")) AddAttributes(signer, control["protected_jose"], true);
             if (control.ContainsKey("unprotected_jose")) AddAttributes(signer, control["unprotected_jose"], false);
@@ -1593,34 +1612,34 @@ namespace examples
             return bytes;
         }
 
-        public static CBORObject AsCbor(JOSE.JSON json)
+        public static CBORObject AsCbor(JSON json)
         {
             CBORObject obj;
 
             switch (json.nodeType) {
-            case JOSE.JsonType.array:
+            case JsonType.array:
                 obj = CBORObject.NewArray();
-                foreach (JOSE.JSON pair in json.array) {
+                foreach (JSON pair in json.array) {
                     obj.Add(AsCbor(pair));
                 }
 
                 return obj;
 
-            case JOSE.JsonType.map:
+            case JsonType.map:
                 obj = CBORObject.NewMap();
-                foreach (KeyValuePair<string, JOSE.JSON> pair in json.map) {
+                foreach (KeyValuePair<string, JSON> pair in json.map) {
                     obj.Add(pair.Key, AsCbor(pair.Value));
                 }
 
                 return obj;
 
-            case JOSE.JsonType.number:
+            case JsonType.number:
                 return CBORObject.FromObject(json.number);
 
-            case JOSE.JsonType.text:
+            case JsonType.text:
                 return CBORObject.FromObject(json.text);
 
-            case JOSE.JsonType.unknown:
+            case JsonType.unknown:
             default:
                 throw new Exception("Can deal with unknown JSON node type");
             }
@@ -1630,7 +1649,7 @@ namespace examples
 
         static CBORObject AlgorithmMap(CBORObject old)
         {
-            if (old.Type == CBORType.Number) {
+            if (old.Type == CBORType.Integer) {
                 return old;
             }
 
@@ -1690,7 +1709,7 @@ namespace examples
             case "RSA-PSS-256": return AlgorithmValues.RSA_PSS_256;
             case "RSA-PSS-384": return AlgorithmValues.RSA_PSS_384;
             case "RSA-PSS-512": return AlgorithmValues.RSA_PSS_512;
-                case "HSS-LSM": return AlgorithmValues.HSS_LMS_HASH;
+                case "HSS-LMS": return AlgorithmValues.HSS_LMS_HASH;
             default: return old;
             }
         }
@@ -1719,7 +1738,7 @@ namespace examples
                     throw new Exception("NYI");
                 }
             }
-            else if (alg.Type == CBORType.Number) {
+            else if (alg.Type == CBORType.Integer) {
                 switch ((AlgorithmValuesInt) alg.AsInt32()) {
                 case AlgorithmValuesInt.AES_GCM_128:
                 case AlgorithmValuesInt.AES_CCM_16_64_128:
@@ -1758,18 +1777,27 @@ namespace examples
             return cbitKey;
         }
 
-        static CBORObject GetSection(CBORObject control, string tag)
+        public static CBORObject GetSection(CBORObject control, string tag, CBORType type = CBORType.Map)
         {
             CBORObject obj;
 
             if (control.ContainsKey(tag)) return control[tag];
 
-            obj = CBORObject.NewMap();
+            if (type == CBORType.Map) {
+                obj = CBORObject.NewMap();
+            }
+            else if (type == CBORType.Array) {
+                obj = CBORObject.NewArray();
+            }
+            else {
+                throw new Exception("NYI in GetSection");
+            }
+
             control.Add(tag, obj);
             return obj;
         }
 
-        static void SetField(CBORObject obj, string tag, byte[] value, ref bool fDirty)
+        public static void SetField(CBORObject obj, string tag, byte[] value, ref bool fDirty)
         {
             if (obj.ContainsKey(tag)) {
                 if (value == null) {
@@ -1791,6 +1819,31 @@ namespace examples
             }
         }
 
+        public static void SetField(CBORObject obj, string tag, string value, ref bool fDirty)
+        {
+            if (obj.ContainsKey(tag))
+            {
+                if (value == null)
+                {
+                    obj.Remove(CBORObject.FromObject(tag));
+                    fDirty = true;
+                    return;
+                }
+
+                string old = obj[tag].AsString();
+                string newVal = value;
+                if (old != newVal)
+                {
+                    obj[tag] = CBORObject.FromObject(newVal);
+                    fDirty = true;
+                }
+            }
+            else if (value != null)
+            {
+                obj.Add(tag, CBORObject.FromObject(value));
+                fDirty = true;
+            }
+        }
 
         static void ValidateJSON(CBORObject control)
         {
@@ -1814,7 +1867,7 @@ namespace examples
                 Console.WriteLine();
                 Console.WriteLine(String.Format("COSE threw an error '{0}'.", e.ToString()));
             }
-            catch (JOSE.JOSE_Exception e) {
+            catch (Com.AugustCellars.JOSE.JoseException e) {
                 Console.WriteLine();
                 Console.WriteLine(String.Format("COSE threw an error '{0}'.", e.ToString()));
             }

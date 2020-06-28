@@ -1,16 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
-    <PackageId>Com.AugustCellars.JWT</PackageId>
-    <Id>Com.AugustCellars.JWT</Id>
+    <TargetFrameworks>netstandard2.0;net462;netcoreapp2.0;netcoreapp2.1</TargetFrameworks>
+    <PackageId>Com.AugustCellars.JOSE</PackageId>
+    <Id>Com.AugustCellars.JOSE</Id>
     <PackageVersion>1.2.0</PackageVersion>
     <Version>1.2.0</Version>
     <Authors>Jim Schaad</Authors>
-    <Description>An implementation of the CBOR Object Signing and Encryption standards.</Description>
+    <Description>An implementation of the JOSE.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Copyright>Copyright @2016-7 Jim Schaad</Copyright>
-    <PackageTags>COSE CBOR</PackageTags>
+    <Copyright>Copyright @2016-9 Jim Schaad</Copyright>
+    <PackageTags>JOSE JWK</PackageTags>
     
     <PackageReleaseNotes>
     Don't release me
@@ -21,10 +21,11 @@
 
   <PropertyGroup>
     <EnableDefaultItems>false</EnableDefaultItems>
-    <AssemblyName>JWT</AssemblyName>
-    <RootNamespace>Com.AugustCellars.JWT</RootNamespace>
+    <AssemblyName>JOSE</AssemblyName>
+    <RootNamespace>Com.AugustCellars.JOSE</RootNamespace>
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
   </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;DEBUG;NETSTANDARD1_0</DefineConstants>
     <IntermediateOutputPath>obj\dev\Debug</IntermediateOutputPath>
@@ -33,8 +34,15 @@
   
 
   <ItemGroup>
-    <Compile Include="JWT.cs" />
-    <Compile Include="JwtException.cs" />
+    <Compile Include="Attributes.cs" />
+    <Compile Include="EncryptMessage.cs" />
+    <Compile Include="JSON.cs" />
+    <Compile Include="JOSE_Exception.cs" />
+    <Compile Include="Key.cs" />
+    <Compile Include="Message.cs" />
+    <Compile Include="Recipient.cs" />
+    <Compile Include="Signer.cs" />
+    <Compile Include="SignMessage.cs" />
   </ItemGroup>
   
 
@@ -44,14 +52,7 @@
   
 
   <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-  
-
-  <ItemGroup>
     <ProjectReference Include="..\..\..\Bouncy-Castle\bc-csharp\crypto\crypto.csproj" />
-    <ProjectReference Include="..\JOSE\JOSE.dev.csproj" />
   </ItemGroup>
   
-
 </Project>

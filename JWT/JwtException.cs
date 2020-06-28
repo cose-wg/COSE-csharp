@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JWT
+namespace Com.AugustCellars.JWT
 {
     public class JwtException : Exception
     {

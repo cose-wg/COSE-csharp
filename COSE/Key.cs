@@ -157,12 +157,6 @@ namespace Com.AugustCellars.COSE
 
             if (_map[CoseKeyKeys.KeyType].Type == CBORType.TextString) {
                 switch (_map[CoseKeyKeys.KeyType].AsString()) {
-                case "HSS-LMS":
-                    if (!CompareField(key2, CoseKeyParameterKeys.Lms_Public)) {
-                        return false;
-                    }
-                    break;
-
                 default:
                     return true;
                 }
@@ -191,6 +185,13 @@ namespace Com.AugustCellars.COSE
                         return false;
                     }
 
+                    break;
+
+                case GeneralValuesInt.KeyType_HssLms:
+                    if (!CompareField(key2, CoseKeyParameterKeys.Lms_Public))
+                    {
+                        return false;
+                    }
                     break;
 
                 default:
@@ -431,12 +432,7 @@ namespace Com.AugustCellars.COSE
         {
             OneKey newKey = new OneKey();
             if (_map[CoseKeyKeys.KeyType].Type == CBORType.TextString) {
-                if (_map[CoseKeyKeys.KeyType].AsString() == "HSS-LMS") {
-                    newKey.Add(CoseKeyParameterKeys.Lms_Public, _map[CoseKeyParameterKeys.Lms_Public]);
-                }
-                else {
                     throw new CoseException("Key type unrecognized");
-                }
             }
             else {
                 switch ((GeneralValuesInt) _map[CoseKeyKeys.KeyType].AsInt16()) {
@@ -457,6 +453,10 @@ namespace Com.AugustCellars.COSE
                 case GeneralValuesInt.KeyType_OKP:
                     newKey.Add(CoseKeyParameterKeys.EC_Curve, _map[CoseKeyParameterKeys.EC_Curve]);
                     newKey.Add(CoseKeyParameterKeys.EC_X, _map[CoseKeyParameterKeys.EC_X]);
+                    break;
+
+                case GeneralValuesInt.KeyType_HssLms:
+                    newKey.Add(CoseKeyParameterKeys.Lms_Public, _map[CoseKeyParameterKeys.Lms_Public]);
                     break;
 
                 default:

@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using JOSE;
+using JOSE = Com.AugustCellars.JOSE;
+using Com.AugustCellars.JOSE;
+using PeterO.Cbor;
 
-namespace JWT
+namespace Com.AugustCellars.JWT
 {
     public enum ClaimID
     {
@@ -20,27 +22,35 @@ namespace JWT
 
     public class JWT
     {
-        JOSE.JSON claims = new JSON();
+        readonly CBORObject _claims = CBORObject.NewMap();
 
         public JWT()
         {
 
         }
 
+        public JWT(CBORObject token)
+        {
+            if (token.Type != CBORType.Map) throw new JwtException("CWT must be a map");
+            _claims = token;
+        }
+
+
+
         public void SetClaim(ClaimID claim, string value)
         {
-            SetClaim(claim, JSON.FromObject(value));
+            SetClaim(claim, CBORObject.FromObject(value));
         }
 
         public void SetClaim(ClaimID claim, DateTime dt)
         {
             double unixTime = (TimeZoneInfo.ConvertTimeToUtc(dt) -
                        new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc)).TotalSeconds;
-            JSON value = JSON.FromObject(unixTime);
+            CBORObject value = CBORObject.FromObject(unixTime);
             SetClaim(claim, value);
         }
 
-        public void SetClaim(ClaimID claim, JSON value)
+        public void SetClaim(ClaimID claim, CBORObject value)
         {
             string keyName;
 
@@ -59,23 +69,23 @@ namespace JWT
             SetClaim(keyName, value);
         }
 
-        public void SetClaim(string claim, JSON value)
+        public void SetClaim(string claim, CBORObject value)
         {
             switch (claim) {
             case "iss":
             case "sub":
             case "aud":
-                if (value.nodeType != JsonType.text) throw new JwtException("Claim value type is incorrect for the claim");
+                if (value.Type != CBORType.TextString) throw new JwtException("Claim value type is incorrect for the claim");
                 break;
 
             case "exp":
             case "nbf":
             case "iat":
-                if (value.nodeType != JsonType.number) throw new JwtException("Claim value type is incorrect for the claim");
+                if (value.Type != CBORType.Integer) throw new JwtException("Claim value type is incorrect for the claim");
                 break;
 
             case "jti":
-                if (value.nodeType != JsonType.text) throw new JwtException("Claim value type is incorrect for the claim");
+                if (value.Type != CBORType.TextString) throw new JwtException("Claim value type is incorrect for the claim");
                 break;
 
             default:
@@ -83,7 +93,7 @@ namespace JWT
                 break;
             }
 
-            claims.Add(claim, value);
+            _claims.Add(claim, value);
         }
     }
 

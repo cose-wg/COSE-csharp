@@ -46,7 +46,7 @@ namespace examples
         /// <param name="bytes">Array to receive bytes.</param>
         /// <param name="start">Index to start filling at.</param>
         /// <param name="len">Length of segment to fill.</param>
-        override public void NextBytes(byte[] bytes, int start, int len)
+        public override void NextBytes(byte[] bytes, int start, int len)
         {
 
             if (m_iRngData + len > m_rgbRngData.Length) {
@@ -68,8 +68,11 @@ namespace examples
 
         }
 
-        public CBORObject buffer { get { if (m_iRngData == 0) return null; else return objNew; } }
-        public bool IsDirty { get { return m_fDirty || (m_iRngData != m_rgbRngData.Length) || true; } }
-        public void Reset() { m_iRngData = 0; }
+        public CBORObject Buffer => m_iRngData == 0 ? null : objNew;
+        public bool IsDirty => m_fDirty || (m_iRngData != m_rgbRngData.Length);
+
+        public void Reset() { m_iRngData = 0;
+            objNew = CBORObject.NewArray();
+        }
     }
 }

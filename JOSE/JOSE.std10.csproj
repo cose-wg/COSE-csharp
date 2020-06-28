@@ -1,16 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFrameworks>netstandard2.1;netstandard2.0;net462;netcoreapp2.0</TargetFrameworks>
     <PackageId>Com.AugustCellars.JOSE</PackageId>
     <Id>Com.AugustCellars.JOSE</Id>
     <PackageVersion>1.2.0</PackageVersion>
     <Version>1.2.0</Version>
     <Authors>Jim Schaad</Authors>
-    <Description>An implementation of the CBOR Object Signing and Encryption standards.</Description>
+    <Description>An implementation of the JOSE.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Copyright>Copyright @2016-7 Jim Schaad</Copyright>
-    <PackageTags>COSE CBOR</PackageTags>
+    <Copyright>Copyright @2016-9 Jim Schaad</Copyright>
+    <PackageTags>JOSE JWK</PackageTags>
     
     <PackageReleaseNotes>
     Don't release me
@@ -25,29 +25,38 @@
     <RootNamespace>Com.AugustCellars.JOSE</RootNamespace>
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
   </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;DEBUG;NETSTANDARD1_0</DefineConstants>
-    <IntermediateOutputPath>obj\dev\Debug</IntermediateOutputPath>
-    <OutputPath>bin\dev\Debug\</OutputPath>
   </PropertyGroup>
   
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Deploy|AnyCPU' ">
+    <AssemblyOriginatorKeyFile>AugustCellarsStrongKey.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+
 
   <ItemGroup>
+    <Compile Include="AlgorithmValues.cs" />
+    <Compile Include="Attributes.cs" />
     <Compile Include="EncryptMessage.cs" />
+    <Compile Include="HeaderKeys.cs" />
+    <Compile Include="JOSE_Exception.cs" />
     <Compile Include="JSON.cs" />
     <Compile Include="Key.cs" />
     <Compile Include="Message.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Recipient.cs" />
+    <Compile Include="Signer.cs" />
     <Compile Include="SignMessage.cs" />
   </ItemGroup>
   
+  <ItemGroup>
+    <None Include="AugustCellarsStrongKey.snk" />
+  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="PeterO.Cbor" Version="3.0.3" />
+    <PackageReference Include="PeterO.Cbor" Version="4.0.1" />
+    <PackageReference Include="Portable.BouncyCastle" Version="1.8.5" />
   </ItemGroup>
-  
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Bouncy-Castle\bc-csharp\crypto\crypto.csproj" />
-  </ItemGroup>
 </Project>

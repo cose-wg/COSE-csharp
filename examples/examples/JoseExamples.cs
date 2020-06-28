@@ -2,22 +2,32 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-using JOSE;
+using Com.AugustCellars;
+using Com.AugustCellars.JOSE;
 using Org.BouncyCastle.Crypto.Digests;
+using PeterO.Cbor;
 
 
 namespace examples
 {
     public class JoseExamples
     {
-        static public void RunTestsInDirectory(string strDirectory)
+        static string RootDir = @"d:\Projects\JOSE\cookbook";
+
+        public void RunJoseExamples()
+        {
+            RunTestsInDirectory(RootDir + "\\jwe");
+        }
+
+        public static void RunTestsInDirectory(string strDirectory)
         {
             DirectoryInfo diTop;
 
-            diTop = new DirectoryInfo(strDirectory);
+            diTop = new DirectoryInfo(Path.Combine(RootDir, strDirectory));
             foreach (var di in diTop.EnumerateDirectories()) {
                 if ((!di.Attributes.HasFlag(FileAttributes.Hidden)) &&
                     (di.FullName.Substring(di.FullName.Length - 4) != "\\new")) {
@@ -27,8 +37,8 @@ namespace examples
 
             foreach (var di in diTop.EnumerateFiles()) {
                 if (di.Extension == ".json") {
-                    Console.WriteLine("Process file: " + di.Name);
-                    ProcessFile(di.FullName);
+                    if (di.Name[0] == '.') continue;
+                    ProcessFile(strDirectory, di.Name);
                 }
             }
         }
@@ -74,92 +84,448 @@ namespace examples
         }
 #endif
 
-        static void ProcessFile(string fileName)
+        static void ProcessFile(string dir, string fileName)
         {
-            if (fileName[fileName.Length - 1] == '~') return;
-            if (fileName[fileName.Length - 1] == '#') return;
-
-            StreamReader file = File.OpenText(fileName);
-
+            StreamReader file = File.OpenText(Path.Combine(RootDir, dir, fileName));
             string fileText = file.ReadToEnd();
+            file.Close();
+            file.Dispose();
+            CBORObject control = CBORObject.FromJSONString(fileText);
 
-            JSON control;
+            Directory.CreateDirectory(RootDir + "\\new\\" + dir);
+
             try {
-                control = JSON.Parse(fileText);
-            }
-            catch (Exception) {
-                return;
-            }
+                if (ProcessJSON(control)) {
+                    fileText = control.ToJSONString();
+                    JSON j = JSON.Parse(fileText);
+                    fileText = j.Serialize(0);
+                    StreamWriter file2 = File.CreateText(RootDir + "\\new\\" + dir + "\\" + fileName);
+                    file2.Write(fileText);
+                    file2.Write("\r\n");
+                    file2.Close();
+                }
 
-            if (!control.ContainsKey("input")) return;
-
-            if (control["input"].ContainsKey("passport")) {
-                ProcessPassport(control);
+                ValidateJSON(control);
             }
-            else {
-                ProcessJSON(control);
+            catch (Exception e) {
+                Console.WriteLine($"ERROR: {e}");
             }
         }
 
-        static void ProcessJSON(JSON control)
+        static void ValidateJSON(CBORObject control)
         {
-            KeySet keys = null;
+            bool result = false;
 
-            //  Get the keys
-
-            if (control["input"].ContainsKey("key")) {
-                keys = new KeySet(control["input"]["key"]);
-            }
-            if (control["input"].ContainsKey("pwd")) {
-                Key key = new Key();
-                key.Add("kty", "oct");
-                key.Add("k", Message.base64urlencode(UTF8Encoding.UTF8.GetBytes(control["input"]["pwd"].AsString())));
-                keys = new KeySet();
-                keys.Add(key);
-            }
-            if (keys == null) {
-                Console.WriteLine("No keys found");
-                return;
-            }
-
-            //
-            //  Check that we can validate each of these items
-            //
-            //  Start with compact
-
-            if (control["output"].ContainsKey("compact")) {
-                Console.WriteLine("    Compact");
-                for (int i = 0; i < keys.Count; i++) {
-                    Message msg = Message.DecodeFromString(control["output"]["compact"].AsString());
-
-                    CheckMessage(msg, keys[i], control["input"]);
-
+            try {
+                if (control["input"].ContainsKey("enveloped")) {
+                    result = ValidateEnveloped(control);
+                }
+                else if (control["input"].ContainsKey("sign")) {
+                   result = ValidateSigned(control);
+                }
+                else {
+                    throw new Exception("Unknown operation in control");
                 }
 
-                //
-                //  Build a new version of the message
-                //
-
-                BuildCompact(control, keys);
+                if (!result) {
+                    Console.Write(" ");
+                }
+            }
+            catch (JoseException e) {
+                Console.WriteLine();
+                Console.WriteLine(String.Format("COSE threw an error '{0}'.", e.ToString()));
+            }
+            catch (Exception e) {
+                Console.WriteLine();
+                throw e;
             }
 
-            if (control["output"].ContainsKey("json")) {
-                Console.WriteLine("     Full");
-                for (int i = 0; i < keys.Count; i++) {
-                    Message msg = Message.DecodeFromJSON(control["output"]["json"]);
+            Console.WriteLine(result ? ".... PASS" : ".... FAILED");
+        }
 
-                    CheckMessage(msg, keys[i], control["input"]);
+        private static string[] Formats = {"json", "json_flat", "compact"};
+
+
+
+        static bool ProcessJSON(CBORObject control)
+        {
+            bool modified = false;
+            StaticPrng prng = new StaticPrng();
+
+            if (control.ContainsKey("title")) {
+                Console.Write("Processing: " + control["title"].AsString());
+            }
+
+            if (control["input"].ContainsKey("rng_stream")) {
+                if (control["input"]["rng_stream"].Type == CBORType.TextString) {
+                    prng.AddSeedMaterial(Program.FromHex(control["input"]["rng_stream"].AsString()));
+                }
+                else if (control["input"]["rng_stream"].Type == CBORType.Array) {
+                    foreach (var x in control["input"]["rng_stream"].Values) {
+                        prng.AddSeedMaterial(Program.FromHex(x.AsString()));
+                    }
                 }
             }
 
-            if (control["output"].ContainsKey("json_flat")) {
-                Console.WriteLine("     Flat");
-                for (int i = 0; i < keys.Count; i++) {
-                    Message msg = Message.DecodeFromJSON(control["output"]["json_flat"]);
+            Message.SetPRNG(prng);
 
-                    CheckMessage(msg, keys[i], control["input"]);
+            try {
+
+                prng.Reset();
+                Message result;
+
+
+                if (control["input"].ContainsKey("enveloped")) result = ProcessEnveloped(control, ref modified);
+                else if (control["input"].ContainsKey("sign")) result = ProcessSign(control, ref modified);
+                else throw new Exception("Unknown operation in control");
+
+                foreach (string format in Formats) {
+                    CBORObject json = null;
+                    string jsonText = null;
+
+                    try {
+                        switch (format) {
+                        case "json":
+                            json = result.EncodeToJSON(false);
+                            break;
+
+                        case "json_flat":
+                            json = result.EncodeToJSON(true);
+                            break;
+
+                        case "compact":
+                            jsonText = result.EncodeCompressed();
+                            break;
+                        }
+                    }
+                    catch (JoseException) {
+                        // Ignore
+                    }
+
+
+                    if (control["output"].ContainsKey(format)) {
+                        if (json == null && jsonText == null) {
+                            control["output"].Remove(format);
+                            modified = true;
+                        }
+                        else {
+
+                            CBORObject oldVersion = control["output"][format];
+
+                            if (format == "compact") {
+                                if (oldVersion.Type != CBORType.TextString || jsonText != oldVersion.AsString()) {
+                                    Console.WriteLine();
+                                    Console.WriteLine($"******************* New and Old do not match {format}!!!");
+                                    Console.WriteLine();
+
+                                    control["output"][format] = CBORObject.FromObject(jsonText);
+                                    modified = true;
+                                }
+                            }
+                            else if (json.ToJSONString() != oldVersion.ToJSONString()) {
+                                Console.WriteLine();
+                                Console.WriteLine($"******************* New and Old do not match {format}!!!");
+                                Console.WriteLine();
+
+                                control["output"][format] = json;
+                                modified = true;
+                            }
+                        }
+                    }
+                    else {
+                        if (format == "compact" && jsonText != null) {
+                            control["output"].Add(format, jsonText);
+                            modified = true;
+                        }
+                        else if (json != null) {
+                            control["output"].Add(format, json);
+                            modified = true;
+                        }
+                    }
+                }
+
+
+                if (prng.IsDirty) {
+                    if (prng.Buffer != null) {
+                        if (control["input"].ContainsKey("rng_stream")) {
+                            control["input"]["rng_stream"] = prng.Buffer;
+                        }
+                        else {
+                            control["input"].Add("rng_stream", prng.Buffer);
+                        }
+                    }
+                    else {
+                        if (control["input"].ContainsKey("rng_stream")) {
+                            control["input"].Remove(CBORObject.FromObject("rng_stream"));
+                        }
+                    }
+
+                    modified = true;
+                }
+
+            }
+            catch (Com.AugustCellars.JOSE.JoseException e) {
+                Console.WriteLine($"JOSE threw an error '{e}'.");
+            }
+
+            return modified;
+        }
+
+        static Message ProcessEnveloped(CBORObject control, ref bool fDirty)
+        {
+            CBORObject input = control["input"];
+            CBORObject encrypt = input["enveloped"];
+
+            EncryptMessage msg = new EncryptMessage();
+
+            if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
+            msg.SetContent(input["plaintext"].AsString());
+
+            if (encrypt.ContainsKey("protected")) AddAttributes(msg, encrypt["protected"], 0);
+            if (encrypt.ContainsKey("unprotected")) AddAttributes(msg, encrypt["unprotected"], 1);
+            if (encrypt.ContainsKey("unsent")) AddAttributes(msg, encrypt["unsent"], 2);
+
+            if (encrypt.ContainsKey("alg")) {
+                encrypt.Remove(CBORObject.FromObject("alg"));
+            }
+
+            if ((!encrypt.ContainsKey("recipients")) || (encrypt["recipients"].Type != CBORType.Array)) {
+                throw new Exception("Missing or malformed recipients");
+            }
+
+            foreach (CBORObject recipient in encrypt["recipients"].Values)
+            {
+                msg.AddRecipient(GetRecipient(recipient));
+            }
+
+            {
+                msg.Encode();
+
+                CBORObject intermediates = Program.GetSection(control, "intermediates");
+
+//                SetField(intermediates, "AAD_hex", msg.getAADBytes(), ref fDirty);
+//                SetField(intermediates, "CEK_hex", msg.getCEK(), ref fDirty);
+
+                CBORObject rList = Program.GetSection(intermediates, "recipients");
+
+//                SaveRecipientDebug(msg.RecipientList, rList, ref fDirty);
+            }
+
+
+#if false
+            //  If we want this to fail, look at the different failure methods.
+            if (input.ContainsKey("failures"))
+            {
+                msgOut = ProcessFailures(msgOut, input["failures"], 2);
+            }
+#endif
+
+            return msg;
+        }
+
+
+        static bool ValidateEnveloped(CBORObject control)
+        {
+            CBORObject input = control["input"];
+            CBORObject encrypt = input["enveloped"];
+
+            if ((!encrypt.ContainsKey("recipients")) || (encrypt["recipients"].Type != CBORType.Array)) {
+                throw new Exception("Missing or malformed recipients");
+            }
+
+            for (int iRecipient = 0; iRecipient < encrypt["recipients"].Count; iRecipient++) {
+
+                bool fFail = HasFailMarker(control) || HasFailMarker(encrypt);
+                EncryptMessage encryptMessage;
+
+                try {
+
+                    Message message;
+                    CBORObject obj = control["output"]["json"];
+                    if (obj.Type == CBORType.TextString) {
+                        message = Message.DecodeFromString(obj.AsString());
+                    }
+                    else {
+                        message = Message.DecodeFromJSON(obj);
+                    }
+
+                    encryptMessage = (EncryptMessage) message;
+                }
+                catch (Exception) {
+                    if (fFail) return true;
+                    return false;
+                }
+
+                if (encrypt.ContainsKey("unsent")) AddAttributes(encryptMessage, encrypt["unsent"], 2);
+                CBORObject recipient = encrypt["recipients"][iRecipient];
+                Recipient recipientMessage = encryptMessage.RecipientList[iRecipient];
+
+                recipientMessage = SetReceivingAttributes(recipientMessage, recipient);
+
+                /*
+                if (recipient["sender_key"] != null)
+                {
+                    if (recipientMessage.FindAttribute(HeaderKeys.StaticKey) == null)
+                    {
+                        recipientMessage.AddAttribute(HeaderKeys.StaticKey, GetKey(recipient["sender_key"], true).AsCBOR(),
+                            Attributes.DO_NOT_SEND);
+                    }
+                }
+                */
+
+                bool fFailRecipient = HasFailMarker(recipient);
+
+                try {
+                    encryptMessage.Decrypt(recipientMessage);
+
+                    if (encryptMessage.GetContentAsString() != input["plaintext"].AsString()) {
+                        return false;
+                    }
+
+                }
+                catch (Exception) {
+                    if (fFail || fFailRecipient) return true;
+                    return false;
                 }
             }
+
+
+            return true;
+        }
+
+
+        static Message ProcessSign(CBORObject control, ref bool fDirty)
+        {
+            CBORObject input = control["input"];
+            CBORObject sign = input["sign"];
+            CBORObject signers;
+
+            SignMessage msg = new SignMessage();
+
+            if (!input.ContainsKey("plaintext")) throw new Exception("missing plaintext field");
+            msg.SetContent(input["plaintext"].AsString());
+
+            if (sign.ContainsKey("protected")) AddAttributes(msg, sign["protected"], 0);
+            if (sign.ContainsKey("unprotected")) AddAttributes(msg, sign["unprotected"], 1);
+            if (sign.ContainsKey("unsent")) AddAttributes(msg, sign["unsent"], 2);
+
+            if ((!sign.ContainsKey("signers")) || (sign["signers"].Type != CBORType.Array))
+                throw new Exception("Missing or malformed recipients");
+            foreach (CBORObject recip in sign["signers"].Values)
+            {
+                msg.AddSigner(GetSigner(recip));
+            }
+
+            {
+                msg.Encode();
+
+                signers = Program.GetSection(Program.GetSection(control, "intermediates"), "signers", CBORType.Array);
+                
+
+                for (int iSigner = 0; iSigner < msg.SignerList.Count; iSigner++)
+                {
+                    while (signers.Count < msg.SignerList.Count) {
+                        signers.Add(CBORObject.NewMap());
+                    }
+                    
+                    Program.SetField(signers[iSigner], "ToBeSign", msg.SignerList[iSigner].ToBeSigned, ref fDirty);
+                }
+            }
+
+            return msg;
+        }
+
+        static bool ValidateSigned(CBORObject cnControl)
+        {
+            CBORObject cnInput = cnControl["input"];
+            CBORObject cnMessage;
+            CBORObject cnSigners;
+            bool fFailBody = false;
+
+            fFailBody = HasFailMarker(cnControl);
+
+            try
+            {
+                cnMessage = cnInput["sign"];
+                cnSigners = cnMessage["signers"];
+
+                foreach (string format in Formats) {
+                    if (!cnControl["output"].ContainsKey(format)) {
+                        continue;
+                    }
+
+                    string rgb;
+                    if (format == "compact") {
+                        rgb = cnControl["output"][format].AsString();
+                    }
+                    else {
+                        rgb = cnControl["output"][format].ToJSONString();
+                    }
+
+                    int i = 0;
+                    foreach (CBORObject cnSigner in cnSigners.Values) {
+                        SignMessage signMsg = null;
+
+                        try {
+                            Message msg = Message.DecodeFromString(rgb);
+                            signMsg = (SignMessage) msg;
+                        }
+                        catch (Exception e) {
+                            if (fFailBody) return true;
+                            throw e;
+                        }
+
+                        // SetReceivingAttributes(signMsg, cnMessage);
+
+                        JWK cnKey = GetKey(cnSigner["key"]);
+                        Signer hSigner = signMsg.SignerList[i];
+
+                        SetReceivingAttributes(hSigner, cnSigner);
+
+                        hSigner.SetKey(cnKey);
+
+                        bool fFailSigner = HasFailMarker(cnSigner);
+
+                        try {
+                            bool f = signMsg.Validate(hSigner);
+                            if (!f && !(fFailBody || fFailSigner)) return false;
+                        }
+                        catch (Exception) {
+                            if (!fFailBody && !fFailSigner) return false;
+                        }
+
+                        i++;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+
+        static Signer GetSigner(CBORObject control)
+        {
+            CBORObject alg = GetAttribute(control, "alg");
+            if (control.ContainsKey("alg"))
+            {
+                control.Remove(CBORObject.FromObject("alg"));
+            }
+
+            JWK key = GetKey(control["key"]);
+
+            Signer signer;
+
+                signer = new Signer(key, alg.AsString());
+
+            if (control.ContainsKey("protected")) AddAttributes(signer, control["protected"], 0);
+            if (control.ContainsKey("unprotected")) AddAttributes(signer, control["unprotected"], 1);
+            if (control.ContainsKey("unsent")) AddAttributes(signer, control["unsent"], 2);
+
+            return signer;
         }
 
         static void ProcessNestedFile(string fileName)
@@ -167,8 +533,9 @@ namespace examples
             StreamReader file = File.OpenText(fileName);
 
             string fileText = file.ReadToEnd();
+            file.Close();
 
-            JSON control = JSON.Parse(fileText);
+            CBORObject control = CBORObject.FromJSONString(fileText);
 
             ProcessJSON(control["sign"]);
 
@@ -177,13 +544,17 @@ namespace examples
         }
 
 
-        static void CheckMessage(Message msg, Key key, JSON input)
+#if false
+        static void CheckMessage(Message msg, JWK key, CBORObject input)
         {
             if (msg.GetType() == typeof(EncryptMessage)) {
                 EncryptMessage enc = (EncryptMessage) msg;
 
+                Recipient recipient = enc.RecipientList[0];
+                recipient.SetKey(key);
+
                 try {
-                    enc.Decrypt(key);
+                    enc.Decrypt(recipient);
                 }
                 catch (Exception e) { Console.WriteLine("Failed to decrypt " + e.ToString()); return; }
 
@@ -199,30 +570,32 @@ namespace examples
                     catch (System.Exception) {
                         sig.SetContent(input["payload"].AsString());
                     }
-                    sig.Verify(key);
+                    sig.Validate(key);
 
                     if (sig.GetContentAsString() != input["payload"].AsString()) Console.WriteLine("Plain text does not match");
                 }
                 catch (Exception e) { Console.WriteLine("Failed to verify " + e.ToString()); return; }
             }
         }
+#endif
 
-        static void BuildCompact(JSON control, KeySet keys)
+#if false
+        static void BuildCompact(CBORObject control, JwkSet keys)
         {
             //  Encrypted or Signed?
             if (control.ContainsKey("signing")) {
-                JOSE.SignMessage sign = new JOSE.SignMessage();
-                JOSE.Signer signer = new JOSE.Signer(keys[0]);
+                SignMessage sign = new SignMessage();
+                Signer signer = new Signer(keys[0]);
 
                 sign.SetContent(control["input"]["payload"].AsString());
                 sign.AddSigner(signer);
 
-                JSON xx = control["signing"]["protected"];
-                foreach (string key in xx.Keys) {
-                    signer.AddProtected(key, xx[key]);
+                CBORObject xx = control["signing"]["protected"];
+                foreach (CBORObject key in xx.Keys) {
+                    signer.AddAttribute(key, xx[key], Attributes.PROTECTED);
                 }
 
-                string output = sign.EncodeCompact();
+                string output = sign.EncodeCompressed();
 
                 Message msg = Message.DecodeFromString(output);
 
@@ -230,19 +603,18 @@ namespace examples
 
             }
             else if (control.ContainsKey("encrypting_key")) {
-                JOSE.EncryptMessage enc = new EncryptMessage();
-                JSON xx = control["encrypting_content"]["protected"];
-                foreach (string key in xx.Keys) {
-                    enc.AddProtected(key, xx[key]);
+                EncryptMessage enc = new EncryptMessage();
+                CBORObject xx = control["encrypting_content"]["protected"];
+                foreach (CBORObject key in xx.Keys) {
+                    enc.AddAttribute(key, xx[key], Attributes.PROTECTED);
                 }
 
-                JOSE.Recipient recip = new Recipient(keys[0], control["input"]["alg"].AsString(), enc);
+                Recipient recip = new Recipient(keys[0], control["input"]["alg"].AsString(), enc);
 
                 enc.AddRecipient(recip);
                 enc.SetContent(control["input"]["plaintext"].AsString());
 
-
-                string output = enc.EncodeCompact();
+                string output = enc.EncodeCompressed();
 
                 Message msg = Message.DecodeFromString(output);
 
@@ -250,14 +622,14 @@ namespace examples
 
             }
         }
+#endif
 
         static void PBE_Tests()
         {
             byte[] password = UTF8Encoding.ASCII.GetBytes("password");
-            byte[] salt = UTF8Encoding.ASCII.GetBytes("salt");
+            byte[] salt = Encoding.ASCII.GetBytes("salt");
 
-            byte[] output = Recipient.PBKF2(password, salt, 1, 20, new Sha1Digest());
-            output = Recipient.PBKF2(password, salt, 2, 20, new Sha1Digest());
+            byte[] output = Recipient.PBKDF2(password, salt, 1, 20, new Sha1Digest());
 
         }
 
@@ -266,387 +638,208 @@ namespace examples
 
         }
 
-    }
 
-#if false
-    public enum JsonType
-    {
-        unknown = -1, map = 1, text = 2, array = 3, number = 4, boolean = 5
-    }
-#endif
-
-#if false
-    public class JSON
-    {
-        string source;
-        public JsonType nodeType = JsonType.unknown;
-        public Dictionary<string, JSON> map;
-        public string text;
-        public List<JSON> array;
-        public int number;
-
-        public JSON()
+        static void AddAttributes(Attributes msg, CBORObject items, int destination)
         {
-
+            _AddAttributes(msg, null, items, destination);
         }
 
-        public JSON(String text)
+        static void _AddAttributes(Attributes msg, CBORObject map, CBORObject items, int destination)
         {
-            source = text;
-            int used = Parse(0);
-            if (used != text.Length) throw new Exception("Did not use entire string");
-        }
+            foreach (CBORObject cborKey2 in items.Keys)
+            {
+                CBORObject cborValue = items[cborKey2];
+                CBORObject cborKey = cborKey2;
+                string strKey = cborKey.AsString();
 
-        public JSON(byte[] rgb)
-        {
-            text = Message.base64urlencode(rgb);
-            nodeType = JsonType.text;
-        }
-
-        public JSON(int i)
-        {
-            nodeType = JsonType.number;
-            number = i;
-        }
-
-        public static JSON Parse(String text)
-        {
-            JSON json = new JSON();
-            json.Parse(text, 0);
-            return json;
-        }
-
-        public int Parse(String text, int offset)
-        {
-            source = text;
-            return Parse(offset);
-        }
-
-        private int Parse(int offset)
-        {
-            int offsetStart = offset;
-
-
-
-            offset += SkipWhiteSpace(offset);
-
-            switch (source[offset]) {
-            case '{':
-                offset += ParseMap(offset);
-                break;
-
-            case '"':
-                offset += ParseString(offset);
-                break;
-
-            case '[':
-                offset += ParseArray(offset);
-                break;
-
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-                offset += ParseNumber(offset);
-                break;
-
-            case 'f':
-                offset += ParseWord(offset, "false");
-                break;
-
-            case 't':
-                offset += ParseWord(offset, "true");
-                break;
-
-            default:
-
-                throw new Exception("Invalid JSON string");
-            }
-
-            offset += SkipWhiteSpace(offset);
-
-            return offset - offsetStart;
-        }
-
-        private int ParseArray(int offset)
-        {
-            int offsetStart = offset;
-
-            nodeType = JsonType.array;
-            array = new List<JSON>();
-
-            if (source[offset] != '[') throw new Exception("Bad JSON array");
-            offset += 1;
-            offset += SkipWhiteSpace(offset);
-
-            while (source[offset] != ']') {
-                JSON value = new JSON();
-                offset += value.Parse(source, offset);
-                array.Add(value);
-                offset += SkipWhiteSpace(offset);
-                if (source[offset] == ',') {
-                    offset += 1;
-                    offset += SkipWhiteSpace(offset);
-                }
-                else if (source[offset] != ']') throw new Exception("Bad JSON array");
-            }
-
-            offset += 1;
-
-            return offset - offsetStart;
-        }
-
-        private int ParseMap(int offset)
-        {
-            int offsetStart = offset;
-
-            nodeType = JsonType.map;
-            map = new Dictionary<string, JSON>();
-
-            offset += SkipWhiteSpace(offset);
-
-            //  Start of map
-            if (source[offset] != '{') throw new Exception("Invalid Map");
-            offset += 1;
-
-            while (true) {
-                offset += SkipWhiteSpace(offset);
-                if (source[offset] == '}') break;
-
-                JSON key = new JSON();
-                offset += key.Parse(source, offset);
-                if (key.nodeType != JsonType.text) throw new Exception("Invalid map");
-
-                offset += SkipWhiteSpace(offset);
-
-                if (source[offset] != ':') throw new Exception("Invalid Map");
-                offset += 1;
-
-                JSON value = new JSON();
-                offset += value.Parse(source, offset);
-
-                offset += SkipWhiteSpace(offset);
-
-                map[key.text] = value;
-
-                if (source[offset] != ',') break;
-                offset += 1;
-
-            }
-
-
-            //  End of map
-            if (source[offset] != '}') throw new Exception("Invalid Map");
-            offset += 1;
-
-            offset += SkipWhiteSpace(offset);
-
-            return offset - offsetStart;
-        }
-
-        private int ParseNumber(int offsetStart)
-        {
-            int offset = offsetStart;
-
-            int value = 0;
-
-            offset += SkipWhiteSpace(offset);
-            while (Char.IsDigit(source[offset])) {
-                value = value * 10 + source[offset] - '0';
-                offset += 1;
-            }
-
-            nodeType = JsonType.number;
-            number = value;
-
-            offset += SkipWhiteSpace(offset);
-            return offset - offsetStart;
-        }
-
-        private int ParseWord(int offsetStart, string word)
-        {
-            int offset = offsetStart;
-
-            for (int i = 0; i < word.Length; i++) {
-                if (source[offset + i] != word[i]) throw new Exception("Invalid JSON matching " + word);
-            }
-
-            offset += word.Length + 1;
-            offset += SkipWhiteSpace(offset);
-
-            switch (word) {
-            case "false": nodeType = JsonType.boolean; number = 0; break;
-            case "true": nodeType = JsonType.boolean; number = -1; break;
-            default: throw new Exception("ICE");
-            }
-
-            return offset - offsetStart;
-        }
-
-        private int ParseString(int offsetStart)
-        {
-            int offset = offsetStart;
-            string strOut = "";
-            Dictionary<char, char> escapee = new Dictionary<char, char>();
-            escapee['"'] = '"';
-            escapee['\\'] = '\\';
-            escapee['/'] = '/';
-            escapee['b'] = '\b';
-            escapee['f'] = '\f';
-            escapee['n'] = '\n';
-            escapee['r'] = '\r';
-            escapee['t'] = '\t';
-
-            offset += SkipWhiteSpace(offset);
-
-            if (source[offset] != '"') throw new Exception("Invalid Map");
-
-            while (++offset < source.Length) {
-                if (source[offset] == '"') {
-                    offset += 1;
-                    break;
+                if ((strKey.Length > 4) && (strKey.Substring(strKey.Length - 4, 4) == "_hex"))
+                {
+                    cborKey = CBORObject.FromObject(strKey.Substring(0, strKey.Length - 4));
+                    cborValue = CBORObject.FromObject(FromHex(cborValue.AsString()));
                 }
 
-                if (source[offset] == '\\') {
-                    offset += 1;
-                    if (source[offset] == 'u') {
-                        int uffff = 0;
-                        int x;
-                        for (int i = 0; i < 4; i++) {
-                            if ('0' <= source[offset] && source[offset] <= '9') x = source[offset] - '0';
-                            else if ('a' <= source[offset] && source[offset] <= 'f') x = source[offset] - 'a' + 10;
-                            else if ('A' <= source[offset] && source[offset] <= 'F') x = source[offset] - 'A' + 10;
-                            else throw new Exception("Invalid hex value");
-                            uffff = uffff * 16 + x;
+                if (cborKey.AsString() == "comment")
+                {
+                    continue;
+                }
+
+                switch (cborKey.AsString())
+                {
+                    case "alg":
+                        break;
+
+                    case "kid":
+                    binFromText:
+                        break;
+
+                    case "epk":
+                        break;
+
+                    case "spk":
+                        break;
+
+                    case "salt":
+                        goto binFromText;
+
+                    case "apu_id":
+                        goto binFromText;
+
+                    case "apv_id":
+                        goto binFromText;
+                    case "apu_nonce":
+                        goto binFromText;
+                    case "apv_nonce":
+                        goto binFromText;
+                    case "apu_other":
+                        goto binFromText;
+                    case "apv_other":
+                        goto binFromText;
+                    case "pub_other":
+                        goto binFromText;
+                    case "priv_other":
+                        goto binFromText;
+                    case "spk_kid":
+                        goto binFromText;
+
+                    case "IV":
+                        goto binFromText;
+                    case "partialIV":
+                        goto binFromText;
+
+                    case "crit":
+
+                        break;
+
+                    case "op time":
+                        {
+                            DateTime when = DateTime.Parse(cborValue.AsString());
+                            cborValue = CBORObject.FromObject(
+                                (long)(when - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds);
+
                         }
-                        strOut += Convert.ToChar(uffff);
-                    }
-                    else if (escapee.ContainsKey(source[offset])) {
-                        strOut += escapee[source[offset]];
-                    }
+                        break;
+
+                    case "ctyp":
+                        break;
+
+
+                    case "x5u":
+                        break;
+
+                    case "x5u-sender":
+                        break;
+
+                    default:
+                        break;
                 }
-                else {
-                    strOut += source[offset];
+
+                switch (destination)
+                {
+                    case 0:
+                        msg.AddAttribute(cborKey, cborValue, Attributes.PROTECTED);
+                        break;
+                    case 1:
+                        msg.AddAttribute(cborKey, cborValue, Attributes.UNPROTECTED);
+                        break;
+                    case 2:
+                        msg.AddAttribute(cborKey, cborValue, Attributes.DO_NOT_SEND);
+                        break;
+                    case 4:
+                        map[cborKey] = cborValue;
+                        break;
                 }
             }
-
-            nodeType = JsonType.text;
-            text = strOut;
-
-            return offset - offsetStart;
         }
 
-        private int SkipWhiteSpace(int offsetStart)
+        public static bool HasFailMarker(CBORObject cn)
         {
-            int offset = offsetStart;
-
-            while ((offset < source.Length) && Char.IsWhiteSpace(source[offset])) offset += 1;
-            return offset - offsetStart;
+            CBORObject cnFail = cn["fail"];
+            if (cnFail != null && cnFail.AsBoolean()) return true;
+            return false;
         }
 
-        public static JSON FromObject(Object obj)
+        public static byte[] FromHex(String hex)
         {
-            if (obj.GetType() == typeof(JSON)) {
-                return (JSON) obj;
+            int NumberChars = hex.Length;
+            byte[] bytes = new byte[NumberChars / 2];
+            for (int i = 0; i < NumberChars; i += 2)
+                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+            return bytes;
+        }
+
+        static Com.AugustCellars.JOSE.Recipient GetRecipient(CBORObject control)
+        {
+            Com.AugustCellars.JOSE.JWK key;
+
+            if (!control.ContainsKey("alg")) throw new Exception("Recipient missing alg field");
+
+            if (control.ContainsKey("key")) {
+                key = new Com.AugustCellars.JOSE.JWK(control["key"]);
             }
-            else if (obj.GetType() == typeof(string)) {
-                JSON objJson = new JSON();
-                objJson.nodeType = JsonType.text;
-                objJson.text = (string) obj;
-                return objJson;
+            else if (control.ContainsKey("pwd")) {
+                key = new Com.AugustCellars.JOSE.JWK();
+                key.Add("kty", "oct");
+                key.Add("k", Com.AugustCellars.JOSE.Message.base64urlencode(Encoding.UTF8.GetBytes(control["pwd"].AsString())));
             }
             else {
-                throw new Exception("did not change the type of the result");
-            }
-        }
-
-        public void Add(Object obj)
-        {
-            if (nodeType == JsonType.unknown) {
-                nodeType = JsonType.array;
-                array = new List<JSON>();
-            }
-            else if (nodeType != JsonType.array) {
-                throw new Exception("Can't change type of JSON node");
+                throw new Exception("No key defined for a recipient");
             }
 
-            array.Add(FromObject(obj));
-        }
+            Com.AugustCellars.JOSE.Recipient recipient = new Com.AugustCellars.JOSE.Recipient(key, control["alg"].AsString());
 
-        public void Add(string key, Object obj)
-        {
-            if (nodeType == JsonType.unknown) {
-                nodeType = JsonType.map;
-                map = new Dictionary<string, JSON>();
+            //  Double check that alg is the same as in the attributes
+
+            recipient.ClearProtected();
+            recipient.ClearUnprotected();
+
+            if (control.ContainsKey("protected")) AddAttributes(recipient, control["protected"], 0);
+            if (control.ContainsKey("unprotected")) AddAttributes(recipient, control["unprotected"], 1);
+
+            if (control.ContainsKey("sender_key")) {
+                Com.AugustCellars.JOSE.JWK myKey = new Com.AugustCellars.JOSE.JWK(control["sender_key"]);
+                recipient.SetSenderKey(myKey);
             }
-            else if (nodeType != JsonType.map) {
-                throw new Exception("Can't change type of JSON node");
+
+            return recipient;
+        }
+
+        static Recipient SetReceivingAttributes(Recipient recip, CBORObject control)
+        {
+            JWK key = null;
+
+            if (control.ContainsKey("unsent")) AddAttributes(recip, control["unsent"], 2);
+
+            if (control["key"] != null) key = GetKey(control["key"]);
+
+            recip.SetKey(key);
+
+            return recip;
+        }
+
+        static void SetReceivingAttributes(Signer recip, CBORObject control)
+        {
+            if (control.ContainsKey("unsent")) AddAttributes(recip, control["unsent"], 2);
+        }
+
+        static CBORObject GetAttribute(CBORObject obj, string attrName)
+        {
+            if (obj.ContainsKey("protected") && obj["protected"].ContainsKey(attrName))
+                return obj["protected"][attrName];
+            if (obj.ContainsKey("unprotected") && obj["unprotected"].ContainsKey(attrName))
+                return obj["unprotected"][attrName];
+            if (obj.ContainsKey("unsent") && obj["unsent"].ContainsKey(attrName)) return obj["unsent"][attrName];
+            return null;
+        }
+
+        static JWK GetKey(CBORObject control, bool fPublicKey = false)
+        {
+            JWK jwk = new JWK(control);
+
+            if (fPublicKey && (control["kty"].AsString() != "oct")) {
+                return jwk.PublicKey();
             }
 
-            map[key] = FromObject(obj);
-        }
-
-        public bool ContainsKey(string key)
-        {
-            return map.ContainsKey(key);
-        }
-
-        public void Remove(string key)
-        {
-            if (nodeType != JsonType.map) throw new Exception("Not a map");
-            map.Remove(key);
-        }
-
-        public JSON this[string key]
-        {
-            get
-            {
-                if (nodeType == JsonType.map) {
-                    return map[key];
-                }
-                throw new Exception("invalid index into json object");
-            }
-            set { if (nodeType == JsonType.unknown) { nodeType = JsonType.map; map = new Dictionary<string, JSON>(); } if (nodeType == JsonType.map) map[key] = value; else throw new Exception("Invlid index into json object"); }
-        }
-
-        public JSON this[int index]
-        {
-            get { if (nodeType == JsonType.array) return array[index]; throw new Exception("bad index not array"); }
-        }
-
-        public string AsString()
-        {
-            if (nodeType != JsonType.text) throw new Exception("Not a string");
-            return text;
-        }
-
-        public int AsInteger()
-        {
-            if (nodeType != JsonType.number) throw new Exception("not an integer");
-            return number;
-        }
-
-        public byte[] AsBytes()
-        {
-            if (nodeType != JsonType.text) throw new Exception("not a string");
-            return Message.base64urldecode(text);
-        }
-
-        public int Count
-        {
-            get
-            {
-                if (nodeType == JsonType.array) return array.Count;
-                if (nodeType == JsonType.map) return map.Count;
-                return 0;
-            }
+            return jwk;
         }
     }
-#endif
 }
