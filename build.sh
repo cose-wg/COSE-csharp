@@ -5,9 +5,8 @@ ls
 
 echo $SLN
 echo $VERSION
-echo $TARGET
+echo $FRAMEWORK
 
-ls
 
 cd COSE
 
@@ -15,7 +14,9 @@ cd COSE
 #nuget.exe restore $SLN
 
 # $NUGET restore $SLN
+dotnet restore --verbosity detailed $SLN
 dotnet build --framework=$FRAMEWORK $SLN
+dotnet test --framework=$FRAMEWORK $SLN
 #xbuild /p:Configuration=$VERSION $SLN
 
 # mono ../testrunner/NUnit.ConsoleRunner.3.5.0/tools/nunit3-console.exe ./COSE.Tests/bin/$VERSION/$TARGET/COSE.Tests.dll

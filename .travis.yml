@@ -3,20 +3,26 @@ solution: COSE.Std10.sln
 
 matrix:
   include:
-    - dotnet: 2.2
+    - dotnet: 3.1
       mono: none
       env:
         - SLN=COSE.Std10.sln
-          TARGET=Std10
           VERSION=Release
           NUGET=dotnet
           FRAMEWORK=netcoreapp2.0
       os: osx
-    - dotnet: 2.2
+    - dotnet: 3.1
       mono: none
       env:
         - SLN=COSE.Std10.sln
-          TARGET=Std10
+          VERSION=Release
+          NUGET=dotnet
+          FRAMEWORK=netcoreapp2.0
+      os: linux
+    - dotnet: 2.1
+      mono: none
+      env:
+        - SLN=COSE.Std10.sln
           VERSION=Release
           NUGET=dotnet
           FRAMEWORK=netcoreapp2.0
