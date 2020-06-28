@@ -7,7 +7,6 @@ matrix:
       mono: none
       env:
         - SLN=COSE.Std10.sln
-          TARGET=Std10
           VERSION=Release
           NUGET=dotnet
           FRAMEWORK=netcoreapp2.0
@@ -16,7 +15,6 @@ matrix:
       mono: none
       env:
         - SLN=COSE.Std10.sln
-          TARGET=Std10
           VERSION=Release
           NUGET=dotnet
           FRAMEWORK=netcoreapp2.0
@@ -25,7 +23,6 @@ matrix:
       mono: none
       env:
         - SLN=COSE.Std10.sln
-          TARGET=Std10
           VERSION=Release
           NUGET=dotnet
           FRAMEWORK=netcoreapp2.0
