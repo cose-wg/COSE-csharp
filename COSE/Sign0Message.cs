@@ -496,8 +496,8 @@ namespace Com.AugustCellars.COSE
                 case AlgorithmValuesInt.RSA_PSS_384:
                 case AlgorithmValuesInt.RSA_PSS_512: {
                         PssSigner signer = new PssSigner(new RsaEngine(), digest, digest2, digest.GetByteLength());
-
-                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(signerKey.AsBigInteger(CoseKeyParameterKeys.RSA_n), signerKey.AsBigInteger(CoseKeyParameterKeys.RSA_e), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_d), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_p), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_q), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dP), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), _keyToSign.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
+                        
+                        RsaKeyParameters prv = new RsaPrivateCrtKeyParameters(signerKey.AsBigInteger(CoseKeyParameterKeys.RSA_n), signerKey.AsBigInteger(CoseKeyParameterKeys.RSA_e), signerKey.AsBigInteger(CoseKeyParameterKeys.RSA_d), signerKey.AsBigInteger(CoseKeyParameterKeys.RSA_p), signerKey.AsBigInteger(CoseKeyParameterKeys.RSA_q), signerKey.AsBigInteger(CoseKeyParameterKeys.RSA_dP), signerKey.AsBigInteger(CoseKeyParameterKeys.RSA_dQ), signerKey.AsBigInteger(CoseKeyParameterKeys.RSA_qInv));
                         ParametersWithRandom param = new ParametersWithRandom(prv, GetPRNG());
 
                         signer.Init(false, param);
